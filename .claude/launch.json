@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nakoplen-web",
+      "runtimeExecutable": "/Users/ivankuznecov/.nvm/versions/node/v20.20.2/bin/npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "/Users/ivankuznecov/Desktop/nakoplen/web",
+      "port": 3001
+    }
+  ]
+}
