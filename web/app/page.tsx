@@ -1,12 +1,36 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 
-// ── FEATURE FLAG ─────────────────────────────────────────────────────────────
-// Set to false to remove the skeleton loading state entirely.
-const ENABLE_LOADING_SKELETON = true;
-const SKELETON_DURATION_MS = 450;
+// ── FEATURE FLAGS ─────────────────────────────────────────────────────────────
+const ENABLE_LOADING_SKELETON = true;   // set false to remove skeleton
+const SKELETON_DURATION_MS    = 450;
+const CAROUSEL_DELAY_MS       = 10000; // 10 s before auto-advance to banner
 // ─────────────────────────────────────────────────────────────────────────────
+
+/* ── BANNER DATA ── */
+const BANNERS = [
+  {
+    id:       "keshboks",
+    img:      "/images/banner-keshboks.png",
+    // 88% wide fills horizontal space; translateY(+20px) shifts DOWN to reveal full top
+    imgStyle: { transform: "translateY(20px)" } as React.CSSProperties,
+    title:    "Кешбокс до 16%",
+    subtitle: "Накопительный счёт с растущей ставкой",
+    btn:      "Открыть счёт",
+  },
+  {
+    id:       "tsifrovye",
+    img:      "/images/banner-tsifrovye.png",
+    // max-height:100% = fits wrap height exactly — no crop, 1.5× smaller than 88%
+    imgStyle: { width: "auto", maxHeight: "100%" } as React.CSSProperties,
+    title:    "Цифровые активы",
+    subtitle: "Инвестируйте новым способом",
+    btn:      "Подробнее",
+  },
+];
+// Total slides: 1 filter slide + BANNERS.length banner slides
+const TOTAL = 1 + BANNERS.length; // 3
 
 /* ── CHIP KEYS ── */
 type ChipKey = "visok" | "stabil" | "dostup" | "podushka" | "bezmin" | "popol";
@@ -115,6 +139,29 @@ function SkeletonPanel() {
   );
 }
 
+/* ── BANNER SLIDE ── */
+function BannerSlide({ banner }: { banner: typeof BANNERS[0] }) {
+  return (
+    <div className="banner-slide">
+      {/* Image area — fills space above text */}
+      <div className="banner-img-wrap">
+        <img
+          className="banner-img"
+          src={banner.img}
+          alt=""
+          style={banner.imgStyle}
+        />
+      </div>
+      {/* Text + CTA — always at bottom */}
+      <div className="banner-body">
+        <p className="banner-title">{banner.title}</p>
+        <p className="banner-subtitle">{banner.subtitle}</p>
+        <button className="banner-btn">{banner.btn}</button>
+      </div>
+    </div>
+  );
+}
+
 /* ── CARD COMPONENT ── */
 function ProductCard({ card }: { card: CardData }) {
   return (
@@ -131,17 +178,126 @@ function ProductCard({ card }: { card: CardData }) {
 
 /* ── PAGE ── */
 export default function Page() {
-  /* No chips selected = no filter = all products shown */
+  /* ── Filter state ── */
   const [activeChips, setActiveChips] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading]     = useState(false);
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const skTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  /* ── Carousel state ──
+   * Infinite clone technique:
+   *   Rendered order: [lastBanner_clone, filter, banner0, banner1, filter_clone]
+   *   displayPos:         0               1        2        3          4
+   *   slideIdx (logical): TOTAL-1         0        1        2          0
+   *
+   * After CSS transition lands on a clone (pos 0 or TOTAL+1),
+   * we instant-jump (no transition) to the corresponding real slide.
+   */
+  const [slideIdx,         setSlideIdx]         = useState(0); // 0..TOTAL-1
+  const [displayPos,       setDisplayPos]        = useState(1); // 0..TOTAL+1
+  const [filterInteracted, setFilterInteracted] = useState(false);
+  const [progress,         setProgress]         = useState(0);
+  const [earsCollapsed,    setEarsCollapsed]     = useState(false);
+
+  const trackRef    = useRef<HTMLDivElement>(null);
+  const swipeStartX = useRef(0);
+  const swipeStartY = useRef(0);
+
+  /* Advance carousel forward (next) — collapse ears first for seamless entry */
+  const goToNext = useCallback(() => {
+    setEarsCollapsed(true);
+    setDisplayPos(p => p + 1);
+    setSlideIdx(s => (s + 1) % TOTAL);
+  }, []);
+
+  /* Advance carousel backward (prev) */
+  const goToPrev = useCallback(() => {
+    setEarsCollapsed(true);
+    setDisplayPos(p => p - 1);
+    setSlideIdx(s => (s - 1 + TOTAL) % TOTAL);
+  }, []);
+
+  /* After CSS transition ends, instant-jump from clone to real position.
+     Also re-expand ears if we landed back on filter with no active filters. */
+  const handleTrackTransitionEnd = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    setDisplayPos(cur => {
+      if (cur === TOTAL + 1 || cur === 0) {
+        const jumpTo = cur === TOTAL + 1 ? 1 : TOTAL;
+        track.style.transition = 'none';
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => { track.style.transition = ''; })
+        );
+        return jumpTo;
+      }
+      // Landed on a real slide — re-expand ears if we're on filter with no chips
+      setSlideIdx(s => {
+        if (s === 0) setEarsCollapsed(false);
+        return s;
+      });
+      return cur;
+    });
+  }, []);
+
+  /* Auto-advance timer — restarts whenever slideIdx or filterInteracted changes */
+  useEffect(() => {
+    if (filterInteracted) { setProgress(0); return; }
+
+    let rafId: number;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / CAROUSEL_DELAY_MS, 1);
+      setProgress(p);
+      if (p < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        goToNext();
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [filterInteracted, slideIdx, goToNext]);
+
+  /* Swipe handlers */
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    swipeStartX.current = e.touches[0].clientX;
+    swipeStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - swipeStartX.current;
+    const dy = e.changedTouches[0].clientY - swipeStartY.current;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) goToNext(); else goToPrev();
+    setProgress(0);
+  }, [goToNext, goToPrev]);
+
+  /* Chip toggle:
+     - any chip selected   → stop carousel, hide ears, return to filter
+     - all chips cleared   → restart carousel, show ears again
+  */
   const toggleChip = useCallback((idx: number) => {
+    setSlideIdx(0);
+    setDisplayPos(1); // snap back to filter slide
+
     setActiveChips((prev) => {
       const next = new Set(prev);
       if (next.has(idx)) next.delete(idx);
       else next.add(idx);
+
+      if (next.size === 0) {
+        /* no active filters → restart carousel, re-expand ears */
+        setFilterInteracted(false);
+        setEarsCollapsed(false);
+        setProgress(0);
+      } else {
+        /* at least one filter active → freeze carousel */
+        setFilterInteracted(true);
+      }
+
       return next;
     });
     if (ENABLE_LOADING_SKELETON) {
@@ -169,17 +325,11 @@ export default function Page() {
   return (
     <div className="screen" id="top">
       <div className="top-gradient" />
+      {/* Lavender banner bg — fades in over the dark indigo when a banner is active */}
+      <div className="banner-bg" style={{ opacity: slideIdx > 0 ? 1 : 0 }} />
 
       {/* ── Navbar ── */}
       <div className="navbar">
-        <div className="status-bar">
-          <div className="status-time">09:41</div>
-          <div className="status-icons">
-            <img src="/images/icon-wifi.svg" alt="wifi" />
-            <img src="/images/icon-cell.svg" alt="signal" />
-            <img src="/images/icon-battery.svg" alt="battery" />
-          </div>
-        </div>
         <div className="navbar-content">
           <div className="navbar-inner">
             <button className="icon-button" aria-label="Назад">
@@ -192,37 +342,100 @@ export default function Page() {
         </div>
       </div>
 
-      {/* ── Hero ── */}
-      <div className="hero">
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
-          <p className="hero-title">Накопления</p>
-          <p className="hero-subtitle">Выберите критерии, покажем варианты</p>
-        </div>
+      {/* ── Hero Carousel ── */}
+      <div
+        className="hero-carousel"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/*
+          Cloned slide order for infinite scroll:
+            pos 0: clone of last banner  ← instant-jump to pos TOTAL after transition
+            pos 1: filter/chips (real)
+            pos 2: banner 0 (real)
+            pos 3: banner 1 (real)
+            pos 4: clone of filter       ← instant-jump to pos 1 after transition
+        */}
+        <div
+          ref={trackRef}
+          className="hero-track"
+          style={{ transform: `translateX(-${displayPos * 375}px)` }}
+          onTransitionEnd={handleTrackTransitionEnd}
+        >
+          {/* pos 0 — clone of last banner */}
+          <div className="hero-slide">
+            <BannerSlide banner={BANNERS[BANNERS.length - 1]} />
+          </div>
 
-        {/* Chips */}
-        <div className="chips-container">
-          {CHIPS.map((chip, idx) => (
-            <button
-              key={idx}
-              className={`chip${activeChips.has(idx) ? " selected" : ""}`}
-              onClick={() => toggleChip(idx)}
-            >
-              <div className="chip-icon">
-                <img src={chip.imgSrc} alt="" style={{ position: "absolute", maxWidth: "none", ...chip.imgStyle }} />
+          {/* pos 1 — filter / chips (real) */}
+          <div className="hero-slide">
+            {!filterInteracted && (
+              <>
+                <div className={`banner-ear banner-ear-left${earsCollapsed ? ' ear-collapsed' : ''}`} />
+                <div className={`banner-ear banner-ear-right${earsCollapsed ? ' ear-collapsed' : ''}`} />
+              </>
+            )}
+            <div className="hero">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+                <p className="hero-title">Накопления</p>
+                <p className="hero-subtitle">Выберите критерии, покажем варианты</p>
               </div>
-              <span className="chip-label">{chip.label}</span>
-            </button>
+              <div className="chips-container">
+                {CHIPS.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    className={`chip${activeChips.has(idx) ? " selected" : ""}`}
+                    onClick={() => toggleChip(idx)}
+                  >
+                    <div className="chip-icon">
+                      <img src={chip.imgSrc} alt="" style={{ position: "absolute", maxWidth: "none", ...chip.imgStyle }} />
+                    </div>
+                    <span className="chip-label">{chip.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* pos 2..TOTAL — real banners */}
+          {BANNERS.map((banner) => (
+            <div key={banner.id} className="hero-slide">
+              <BannerSlide banner={banner} />
+            </div>
           ))}
+
+          {/* pos TOTAL+1 — clone of filter (first real slide) */}
+          <div className="hero-slide">
+            <div className="hero">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+                <p className="hero-title">Накопления</p>
+                <p className="hero-subtitle">Выберите критерии, покажем варианты</p>
+              </div>
+              <div className="chips-container">
+                {CHIPS.map((chip, idx) => (
+                  <button key={idx} className={`chip${activeChips.has(idx) ? " selected" : ""}`}>
+                    <div className="chip-icon">
+                      <img src={chip.imgSrc} alt="" style={{ position: "absolute", maxWidth: "none", ...chip.imgStyle }} />
+                    </div>
+                    <span className="chip-label">{chip.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Slide dots ── */}
+      {/* ── Slide dots (progress indicator) ── */}
       <div className="slide-dots">
         <div className="dot dot-sm" />
         <div className="dot dot-md" />
         <div className="dot-active">
           <div className="dot-active-bg" />
-          <div className="dot-active-fill" />
+          <div
+            className="dot-active-fill"
+            style={{ width: filterInteracted ? 0 : `${Math.round(progress * 32)}px` }}
+          />
         </div>
         <div className="dot dot-md" />
         <div className="dot dot-sm" />
@@ -308,10 +521,6 @@ export default function Page() {
         </div>
       </div>
 
-      {/* ── Home indicator ── */}
-      <div className="home-indicator">
-        <div className="home-handle" />
-      </div>
     </div>
   );
 }
