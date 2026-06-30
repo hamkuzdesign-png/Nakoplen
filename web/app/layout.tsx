@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Накопления — МТС Банк",
   description: "Прототип экрана накоплений МТС Банк",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Накопления",
+  },
 };
 
 export const viewport: Viewport = {
@@ -11,6 +16,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#1d2023",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
