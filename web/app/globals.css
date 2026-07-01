@@ -2209,6 +2209,10 @@ html, body {
   text-overflow: ellipsis;
 }
 
+.goal-amount-input::placeholder {
+  color: #969fa8;
+}
+
 /* Bottom tab bar */
 .hm-tabbar {
   display: flex;

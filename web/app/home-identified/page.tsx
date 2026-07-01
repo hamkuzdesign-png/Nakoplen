@@ -354,17 +354,23 @@ export default function HomeIdentifiedPage() {
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", height: 52, padding: "0 4px" }}>
           {[
-            { src: img.tabHome, label: "Главная",  active: true  },
-            { src: img.tabPay,  label: "Платежи",  active: false },
-            { src: img.tabHist, label: "История",  active: false },
-            { src: img.tabProd, label: "Продукты", active: false },
-            { src: img.tabMore, label: "Ещё",      active: false },
-          ].map((tab) => (
-            <div key={tab.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-              <Icon src={tab.src} size={24} />
-              <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: tab.active ? S.white : S.tabInactive, lineHeight: "16px", textAlign: "center" }}>{tab.label}</p>
-            </div>
-          ))}
+            { src: img.tabHome, label: "Главная",  active: true,  href: null as string | null },
+            { src: img.tabPay,  label: "Платежи",  active: false, href: null as string | null },
+            { src: img.tabHist, label: "История",  active: false, href: null as string | null },
+            { src: img.tabProd, label: "Продукты", active: false, href: "/products?from=home-identified" },
+            { src: img.tabMore, label: "Ещё",      active: false, href: null as string | null },
+          ].map((tab) => {
+            const tabStyle: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 };
+            const content = (
+              <>
+                <Icon src={tab.src} size={24} />
+                <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: tab.active ? S.white : S.tabInactive, lineHeight: "16px", textAlign: "center" }}>{tab.label}</p>
+              </>
+            );
+            return tab.href
+              ? <Link key={tab.label} href={tab.href} style={tabStyle}>{content}</Link>
+              : <div key={tab.label} style={tabStyle}>{content}</div>;
+          })}
         </div>
         <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 16px" }}>
           <div style={{ width: 134, height: 5, borderRadius: 999, background: "rgba(255,255,255,0.12)" }} />

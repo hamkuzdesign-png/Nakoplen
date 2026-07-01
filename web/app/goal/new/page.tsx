@@ -16,12 +16,18 @@ const S = {
   fieldBorder: "rgba(127,140,153,0.35)",
 };
 
-type CategoryId = "house" | "car" | "piggy";
+type CategoryId = "car" | "house" | "education" | "travel" | "piggy" | "other";
 
+/* Порядок задан так, чтобы у "Недвижимость" (дефолтная выбранная категория
+   в макете Figma) соседями по каруселе были именно "Автомобиль" и
+   "Образование" — как на исходном экране. */
 const CATEGORIES: { id: CategoryId; label: string; illustration: string; icon: string }[] = [
-  { id: "house", label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"), icon: asset("/images/goal/icon-house.png") },
-  { id: "car", label: "Автомобиль", illustration: asset("/images/goal/illustration-car.png"), icon: asset("/images/goal/icon-car.png") },
-  { id: "piggy", label: "Копилка", illustration: asset("/images/goal/illustration-piggy.png"), icon: asset("/images/goal/icon-piggy.png") },
+  { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       icon: asset("/images/goal/icon-car.png") },
+  { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     icon: asset("/images/goal/icon-house.png") },
+  { id: "education", label: "Образование",  illustration: asset("/images/goal/illustration-education.png"), icon: asset("/images/goal/icon-education.png") },
+  { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/icon-travel.png"),            icon: asset("/images/goal/icon-travel.png") },
+  { id: "piggy",     label: "Копилка",      illustration: asset("/images/goal/illustration-piggy.png"),     icon: asset("/images/goal/icon-piggy.png") },
+  { id: "other",     label: "Другое",       illustration: asset("/images/goal/icon-other.png"),             icon: asset("/images/goal/icon-other.png") },
 ];
 
 type SourceId = "mts-schet" | "vklad-plus" | "cfa";
@@ -270,7 +276,7 @@ function SuccessCard({ onTopUp, onGoToSavings }: { onTopUp: () => void; onGoToSa
 
 export default function NewGoalPage() {
   const router = useRouter();
-  const [categoryIdx, setCategoryIdx] = useState(0);
+  const [categoryIdx, setCategoryIdx] = useState(1); // "Недвижимость" — дефолт из макета Figma
   const [amountRaw, setAmountRaw] = useState("");
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [selectedSources, setSelectedSources] = useState<Set<SourceId>>(new Set());
@@ -327,7 +333,7 @@ export default function NewGoalPage() {
     <div className="phone-width" style={{ minHeight: "100svh", background: S.bgLower, position: "relative" }}>
       {/* Animated wrapper — kept separate from the fixed sheets below so its
           transform doesn't create a containing block that breaks position:fixed */}
-      <div className="page-enter" style={{ display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+      <div className="page-enter" style={{ minHeight: "100svh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
       <div className="top-gradient" />
 
       {/* ── header: back, title + edit, date pill, illustration, category picker ── */}
@@ -352,9 +358,9 @@ export default function NewGoalPage() {
         </div>
 
         <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "8px 0" }}>
-          <img alt="" src={prevCategory.illustration} style={{ width: 100, height: 100, opacity: 0.3, objectFit: "contain" }} />
-          <img alt="" src={category.illustration} style={{ width: 150, height: 150, objectFit: "contain" }} />
-          <img alt="" src={nextCategory.illustration} style={{ width: 100, height: 100, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)" }} />
+          <img alt="" src={prevCategory.illustration} style={{ width: 118, height: 118, opacity: 0.3, objectFit: "contain" }} />
+          <img alt="" src={category.illustration} style={{ width: 200, height: 200, objectFit: "contain" }} />
+          <img alt="" src={nextCategory.illustration} style={{ width: 104, height: 104, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)" }} />
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", paddingBottom: 12 }}>
@@ -371,18 +377,19 @@ export default function NewGoalPage() {
       </div>
 
       {/* ── card content ── */}
-      <div style={{ flex: 1, background: S.bgPrimary, borderRadius: "32px 32px 0 0", position: "relative", zIndex: 1, padding: "20px 0 calc(20px + env(safe-area-inset-bottom))" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", background: S.bgPrimary, borderRadius: "32px 32px 0 0", position: "relative", zIndex: 1, padding: "20px 0 calc(20px + env(safe-area-inset-bottom))" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {/* amount field */}
           <div style={{ padding: "0 20px" }}>
-            <div style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-              <label htmlFor="goal-amount" style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textSecondary }}>Сколько нужно накопить?</label>
+            <div style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, height: 64, boxSizing: "border-box", padding: "0 12px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+              {amountRaw && <label htmlFor="goal-amount" style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textSecondary }}>Сколько нужно накопить?</label>}
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <input
                   id="goal-amount"
+                  className="goal-amount-input"
                   value={amountRaw}
                   onChange={(e) => setAmountRaw(formatAmountInput(e.target.value))}
-                  placeholder="0"
+                  placeholder="Сколько нужно накопить?"
                   inputMode="numeric"
                   style={{ background: "transparent", border: "none", outline: "none", color: S.textPrimary, fontFamily: "'MTS Compact', sans-serif", fontSize: 17, lineHeight: "24px", width: "100%", padding: 0 }}
                 />
@@ -415,14 +422,13 @@ export default function NewGoalPage() {
           )}
         </div>
 
-        {/* CTA */}
+        {/* CTA — всегда активна и прижата к низу карточки */}
         <div style={{ padding: "12px 20px 0" }}>
           <button
-            disabled={amountNum <= 0}
             onClick={() => setCreated(true)}
-            style={{ width: "100%", height: 52, background: amountNum > 0 ? S.purple : "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, cursor: amountNum > 0 ? "pointer" : "default" }}
+            style={{ width: "100%", height: 52, background: S.purple, border: "none", borderRadius: 16, cursor: "pointer" }}
           >
-            <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: amountNum > 0 ? "#fff" : S.textTertiary }}>Создать цель</span>
+            <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: "#fff" }}>Создать цель</span>
           </button>
         </div>
       </div>
