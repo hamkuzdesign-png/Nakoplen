@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, type PointerEvent } from "react";
+import { useState, useEffect, useRef, Suspense, type PointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { asset } from "@/lib/asset";
 
 /* ── TYPES ── */
 type Period = "all" | "no-term" | "3m" | "12m";
@@ -17,33 +18,33 @@ type CardData = {
 
 /* ── DATA ── */
 const BEST: CardData[] = [
-  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: "/images/prod-ejednevny.png" },
-  { id: "b2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: "/images/prod-keshboks.png" },
+  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/prod-ejednevny.png") },
+  { id: "b2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: asset("/images/prod-keshboks.png") },
 ];
 
 const ACCOUNTS: CardData[] = [
-  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: "/images/prod-ejednevny.png" },
-  { id: "a2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: "/images/prod-keshboks.png" },
-  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 12,5%", img: "/images/prod-minimalny.png" },
-  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: "/images/prod-bonusy.png" },
+  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/prod-ejednevny.png") },
+  { id: "a2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: asset("/images/prod-keshboks.png") },
+  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 12,5%", img: asset("/images/prod-minimalny.png") },
+  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
 ];
 
 const DEPOSITS: CardData[] = [
-  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14,7%", img: "/images/prod-vklad-plus.png" },
-  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 14,5%", img: "/images/prod-mts-dengi.png" },
-  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,5%", img: "/images/prod-mts-maksimum.png", wide: true },
+  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14,7%", img: asset("/images/prod-vklad-plus.png") },
+  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 14,5%", img: asset("/images/prod-mts-dengi.png") },
+  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,5%", img: asset("/images/prod-mts-maksimum.png"), wide: true },
 ];
 
 /* УПРИД: уже доступные продукты, не требующие полной идентификации */
 const AVAILABLE_NOW: CardData[] = [
-  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: "/images/prod-bonusy.png" },
-  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: "/images/prod-mts-nakopleniya.png" },
+  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
+  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: asset("/images/prod-mts-nakopleniya.png") },
 ];
 
 const ALTERNATIVE: CardData[] = [
-  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: "/images/prod-mts-nakopleniya.png" },
-  { id: "m2", title: "Цифровые активы", desc: "Инвестируйте в активы новым способом", badge: "До 21%", img: "/images/prod-tsifrovye.png" },
-  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "До 20%", img: "/images/prod-metally.png", wide: true },
+  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: asset("/images/prod-mts-nakopleniya.png") },
+  { id: "m2", title: "Цифровые активы", desc: "Инвестируйте в активы новым способом", badge: "До 21%", img: asset("/images/prod-tsifrovye.png") },
+  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "До 20%", img: asset("/images/prod-metally.png"), wide: true },
 ];
 
 const FAQ_ITEMS = [
@@ -65,11 +66,11 @@ const PERIOD_TABS: { key: Period; label: string }[] = [
 
 /* ── FILTER CHIPS ── */
 const FILTER_CHIPS = [
-  { key: "daily",    label: "Выплаты ежедневно",         icon: "/images/chip-percent.png" },
-  { key: "withdraw", label: "С выводом средств",          icon: "/images/chip-lock.png"   },
-  { key: "nomin",    label: "Без минимальной суммы",      icon: "/images/chip-card.png"   },
-  { key: "insured",  label: "Застрахованы государством",  icon: "/images/chip-shield.png" },
-  { key: "refill",   label: "Можно пополнять",            icon: "/images/chip-coins.png"  },
+  { key: "daily",    label: "Выплаты ежедневно",         icon: asset("/images/chip-percent.png") },
+  { key: "withdraw", label: "С выводом средств",          icon: asset("/images/chip-lock.png")   },
+  { key: "nomin",    label: "Без минимальной суммы",      icon: asset("/images/chip-card.png")   },
+  { key: "insured",  label: "Застрахованы государством",  icon: asset("/images/chip-shield.png") },
+  { key: "refill",   label: "Можно пополнять",            icon: asset("/images/chip-coins.png")  },
 ];
 
 /*
@@ -166,7 +167,7 @@ function Section({ label, star, icon, cards, first, onCardClick }: {
   return (
     <div className="cat-section">
       <div className={`cat-section-label${first ? " first" : ""}`}>
-        {star && <img src="/images/icon-spark.svg" alt="" style={{ width: 16, height: 16 }} />}
+        {star && <img src={asset("/images/icon-spark.svg")} alt="" style={{ width: 16, height: 16 }} />}
         {icon && <img src={icon} alt="" style={{ width: 16, height: 16 }} />}
         {label}
       </div>
@@ -199,6 +200,14 @@ function SlideDots({ fillProgress, disabled }: { fillProgress: number; disabled?
 
 /* ── PAGE ── */
 export default function Page() {
+  return (
+    <Suspense>
+      <PageInner />
+    </Suspense>
+  );
+}
+
+function PageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
@@ -318,10 +327,10 @@ export default function Page() {
         <div className="navbar-content">
           <div className="navbar-inner">
             <button className="icon-button" aria-label="Назад" onClick={() => router.back()}>
-              <img src="/images/icon-back.svg" alt="" />
+              <img src={asset("/images/icon-back.svg")} alt="" />
             </button>
             <div className="icon-button" style={{ opacity: 0, pointerEvents: "none" }}>
-              <img src="/images/icon-back.svg" alt="" />
+              <img src={asset("/images/icon-back.svg")} alt="" />
             </div>
           </div>
         </div>
@@ -339,7 +348,7 @@ export default function Page() {
           {/* Slide 1 — Накопления */}
           <div className="cat-carousel-slide">
             <div className="cat-hero">
-              <img src="/images/hero-bg.png" alt="" className="cat-hero-bg" aria-hidden />
+              <img src={asset("/images/hero-bg.png")} alt="" className="cat-hero-bg" aria-hidden />
               <div className="cat-hero-header">
                 <p className="cat-title">Накопления</p>
                 <p className="cat-subtitle">Укажите критерии — покажем варианты</p>
@@ -347,7 +356,7 @@ export default function Page() {
               <div className="cat-hero-content">
                 <div className="cat-pct-row">
                   <span className="cat-pct-prefix">до</span>
-                  <img src="/images/hero-21.png" alt="21%" className="cat-pct-img" />
+                  <img src={asset("/images/hero-21.png")} alt="21%" className="cat-pct-img" />
                 </div>
                 <div className="cat-period-tabs">
                   {PERIOD_TABS.map(tab => (
@@ -388,7 +397,7 @@ export default function Page() {
                 <p className="cat-subtitle">Накопительный счёт с повышением ставки</p>
               </div>
               <div className="cat-hero-content cat-hero-content-slide2">
-                <img src="/images/prod-keshboks.png" alt="Кешбокс" className="cat-slide2-img" />
+                <img src={asset("/images/prod-keshboks.png")} alt="Кешбокс" className="cat-slide2-img" />
                 <button className="cat-slide2-btn">Открыть счёт</button>
                 <SlideDots fillProgress={fillProgress} disabled={!autoPlay} />
               </div>
@@ -403,7 +412,7 @@ export default function Page() {
         {/* Always rendered — controls panel height, invisible under skeleton */}
         <div style={{ visibility: showSkeleton ? "hidden" : "visible", width: "100%" }}>
           <Section label="Лучшие предложения" star cards={visibleBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Доступно прямо сейчас" icon="/images/icon-device-reservation.svg" cards={visibleAvailableNow} first={visibleBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Доступно прямо сейчас" icon={asset("/images/icon-device-reservation.svg")} cards={visibleAvailableNow} first={visibleBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Накопительные счета" cards={visibleAccounts} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Вклады" cards={visibleDeposits} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Альтернативные продукты" cards={visibleAlt} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
@@ -426,7 +435,7 @@ export default function Page() {
               <div className="accordion-header">
                 <p className="accordion-title">{item.title}</p>
                 <span className={`accordion-chevron${openFaq === item.id ? " open" : ""}`}>
-                  <img src="/images/icon-chevron-down.svg" alt="" />
+                  <img src={asset("/images/icon-chevron-down.svg")} alt="" />
                 </span>
               </div>
               <div className={`accordion-body${openFaq === item.id ? " open" : ""}`}>
@@ -442,7 +451,7 @@ export default function Page() {
         <div className="end-content">
           <div className="end-illustration">
             <video
-              src="/images/catalog-end.mov"
+              src={asset("/images/catalog-end.mov")}
               autoPlay loop muted playsInline
               style={{
                 position: "absolute",

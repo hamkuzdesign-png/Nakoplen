@@ -1,35 +1,45 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { asset } from "@/lib/asset";
 
 export default function CardPage() {
+  return (
+    <Suspense>
+      <CardPageInner />
+    </Suspense>
+  );
+}
+
+function CardPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
 
   const features = [
     {
-      icon: "/images/chip-coins.png",
+      icon: asset("/images/chip-coins.png"),
       title: "До 10 000 ₽ кэшбэка",
       desc: "Выбирайте до 5 категорий на следующий месяц и получайте до 10 000 ₽ кэшбэка в месяц",
     },
     {
-      icon: "/images/chip-shield.png",
+      icon: asset("/images/chip-shield.png"),
       title: "МТС Premium в подарок",
       desc: "Бесплатно на 6 месяцев. Внутри 5% кэшбэка за супермаркеты, Защитник, KION, Строки, Музыка и другое",
     },
     {
-      icon: "/images/chip-pillow.png",
+      icon: asset("/images/chip-pillow.png"),
       title: "Больше преимуществ в МТС",
       desc: "50 ГБ интернета в подарок и кэшбэк до 30% за оплату связи для абонентов МТС",
     },
     {
-      icon: "/images/chip-refill.png",
+      icon: asset("/images/chip-refill.png"),
       title: "Снятие и переводы",
       desc: "Переводите по СБП и снимайте до 100 000 ₽ без комиссии и в любых банкоматах РФ",
     },
     {
-      icon: "/images/chip-access.png",
+      icon: asset("/images/chip-access.png"),
       title: "Бесплатное обслуживание",
       desc: "Выпустим бесплатно и доставим до вашего адреса или в магазин МТС",
     },
@@ -40,13 +50,13 @@ export default function CardPage() {
       <div className="page-enter" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
         {/* Hero */}
         <div className="pd-hero" style={{ background: "linear-gradient(180deg, #b0c8d4 0%, #8eafc0 60%, #1d2023 100%)" }}>
-          <img src="/images/hero-card.png" alt="" className="pd-hero-full" />
+          <img src={asset("/images/hero-card.png")} alt="" className="pd-hero-full" />
         </div>
 
         {/* Back button */}
         <div className="pd-navbar">
           <button className="pd-back-btn" onClick={() => router.back()} aria-label="Назад">
-            <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24, opacity: 0.9 }} />
+            <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24, opacity: 0.9 }} />
           </button>
         </div>
 

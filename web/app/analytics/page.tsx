@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { asset } from "@/lib/asset";
 
 const S = {
   bgPrimary: "#1d2023",
@@ -42,7 +43,7 @@ function SkeletonScreen({ onBack }: { onBack: () => void }) {
         {/* Nav row */}
         <div style={{ display: "flex", alignItems: "center", padding: "44px 20px 20px", position: "relative" }}>
           <button onClick={onBack} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", width: 32, height: 32, borderRadius: 12, background: "transparent", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+            <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
           </button>
           <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 17, color: S.textPrimary, flex: 1, textAlign: "center" }}>Аналитика</p>
         </div>
@@ -239,7 +240,7 @@ function TxIcon({ category }: { category: Category }) {
     return (
       <div style={{ width: 52, height: 52, flexShrink: 0, position: "relative", overflow: "hidden", borderRadius: 16, backgroundImage: ICON_BG }}>
         <div style={{ position: "absolute", left: 10, top: 12, width: 52, height: 52 }}>
-          <img src="/images/savings2/money.svg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", maxWidth: "none" }} />
+          <img src={asset("/images/savings2/money.svg")} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", maxWidth: "none" }} />
         </div>
       </div>
     );
@@ -250,7 +251,7 @@ function TxIcon({ category }: { category: Category }) {
         <div style={{ position: "absolute", inset: 0, borderRadius: 9999, backgroundImage: COIN_OUTER, opacity: 0.72 }} />
         <div style={{ position: "absolute", top: 2, left: 2, width: 48, height: 48, borderRadius: 9999, backgroundImage: COIN_INNER }} />
         <div style={{ position: "absolute", top: 11, left: 13, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <img src="/images/savings2/discount.svg" alt="" style={{ width: 24, height: 24 }} />
+          <img src={asset("/images/savings2/discount.svg")} alt="" style={{ width: 24, height: 24 }} />
         </div>
       </div>
     </div>
@@ -284,7 +285,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
       <div style={{ background: S.bgPrimary, borderRadius: "0 0 32px 32px", flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", padding: "44px 20px 20px", position: "relative" }}>
         <button onClick={onBack} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", width: 32, height: 32, borderRadius: 12, background: "transparent", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+          <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
         </button>
         <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 17, color: S.textPrimary, flex: 1, textAlign: "center" }}>Аналитика</p>
       </div>
@@ -374,7 +375,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
             return (
               <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "20px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", padding: "4px 0 16px" }}>
-                  <img src="/images/analytics/empty-payouts.png" alt="" style={{ width: 100, height: 100, mixBlendMode: "lighten" }} />
+                  <img src={asset("/images/analytics/empty-payouts.png")} alt="" style={{ width: 100, height: 100, mixBlendMode: "lighten" }} />
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
                     <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, lineHeight: "24px", textAlign: "center" }}>Начислений нет</p>
                     <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 400, fontSize: 14, color: S.textSecondary, lineHeight: "20px", textAlign: "center" }}>Покажем их здесь, как только они появятся</p>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { asset } from "@/lib/asset";
 
 type Step = "card" | "topup" | "otp" | "success";
 
@@ -11,7 +12,7 @@ function StepNavbar({ subtitle, onBack }: { subtitle: string; onBack: () => void
     <div className="pd-navbar2">
       <div className="pd-navbar2-row">
         <button className="pd-navbar2-btn" onClick={onBack} aria-label="Назад">
-          <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+          <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
         </button>
         <div className="cb-navbar-titles">
           <p className="cb-navbar-title">Открытие счёта</p>
@@ -36,12 +37,12 @@ function CardStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
           <div style={{ padding: "12px 20px 0" }}>
             <p className="cb-label">Куда зачислять проценты</p>
             <div className="cb-field">
-              <div className="cb-field-icon"><img src="/images/chip-card.png" alt="" /></div>
+              <div className="cb-field-icon"><img src={asset("/images/chip-card.png")} alt="" /></div>
               <div className="cb-field-text">
                 <p className="cb-field-caption">МТС Деньги ·· 0015</p>
                 <p className="cb-field-value">112 000,32 ₽</p>
               </div>
-              <img src="/images/icon-chevron-down.svg" alt="" className="cb-field-chevron" />
+              <img src={asset("/images/icon-chevron-down.svg")} alt="" className="cb-field-chevron" />
             </div>
           </div>
           <div className="cb-bullets" style={{ marginTop: 20 }}>
@@ -96,12 +97,12 @@ function TopupStep({ onBack, onNext }: { onBack: () => void; onNext: () => void 
                 <div>
                   <p className="cb-label">Откуда списать</p>
                   <div className="cb-field">
-                    <div className="cb-field-icon"><img src="/images/chip-card.png" alt="" /></div>
+                    <div className="cb-field-icon"><img src={asset("/images/chip-card.png")} alt="" /></div>
                     <div className="cb-field-text">
                       <p className="cb-field-caption">МТС Деньги ·· 0015</p>
                       <p className="cb-field-value">112 000,32 ₽</p>
                     </div>
-                    <img src="/images/icon-chevron-down.svg" alt="" className="cb-field-chevron" />
+                    <img src={asset("/images/icon-chevron-down.svg")} alt="" className="cb-field-chevron" />
                   </div>
                 </div>
 
@@ -144,7 +145,7 @@ function OtpStep({ onBack, onDone }: { onBack: () => void; onDone: () => void })
         <div className="pd-navbar2">
           <div className="pd-navbar2-row">
             <button className="pd-navbar2-btn" onClick={onBack} aria-label="Назад">
-              <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+              <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
             </button>
             <p className="pd-navbar2-title">Подтверждение</p>
             <div style={{ width: 32, height: 32, flexShrink: 0 }} />
@@ -171,7 +172,7 @@ function SuccessStep({ onDone }: { onDone: () => void }) {
       <div className="page-enter" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1 }} />
         <div className="cb-success-card">
-          <img src="/images/icon-success-done.png" alt="" className="cb-success-icon" />
+          <img src={asset("/images/icon-success-done.png")} alt="" className="cb-success-icon" />
           <div className="cb-success-text">
             <p className="cb-success-title">Заявка принята</p>
             <p className="cb-success-desc">Счёт будет доступен через несколько минут в разделе «Счета»</p>

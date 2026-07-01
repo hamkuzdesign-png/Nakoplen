@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { asset } from "@/lib/asset";
 
 /* ── DATA ── */
 const ACCOUNTS = [
@@ -69,7 +70,7 @@ export default function SavingsPage() {
       {/* Navbar */}
       <div className="sv-navbar">
         <button className="icon-button" aria-label="Назад" onClick={() => router.back()}>
-          <img src="/images/icon-back.svg" alt="" />
+          <img src={asset("/images/icon-back.svg")} alt="" />
         </button>
         <span className="sv-navbar-bell">🔔</span>
       </div>

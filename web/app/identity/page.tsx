@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { asset } from "@/lib/asset";
 
 /* Step 1 — Госуслуги login (light) */
 function GosuslugiScreen({ onLogin }: { onLogin: () => void }) {
@@ -98,7 +99,7 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
       {/* Card image */}
       <div style={{ display: "flex", justifyContent: "center", padding: "24px 0 8px", position: "relative" }}>
         <div style={{ position: "relative", width: 200, height: 130 }}>
-          <img src="/images/hero-card.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }} />
+          <img src={asset("/images/hero-card.png")} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }} />
           {/* Green checkmark badge */}
           <div style={{ position: "absolute", bottom: -8, left: -8, width: 40, height: 40, borderRadius: "50%", background: "#26cd58", display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid #1d2023" }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4.5 4.5L16 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -117,7 +118,7 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
         {/* Row 1 */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(98,108,119,0.25)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src="/images/chip-coins.png" alt="" style={{ width: 24, height: 24 }} />
+            <img src={asset("/images/chip-coins.png")} alt="" style={{ width: 24, height: 24 }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: "#fafafa", marginBottom: 2 }}>Повышенный кэшбэк</p>
@@ -131,7 +132,7 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
         {/* Row 2 */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(98,108,119,0.25)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src="/images/chip-refill.png" alt="" style={{ width: 24, height: 24 }} />
+            <img src={asset("/images/chip-refill.png")} alt="" style={{ width: 24, height: 24 }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: "#fafafa", marginBottom: 2 }}>Переводы по СБП</p>
@@ -159,6 +160,14 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
 }
 
 export default function IdentityPage() {
+  return (
+    <Suspense>
+      <IdentityPageInner />
+    </Suspense>
+  );
+}
+
+function IdentityPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState<"gosuslugi" | "loading" | "success">("gosuslugi");

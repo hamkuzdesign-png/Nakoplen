@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { asset } from "@/lib/asset";
 
 const S = {
   bgPrimary: "#1d2023",
@@ -18,9 +19,9 @@ const S = {
 type CategoryId = "house" | "car" | "piggy";
 
 const CATEGORIES: { id: CategoryId; label: string; illustration: string; icon: string }[] = [
-  { id: "house", label: "Недвижимость", illustration: "/images/goal/illustration-house.png", icon: "/images/goal/icon-house.png" },
-  { id: "car", label: "Автомобиль", illustration: "/images/goal/illustration-car.png", icon: "/images/goal/icon-car.png" },
-  { id: "piggy", label: "Копилка", illustration: "/images/goal/illustration-piggy.png", icon: "/images/goal/icon-piggy.png" },
+  { id: "house", label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"), icon: asset("/images/goal/icon-house.png") },
+  { id: "car", label: "Автомобиль", illustration: asset("/images/goal/illustration-car.png"), icon: asset("/images/goal/icon-car.png") },
+  { id: "piggy", label: "Копилка", illustration: asset("/images/goal/illustration-piggy.png"), icon: asset("/images/goal/icon-piggy.png") },
 ];
 
 type SourceId = "mts-schet" | "vklad-plus" | "cfa";
@@ -110,7 +111,7 @@ function SourceIcon({ kind }: { kind: "discount" | "money" | "image" }) {
   if (kind === "image") {
     return (
       <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 16, overflow: "hidden", background: S.fieldBg }}>
-        <img alt="" src="/images/prod-tsifrovye.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <img alt="" src={asset("/images/prod-tsifrovye.png")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       </div>
     );
   }
@@ -119,7 +120,7 @@ function SourceIcon({ kind }: { kind: "discount" | "money" | "image" }) {
       <div style={{ flexShrink: 0, width: 52, height: 52 }}>
         <div style={{ position: "relative", overflow: "hidden", borderRadius: 16, width: 52, height: 52, backgroundImage: ICON_BG }}>
           <div style={{ position: "absolute", left: 10, top: 12, width: 52, height: 52 }}>
-            <img alt="" src="/images/savings2/money.svg" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", maxWidth: "none" }} />
+            <img alt="" src={asset("/images/savings2/money.svg")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", maxWidth: "none" }} />
           </div>
         </div>
       </div>
@@ -132,7 +133,7 @@ function SourceIcon({ kind }: { kind: "discount" | "money" | "image" }) {
           <div style={{ position: "absolute", inset: 0, borderRadius: 9999, backgroundImage: COIN_OUTER, opacity: 0.72 }} />
           <div style={{ position: "absolute", top: 2, left: 2, width: 48, height: 48, borderRadius: 9999, backgroundImage: COIN_INNER }} />
           <div style={{ position: "absolute", top: 11, left: 13, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-            <img alt="" src="/images/savings2/discount.svg" style={{ width: 24, height: 24 }} />
+            <img alt="" src={asset("/images/savings2/discount.svg")} style={{ width: 24, height: 24 }} />
           </div>
         </div>
       </div>
@@ -199,10 +200,10 @@ function CalendarSheet({ month, onPrevMonth, onNextMonth, onPickDay, onClose, se
             <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary }}>{MONTHS_NOM[month.getMonth()]} {month.getFullYear()}</p>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onPrevMonth} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                <img src="/images/icon-back.svg" alt="" style={{ width: 20, height: 20 }} />
+                <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 20, height: 20 }} />
               </button>
               <button onClick={onNextMonth} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                <img src="/images/icon-back.svg" alt="" style={{ width: 20, height: 20, transform: "scaleX(-1)" }} />
+                <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 20, height: 20, transform: "scaleX(-1)" }} />
               </button>
             </div>
           </div>
@@ -247,7 +248,7 @@ function SuccessCard({ onTopUp, onGoToSavings }: { onTopUp: () => void; onGoToSa
       <div className="goal-sheet">
         <div style={{ background: S.bgPrimary, borderRadius: 32, margin: "0 8px calc(8px + env(safe-area-inset-bottom))", padding: "32px 20px 20px", display: "flex", flexDirection: "column", gap: 32, alignItems: "center" }}>
           <div style={{ width: 120, height: 120, position: "relative" }}>
-            <img alt="" src="/images/goal/success-check.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img alt="" src={asset("/images/goal/success-check.png")} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
             <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, textAlign: "center" }}>Цель создана</p>
@@ -333,7 +334,7 @@ export default function NewGoalPage() {
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
         <div style={{ display: "flex", width: "100%", padding: "44px 20px 0" }}>
           <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+            <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
           </button>
         </div>
 
@@ -394,12 +395,12 @@ export default function NewGoalPage() {
           <div style={{ padding: "0 20px" }}>
             <button onClick={openSourceSheet} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "10px 12px", cursor: "pointer" }}>
               <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(98,108,119,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <img alt="" src="/images/savings2/goal.svg" style={{ width: 24, height: 24, opacity: 0.7 }} />
+                <img alt="" src={asset("/images/savings2/goal.svg")} style={{ width: 24, height: 24, opacity: 0.7 }} />
               </div>
               <span style={{ flex: 1, textAlign: "left", fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: sourceFieldLabel() ? S.textPrimary : S.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {sourceFieldLabel() ?? "Где будете копить?"}
               </span>
-              <img src="/images/icon-chevron-down.svg" alt="" style={{ width: 24, height: 24, flexShrink: 0 }} />
+              <img src={asset("/images/icon-chevron-down.svg")} alt="" style={{ width: 24, height: 24, flexShrink: 0 }} />
             </button>
           </div>
 

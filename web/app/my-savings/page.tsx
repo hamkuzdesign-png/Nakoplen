@@ -1,25 +1,26 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { asset } from "@/lib/asset";
 
 /* ── assets ── */
 const A = {
-  gradient:  "/images/savings2/gradient.png",
-  back:      "/images/savings2/back.svg",
-  hide:      "/images/savings2/hide.svg",
-  sort:      "/images/savings2/sort.svg",
-  plus:      "/images/savings2/plus.svg",
-  arrowUp:   "/images/savings2/arrow-up.svg",
-  analytics: "/images/savings2/analytics.svg",
-  goal:      "/images/savings2/goal.svg",
-  open:      "/images/savings2/open.svg",
-  discount:  "/images/savings2/discount.svg",
-  add:       "/images/savings2/add.svg",
-  spark:     "/images/savings2/spark.svg",
-  money:     "/images/savings2/money.svg",
-  wifi:      "/images/icon-wifi.svg",
-  cell:      "/images/icon-cell.svg",
-  battery:   "/images/icon-battery.svg",
+  gradient:  asset("/images/savings2/gradient.png"),
+  back:      asset("/images/savings2/back.svg"),
+  hide:      asset("/images/savings2/hide.svg"),
+  sort:      asset("/images/savings2/sort.svg"),
+  plus:      asset("/images/savings2/plus.svg"),
+  arrowUp:   asset("/images/savings2/arrow-up.svg"),
+  analytics: asset("/images/savings2/analytics.svg"),
+  goal:      asset("/images/savings2/goal.svg"),
+  open:      asset("/images/savings2/open.svg"),
+  discount:  asset("/images/savings2/discount.svg"),
+  add:       asset("/images/savings2/add.svg"),
+  spark:     asset("/images/savings2/spark.svg"),
+  money:     asset("/images/savings2/money.svg"),
+  wifi:      asset("/images/icon-wifi.svg"),
+  cell:      asset("/images/icon-cell.svg"),
+  battery:   asset("/images/icon-battery.svg"),
 };
 
 /* ── small helpers ── */
@@ -266,7 +267,7 @@ export default function MySavingsPage() {
           }}
         >
           {/* Same gradient image as the page/catalog header, behind the content */}
-          <img alt="" src="/images/hero-gradient.png" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <img alt="" src={asset("/images/hero-gradient.png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           <p style={{ position: "relative", fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 16, color: "#fafafa", lineHeight: "24px", textAlign: "center", width: "100%" }}>Подобрать продукт</p>
           <div style={{ position: "relative", display: "flex", gap: 4, alignItems: "center", justifyContent: "center", width: "100%" }}>
             <div style={{ opacity: 0.72, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
