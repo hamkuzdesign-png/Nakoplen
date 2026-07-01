@@ -182,6 +182,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const scenario = searchParams.get("scenario");
   const needsCard = (scenario === "uprid" || scenario === "anon") && id !== "a4" && id !== "m1";
   const needsIdentity = scenario === "anon" && (id === "a4" || id === "m1");
+  /* Идентифицированный (без scenario): полный флоу открытия Кешбокса */
+  const opensCashbox = !scenario && (id === "a2" || id === "b2");
   const UNLOCK_FEATURE: Feature = {
     icon: "/images/chip-lock.png",
     title: "Откройте доступ к продукту",
@@ -342,6 +344,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         <button className="pd-cta-btn" onClick={() => {
           if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
           else if (needsCard) router.push(`/card${scenario ? `?scenario=${scenario}` : ""}`);
+          else if (opensCashbox) router.push("/open-cashbox");
         }}>{needsIdentity ? "Подтвердить личность" : needsCard ? "Оформить карту" : "Продолжить"}</button>
       </div>
     </div>

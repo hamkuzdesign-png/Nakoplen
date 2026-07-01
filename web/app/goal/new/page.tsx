@@ -1,0 +1,448 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+const S = {
+  bgPrimary: "#1d2023",
+  bgLower: "#000000",
+  textPrimary: "#fafafa",
+  textSecondary: "#969fa8",
+  textTertiary: "#626c77",
+  green: "#26cd58",
+  purple: "#8f8fff",
+  fieldBg: "rgba(98,108,119,0.25)",
+  fieldBorder: "rgba(127,140,153,0.35)",
+};
+
+type CategoryId = "house" | "car" | "piggy";
+
+const CATEGORIES: { id: CategoryId; label: string; illustration: string; icon: string }[] = [
+  { id: "house", label: "Недвижимость", illustration: "/images/goal/illustration-house.png", icon: "/images/goal/icon-house.png" },
+  { id: "car", label: "Автомобиль", illustration: "/images/goal/illustration-car.png", icon: "/images/goal/icon-car.png" },
+  { id: "piggy", label: "Копилка", illustration: "/images/goal/illustration-piggy.png", icon: "/images/goal/icon-piggy.png" },
+];
+
+type SourceId = "mts-schet" | "vklad-plus" | "cfa";
+
+const SOURCES: { id: SourceId; label: string; kind: "discount" | "money" | "image" }[] = [
+  { id: "mts-schet", label: "МТС Счёт ·· 4433", kind: "discount" },
+  { id: "vklad-plus", label: "Вклад Плюс ·· 2211", kind: "money" },
+  { id: "cfa", label: "Цифровые активы ·· 2211", kind: "image" },
+];
+
+const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const MONTHS_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+const WEEKDAYS = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
+
+function formatAmountInput(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 12).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function formatAmount(n: number) {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function buildCalendarWeeks(year: number, month: number) {
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstWeekday).fill(null)];
+  for (let d = 1; d <= totalDays; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+/* ── small inline icons, matching the stroke-icon style already used in analytics/page.tsx ── */
+function PencilIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="#FAFAFA" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function CalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="2.5" y="3.5" width="11" height="10" rx="2" stroke="#FAFAFA" strokeWidth="1.3" />
+      <path d="M2.5 6.5H13.5M5.5 2V4M10.5 2V4" stroke="#FAFAFA" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+function InfoIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7.5" stroke="#FAFAFA" strokeWidth="1.4" />
+      <path d="M10 9V14M10 6.5V6.6" stroke="#FAFAFA" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function CrossIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M4 4L12 12M12 4L4 12" stroke="#FAFAFA" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function CheckboxIcon({ checked }: { checked: boolean }) {
+  if (checked) {
+    return (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill={S.purple} />
+        <path d="M7.5 12.3L10.3 15L16.5 8.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" stroke="rgba(255,255,255,0.24)" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+/* Same coin/money icon skins as /my-savings and /my-product */
+const ICON_BG = "linear-gradient(135deg, rgba(186,224,255,0.05) 0.96154%, rgba(40,49,72,0.5) 100%)";
+const COIN_OUTER = `url("data:image/svg+xml;utf8,<svg viewBox='0 0 52 52' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%25' width='100%25' fill='url(%23g)' opacity='1'/><defs><radialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(5.2 5.2 -5.2 10.849 0 0)'><stop stop-color='rgba(186,224,255,0.24)' offset='0'/><stop stop-color='rgba(113,137,164,0.62)' offset='0.42067'/><stop stop-color='rgba(77,93,118,0.81)' offset='0.63101'/><stop stop-color='rgba(58,71,95,0.905)' offset='0.73618'/><stop stop-color='rgba(40,49,72,1)' offset='0.84135'/></radialGradient></defs></svg>")`;
+const COIN_INNER = `url("data:image/svg+xml;utf8,<svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%25' width='100%25' fill='url(%23g)' opacity='1'/><defs><radialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(4.8 4.8 -4.8 10.015 0 0)'><stop stop-color='rgba(186,224,255,0.24)' offset='0'/><stop stop-color='rgba(113,137,164,0.62)' offset='0.42067'/><stop stop-color='rgba(77,93,118,0.81)' offset='0.63101'/><stop stop-color='rgba(58,71,95,0.905)' offset='0.73618'/><stop stop-color='rgba(40,49,72,1)' offset='0.84135'/></radialGradient></defs></svg>")`;
+
+function SourceIcon({ kind }: { kind: "discount" | "money" | "image" }) {
+  if (kind === "image") {
+    return (
+      <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 16, overflow: "hidden", background: S.fieldBg }}>
+        <img alt="" src="/images/prod-tsifrovye.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      </div>
+    );
+  }
+  if (kind === "money") {
+    return (
+      <div style={{ flexShrink: 0, width: 52, height: 52 }}>
+        <div style={{ position: "relative", overflow: "hidden", borderRadius: 16, width: 52, height: 52, backgroundImage: ICON_BG }}>
+          <div style={{ position: "absolute", left: 10, top: 12, width: 52, height: 52 }}>
+            <img alt="" src="/images/savings2/money.svg" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", maxWidth: "none" }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ flexShrink: 0, width: 52, height: 52 }}>
+      <div style={{ position: "relative", overflow: "hidden", borderRadius: 16, width: 52, height: 52, backgroundImage: ICON_BG }}>
+        <div style={{ position: "absolute", left: 10, top: 12, width: 52, height: 52 }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: 9999, backgroundImage: COIN_OUTER, opacity: 0.72 }} />
+          <div style={{ position: "absolute", top: 2, left: 2, width: 48, height: 48, borderRadius: 9999, backgroundImage: COIN_INNER }} />
+          <div style={{ position: "absolute", top: 11, left: 13, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <img alt="" src="/images/savings2/discount.svg" style={{ width: 24, height: 24 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── "Где будете копить?" bottom sheet — multi-select source picker ── */
+function SourceSheet({ draft, onToggle, onConfirm, onClose }: {
+  draft: Set<SourceId>; onToggle: (id: SourceId) => void; onConfirm: () => void; onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="goal-sheet-overlay" onClick={onClose} />
+      <div className="goal-sheet">
+        <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", paddingBottom: "env(safe-area-inset-bottom)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 0" }}>
+            <div style={{ width: 32, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.35)" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px 4px" }}>
+            <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary }}>Где будете копить?</p>
+            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <CrossIcon />
+            </button>
+          </div>
+          <div style={{ padding: "8px 0" }}>
+            {SOURCES.map((src) => (
+              <button key={src.id} onClick={() => onToggle(src.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <SourceIcon kind={src.kind} />
+                <span style={{ flex: 1, fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: S.textPrimary, lineHeight: "24px" }}>{src.label}</span>
+                <CheckboxIcon checked={draft.has(src.id)} />
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "8px 20px 20px" }}>
+            <button onClick={onConfirm} style={{ width: "100%", background: S.purple, border: "none", borderRadius: 16, height: 52, cursor: "pointer" }}>
+              <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: "#fff" }}>Выбрать</span>
+            </button>
+            <button onClick={onClose} style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, height: 52, cursor: "pointer" }}>
+              <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: S.textPrimary }}>Открыть новый</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── calendar bottom sheet — picks the target date for the goal ── */
+function CalendarSheet({ month, onPrevMonth, onNextMonth, onPickDay, onClose, selected }: {
+  month: Date; onPrevMonth: () => void; onNextMonth: () => void; onPickDay: (day: number) => void; onClose: () => void; selected: Date | null;
+}) {
+  const weeks = buildCalendarWeeks(month.getFullYear(), month.getMonth());
+  const today = new Date();
+  return (
+    <>
+      <div className="goal-sheet-overlay" onClick={onClose} />
+      <div className="goal-sheet">
+        <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 0" }}>
+            <div style={{ width: 32, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.35)" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 12px" }}>
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary }}>{MONTHS_NOM[month.getMonth()]} {month.getFullYear()}</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onPrevMonth} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <img src="/images/icon-back.svg" alt="" style={{ width: 20, height: 20 }} />
+              </button>
+              <button onClick={onNextMonth} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <img src="/images/icon-back.svg" alt="" style={{ width: 20, height: 20, transform: "scaleX(-1)" }} />
+              </button>
+            </div>
+          </div>
+          <div style={{ display: "flex", padding: "0 20px 4px" }}>
+            {WEEKDAYS.map((w) => (
+              <div key={w} style={{ flex: 1, textAlign: "center", fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 12, color: S.textTertiary }}>{w}</div>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", padding: "0 20px 8px" }}>
+            {weeks.map((week, wi) => (
+              <div key={wi} style={{ display: "flex" }}>
+                {week.map((day, di) => {
+                  const isSelected = day !== null && selected && selected.getFullYear() === month.getFullYear() && selected.getMonth() === month.getMonth() && selected.getDate() === day;
+                  const isToday = day !== null && today.getFullYear() === month.getFullYear() && today.getMonth() === month.getMonth() && today.getDate() === day;
+                  return (
+                    <div key={di} style={{ flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {day !== null && (
+                        <button onClick={() => onPickDay(day)} style={{
+                          width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer",
+                          background: isSelected ? S.purple : "transparent",
+                          color: isSelected ? "#fff" : isToday ? S.purple : S.textPrimary,
+                          fontFamily: "'MTS Compact', sans-serif", fontSize: 15,
+                        }}>{day}</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── success card — matches Figma's "Modal Card Graphic 2.0" ── */
+function SuccessCard({ onTopUp, onGoToSavings }: { onTopUp: () => void; onGoToSavings: () => void }) {
+  return (
+    <>
+      <div className="goal-sheet-overlay" />
+      <div className="goal-sheet">
+        <div style={{ background: S.bgPrimary, borderRadius: 32, margin: "0 8px calc(8px + env(safe-area-inset-bottom))", padding: "32px 20px 20px", display: "flex", flexDirection: "column", gap: 32, alignItems: "center" }}>
+          <div style={{ width: 120, height: 120, position: "relative" }}>
+            <img alt="" src="/images/goal/success-check.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+            <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, textAlign: "center" }}>Цель создана</p>
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: S.textSecondary, textAlign: "center", lineHeight: "24px" }}>Доступна в разделе накоплений и в привязанных счетах</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
+            <button onClick={onTopUp} style={{ width: "100%", height: 52, background: S.purple, border: "none", borderRadius: 16, cursor: "pointer" }}>
+              <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: "#fff" }}>Пополнить</span>
+            </button>
+            <button onClick={onGoToSavings} style={{ width: "100%", height: 52, background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, cursor: "pointer" }}>
+              <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: S.textPrimary }}>В накопления</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function NewGoalPage() {
+  const router = useRouter();
+  const [categoryIdx, setCategoryIdx] = useState(0);
+  const [amountRaw, setAmountRaw] = useState("");
+  const [targetDate, setTargetDate] = useState<Date | null>(null);
+  const [selectedSources, setSelectedSources] = useState<Set<SourceId>>(new Set());
+  const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+  const [draftSources, setDraftSources] = useState<Set<SourceId>>(new Set());
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [created, setCreated] = useState(false);
+
+  const category = CATEGORIES[categoryIdx];
+  const prevCategory = CATEGORIES[(categoryIdx + CATEGORIES.length - 1) % CATEGORIES.length];
+  const nextCategory = CATEGORIES[(categoryIdx + 1) % CATEGORIES.length];
+  const amountNum = Number(amountRaw.replace(/\s/g, "")) || 0;
+
+  const now = new Date();
+  const effectiveTarget = targetDate ?? new Date(now.getFullYear(), 11, 31);
+  const monthsRemaining = Math.max(1, Math.ceil((effectiveTarget.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30.44)));
+  const perMonth = amountNum / monthsRemaining;
+  const dateLabelText = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()} года` : `до конца ${now.getFullYear()} года`;
+  const datePillLabel = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()}` : "дата накопления";
+
+  function openSourceSheet() {
+    setDraftSources(selectedSources.size ? new Set(selectedSources) : new Set<SourceId>(["mts-schet"]));
+    setSourceSheetOpen(true);
+  }
+  function toggleDraft(id: SourceId) {
+    setDraftSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function confirmSources() {
+    setSelectedSources(new Set(draftSources));
+    setSourceSheetOpen(false);
+  }
+
+  function openCalendar() {
+    setCalendarMonth(new Date((targetDate ?? now).getFullYear(), (targetDate ?? now).getMonth(), 1));
+    setCalendarOpen(true);
+  }
+  function pickDay(day: number) {
+    setTargetDate(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day));
+    setCalendarOpen(false);
+  }
+
+  function sourceFieldLabel() {
+    if (selectedSources.size === 0) return null;
+    if (selectedSources.size === 1) return SOURCES.find((s) => s.id === [...selectedSources][0])!.label;
+    return `Выбрано ${selectedSources.size} продукта`;
+  }
+
+  return (
+    <div className="phone-width" style={{ minHeight: "100svh", background: S.bgLower, position: "relative" }}>
+      {/* Animated wrapper — kept separate from the fixed sheets below so its
+          transform doesn't create a containing block that breaks position:fixed */}
+      <div className="page-enter" style={{ display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+      <div className="top-gradient" />
+
+      {/* ── header: back, title + edit, date pill, illustration, category picker ── */}
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ display: "flex", width: "100%", padding: "44px 20px 0" }}>
+          <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <img src="/images/icon-back.svg" alt="" style={{ width: 24, height: 24 }} />
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", paddingTop: 12 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24, color: S.textPrimary }}>{category.label}</p>
+            <button onClick={() => setCategoryIdx((i) => (i + 1) % CATEGORIES.length)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Сменить категорию цели">
+              <PencilIcon />
+            </button>
+          </div>
+          <button onClick={openCalendar} style={{ display: "flex", gap: 6, alignItems: "center", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, padding: "8px 12px", cursor: "pointer" }}>
+            <CalendarIcon />
+            <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 10, letterSpacing: "0.5px", textTransform: "uppercase", color: S.textPrimary }}>{datePillLabel}</span>
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "8px 0" }}>
+          <img alt="" src={prevCategory.illustration} style={{ width: 100, height: 100, opacity: 0.3, objectFit: "contain" }} />
+          <img alt="" src={category.illustration} style={{ width: 150, height: 150, objectFit: "contain" }} />
+          <img alt="" src={nextCategory.illustration} style={{ width: 100, height: 100, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)" }} />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, alignItems: "center", paddingBottom: 12 }}>
+          {CATEGORIES.map((c, i) => {
+            const isSelected = i === categoryIdx;
+            const size = isSelected ? 32 : 20;
+            return (
+              <button key={c.id} onClick={() => setCategoryIdx(i)} style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", opacity: isSelected ? 1 : 0.7, border: "none", padding: 0, cursor: "pointer", flexShrink: 0, transition: "width 0.2s, height 0.2s" }}>
+                <img alt="" src={c.icon} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── card content ── */}
+      <div style={{ flex: 1, background: S.bgPrimary, borderRadius: "32px 32px 0 0", position: "relative", zIndex: 1, padding: "20px 0 calc(20px + env(safe-area-inset-bottom))" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* amount field */}
+          <div style={{ padding: "0 20px" }}>
+            <div style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+              <label htmlFor="goal-amount" style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textSecondary }}>Сколько нужно накопить?</label>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <input
+                  id="goal-amount"
+                  value={amountRaw}
+                  onChange={(e) => setAmountRaw(formatAmountInput(e.target.value))}
+                  placeholder="0"
+                  inputMode="numeric"
+                  style={{ background: "transparent", border: "none", outline: "none", color: S.textPrimary, fontFamily: "'MTS Compact', sans-serif", fontSize: 17, lineHeight: "24px", width: "100%", padding: 0 }}
+                />
+                {amountRaw && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: S.textPrimary, flexShrink: 0 }}>₽</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* source field */}
+          <div style={{ padding: "0 20px" }}>
+            <button onClick={openSourceSheet} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "10px 12px", cursor: "pointer" }}>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(98,108,119,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <img alt="" src="/images/savings2/goal.svg" style={{ width: 24, height: 24, opacity: 0.7 }} />
+              </div>
+              <span style={{ flex: 1, textAlign: "left", fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: sourceFieldLabel() ? S.textPrimary : S.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {sourceFieldLabel() ?? "Где будете копить?"}
+              </span>
+              <img src="/images/icon-chevron-down.svg" alt="" style={{ width: 24, height: 24, flexShrink: 0 }} />
+            </button>
+          </div>
+
+          {/* status banner */}
+          {amountNum > 0 && (
+            <div style={{ margin: "0 20px", background: "rgba(127,140,153,0.35)", borderRadius: 16, padding: 12, display: "flex", gap: 8 }}>
+              <div style={{ flexShrink: 0 }}><InfoIcon /></div>
+              <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textPrimary, lineHeight: "20px" }}>
+                Пополняйте на <span style={{ color: S.green }}>{formatAmount(perMonth)} ₽</span> в месяц, чтобы закрыть цель {dateLabelText}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div style={{ padding: "12px 20px 0" }}>
+          <button
+            disabled={amountNum <= 0}
+            onClick={() => setCreated(true)}
+            style={{ width: "100%", height: 52, background: amountNum > 0 ? S.purple : "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, cursor: amountNum > 0 ? "pointer" : "default" }}
+          >
+            <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: amountNum > 0 ? "#fff" : S.textTertiary }}>Создать цель</span>
+          </button>
+        </div>
+      </div>
+      </div>
+
+      {sourceSheetOpen && (
+        <SourceSheet draft={draftSources} onToggle={toggleDraft} onConfirm={confirmSources} onClose={() => setSourceSheetOpen(false)} />
+      )}
+      {calendarOpen && (
+        <CalendarSheet
+          month={calendarMonth}
+          selected={targetDate}
+          onPrevMonth={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+          onNextMonth={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+          onPickDay={pickDay}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
+      {created && (
+        <SuccessCard onTopUp={() => router.push("/my-savings")} onGoToSavings={() => router.push("/my-savings")} />
+      )}
+    </div>
+  );
+}

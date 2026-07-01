@@ -85,12 +85,12 @@ function ChipBtn({ icon, label, onClick }: { icon: string; label: string; onClic
   );
 }
 
-/* product row */
-function ProductRow({ icon, name, amount, subtitle, income }: {
-  icon: React.ReactNode; name: string; amount: string; subtitle: string; income?: string;
+/* product row — links to its owned-product detail card (balance, расчётный доход, mini-analytics) */
+function ProductRow({ href, icon, name, amount, subtitle, income }: {
+  href: string; icon: React.ReactNode; name: string; amount: string; subtitle: string; income?: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "16px 20px", overflow: "hidden" }}>
+    <Link href={href} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px", overflow: "hidden", textDecoration: "none", cursor: "pointer" }}>
       {icon}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0, whiteSpace: "nowrap" }}>
         <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>{name}</p>
@@ -100,7 +100,7 @@ function ProductRow({ icon, name, amount, subtitle, income }: {
       {income && (
         <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#74df8b", lineHeight: "20px", whiteSpace: "nowrap", flexShrink: 0 }}>{income}</p>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -158,7 +158,7 @@ export default function MySavingsPage() {
               {/* Income badge + label */}
               <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", width: "100%" }}>
                 <div style={{ background: "rgba(38,205,88,0.12)", borderRadius: 8, padding: "2px 6px", display: "flex", gap: 4, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                  <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#26cd58", lineHeight: "20px", whiteSpace: "nowrap" }}>+8 546 ₽</p>
+                  <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#26cd58", lineHeight: "20px", whiteSpace: "nowrap" }}>+12 719 ₽</p>
                 </div>
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                   <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#fafafa", lineHeight: "18px", opacity: 0.72, whiteSpace: "nowrap" }}>за всё время</p>
@@ -178,7 +178,7 @@ export default function MySavingsPage() {
             {/* Row 2: chips */}
             <div style={{ display: "flex", gap: 4, width: "100%" }}>
               <ChipBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
-              <ChipBtn icon={A.goal}      label="Цель" />
+              <ChipBtn icon={A.goal}      label="Цель" onClick={() => router.push("/goal/new")} />
               <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push("/catalog")} />
             </div>
           </div>
@@ -188,6 +188,7 @@ export default function MySavingsPage() {
         <div style={{ background: "#1d2023", borderRadius: 32, overflow: "hidden", flexShrink: 0, position: "relative", paddingTop: 12, zIndex: 1 }}>
           <SectionLabel label="Накопительные счета" />
           <ProductRow
+            href="/my-product/os1"
             icon={<DiscountIcon />}
             name="МТС Счёт"
             amount="467 100 ₽"
@@ -195,13 +196,15 @@ export default function MySavingsPage() {
             income="+10 032 ₽"
           />
           <ProductRow
+            href="/my-product/os2"
             icon={<DiscountIcon />}
             name="МТС Счёт"
             amount="30 000,32 ₽"
             subtitle="12,5% на минимальный остаток"
+            income="+641 ₽"
           />
           {/* Add product row */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "16px 20px" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px" }}>
             <div style={{ background: "rgba(98,108,119,0.25)", borderRadius: 16, width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Img src={A.add} size={24} />
             </div>
@@ -217,19 +220,22 @@ export default function MySavingsPage() {
         <div style={{ background: "#1d2023", borderRadius: 32, overflow: "hidden", flexShrink: 0, position: "relative", paddingTop: 12, zIndex: 1 }}>
           <SectionLabel label="Вклады" />
           <ProductRow
+            href="/my-product/dep1"
             icon={<MoneyIcon />}
             name="Вклад МТС Плюс"
             amount="0 ₽"
             subtitle="Пополните до 25 августа 2026"
           />
           <ProductRow
+            href="/my-product/dep2"
             icon={<MoneyIcon />}
             name="Вклад МТС Максимум"
             amount="154 900 ₽"
             subtitle="18,3%, потратьте до 15.02 ещё 38 000 ₽"
+            income="+2 046 ₽"
           />
           {/* Вклад «Плюс» — generic icon, no amount */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "16px 20px" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px" }}>
             <div style={{ background: "rgba(98,108,119,0.25)", borderRadius: 16, width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Img src={A.add} size={24} />
             </div>
