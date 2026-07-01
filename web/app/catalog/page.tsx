@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, type PointerEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 /* ── TYPES ── */
 type Period = "all" | "no-term" | "3m" | "12m";
@@ -32,6 +32,12 @@ const DEPOSITS: CardData[] = [
   { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14,7%", img: "/images/prod-vklad-plus.png" },
   { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 14,5%", img: "/images/prod-mts-dengi.png" },
   { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,5%", img: "/images/prod-mts-maksimum.png", wide: true },
+];
+
+/* УПРИД: уже доступные продукты, не требующие полной идентификации */
+const AVAILABLE_NOW: CardData[] = [
+  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: "/images/prod-bonusy.png" },
+  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: "/images/prod-mts-nakopleniya.png" },
 ];
 
 const ALTERNATIVE: CardData[] = [
@@ -151,8 +157,8 @@ function Card({ card, wide, onClick }: { card: CardData; wide?: boolean; onClick
 }
 
 /* ── SECTION ── */
-function Section({ label, star, cards, first, onCardClick }: {
-  label: string; star?: boolean; cards: CardData[]; first?: boolean;
+function Section({ label, star, icon, cards, first, onCardClick }: {
+  label: string; star?: boolean; icon?: string; cards: CardData[]; first?: boolean;
   onCardClick: (id: string) => void;
 }) {
   if (!cards.length) return null;
@@ -160,7 +166,8 @@ function Section({ label, star, cards, first, onCardClick }: {
   return (
     <div className="cat-section">
       <div className={`cat-section-label${first ? " first" : ""}`}>
-        {star && <span className="cat-section-star">✦</span>}
+        {star && <img src="/images/icon-spark.svg" alt="" style={{ width: 16, height: 16 }} />}
+        {icon && <img src={icon} alt="" style={{ width: 16, height: 16 }} />}
         {label}
       </div>
       <div className="cat-cards-grid">
@@ -193,6 +200,10 @@ function SlideDots({ fillProgress, disabled }: { fillProgress: number; disabled?
 /* ── PAGE ── */
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const scenario = searchParams.get("scenario");
+  const isUprid = scenario === "uprid" || scenario === "anon";
+  const scenarioQuery = scenario ? `?scenario=${scenario}` : "";
   const [period, setPeriod] = useState<Period>("all");
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -295,6 +306,9 @@ export default function Page() {
   /* BEST only shown in the default state (no period, no chips) */
   const visibleBest = chips.size === 0 && period === "all" ? BEST : [];
 
+  /* УПРИД: «Доступно прямо сейчас» — только для сценария УПРИД, в дефолтном состоянии */
+  const visibleAvailableNow = isUprid && chips.size === 0 && period === "all" ? AVAILABLE_NOW : [];
+
   return (
     <div className="screen page-enter" id="top">
       <div className="top-gradient" />
@@ -388,12 +402,13 @@ export default function Page() {
       <div className="lower-panel cat-lower">
         {/* Always rendered — controls panel height, invisible under skeleton */}
         <div style={{ visibility: showSkeleton ? "hidden" : "visible", width: "100%" }}>
-          <Section label="Лучшие предложения" star cards={visibleBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}`)} />
-          <Section label="Накопительные счета" cards={visibleAccounts} first={visibleBest.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}`)} />
-          <Section label="Вклады" cards={visibleDeposits} first={visibleBest.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}`)} />
-          <Section label="Альтернативные продукты" cards={visibleAlt} first={visibleBest.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}`)} />
+          <Section label="Лучшие предложения" star cards={visibleBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Доступно прямо сейчас" icon="/images/icon-device-reservation.svg" cards={visibleAvailableNow} first={visibleBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Накопительные счета" cards={visibleAccounts} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Вклады" cards={visibleDeposits} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Альтернативные продукты" cards={visibleAlt} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
         </div>
-        {showSkeleton && <SkeletonGrid sections={[visibleBest, visibleAccounts, visibleDeposits, visibleAlt]} />}
+        {showSkeleton && <SkeletonGrid sections={[visibleBest, visibleAvailableNow, visibleAccounts, visibleDeposits, visibleAlt]} />}
       </div>
 
       {/* FAQ */}

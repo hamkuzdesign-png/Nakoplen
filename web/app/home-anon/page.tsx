@@ -44,22 +44,30 @@ const img = {
   tabHist:    "/images/home/layout2.svg",
   tabProd:    "/images/home/layout3.svg",
   tabMore:    "/images/home/layout4.svg",
-  savings:    "/images/home/tile-savings.png",
+  savingsEmptyBox: "/images/home/tile-savings-empty-box.png",
+  flexEmpty:  "/images/home/tile-flex-empty.png",
+  loansEmpty: "/images/home/tile-loans-empty.png",
+  investEmpty: "/images/home/tile-invest-empty.png",
+  creditCards: "/images/home/tiles/credit-cards.png",
+  plusCircle: "/images/home/icon-plus-circle.svg",
   wifi:       "/images/icon-wifi.svg",
   cell:       "/images/icon-cell.svg",
   battery:    "/images/icon-battery.svg",
   sbp:        "/images/home/icon-sbp.png",
 };
 
+/* Аноним: все плитки — тёмная карточка без рамки (как у "продуктовых"), без белой
+   подложки под иконкой. Разница лишь в наличии кнопки «+» и подписи вместо суммы.
+   state: "product" — есть продукт (count + жирная сумма, без +)
+          "offer"   — предложение оформить (иконка-продукт + кнопка «+», сумма обычным начертанием)
+          "cta"     — нет продукта (иконка-заглушка + кнопка «+», подпись вместо суммы) */
 const TILES = [
-  { label: "Дебетовые карты", count: "2", amount: "16 106 ₽",      src: "/images/home/tiles/debit.png",        income: null,        href: null },
-  { label: "Кредитные карты", count: "1", amount: "532 144 ₽",     src: "/images/home/tiles/credit-cards.png", income: null,        href: null },
-  { label: "МТС Флекс",       count: null, amount: "54 331 ₽",     src: "/images/home/tiles/flex.png",         income: null,        href: null },
-  { label: "Кредиты и займы", count: null, amount: "221 521 ₽",    src: "/images/home/tiles/loans.png",        income: null,        href: null },
-  { label: "Накопления",      count: "4",  amount: "652 000,88 ₽", src: img.savings,                           income: "+8 546 ₽",  href: "/my-savings" },
-  { label: "Инвестиции",      count: null, amount: "473 144 ₽",    src: "/images/home/tiles/invest.png",       income: null,        href: null },
-  { label: "Мой телефон",     count: null, amount: "100 ₽",        src: "/images/home/tiles/phone.png",        income: null,        href: null },
-  { label: "Мой кошелёк",     count: null, amount: "150 ₽",        src: "/images/prod-06.png",                 income: null,        href: null },
+  { label: "Дебетовые карты", count: "1", amount: "16 106 ₽",  subtitle: null,                 src: "/images/home/tiles/debit.png", href: null,        state: "product" },
+  { label: "Кредитные карты", count: null, amount: "500 000 ₽", subtitle: null,                src: img.creditCards,                href: null,        state: "offer"   },
+  { label: "МТС Флекс",       count: null, amount: null,        subtitle: "оплата частями",     src: img.flexEmpty,                  href: null,        state: "cta"     },
+  { label: "Кредиты и займы", count: null, amount: null,        subtitle: "до 5 000 000 ₽",     src: img.loansEmpty,                 href: null,        state: "cta"     },
+  { label: "Накопления",      count: null, amount: null,        subtitle: "до 21%",             src: img.savingsEmptyBox,            href: "/catalog?scenario=anon", state: "cta" },
+  { label: "Инвестиции",      count: null, amount: null,        subtitle: "комиссия от 0,04%",  src: img.investEmpty,                href: null,        state: "cta"     },
 ];
 
 /* ── tiny reusables ── */
@@ -71,7 +79,7 @@ function Icon({ src, size = 24 }: { src: string; size?: number }) {
   );
 }
 
-export default function HomePage() {
+export default function HomeAnonPage() {
   const [promoClosed, setPromoClosed] = useState(false);
 
   return (
@@ -82,7 +90,6 @@ export default function HomePage() {
 
         {/* NAVBAR */}
         <div style={{ background: S.bgLower }}>
-
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 20px 8px" }}>
           {/* Bell */}
           <div style={{ background: S.bgPrimary, display: "flex", alignItems: "center", justifyContent: "center", padding: 10, borderRadius: 16, flexShrink: 0, position: "relative" }}>
@@ -223,26 +230,29 @@ export default function HomePage() {
         <div style={{ background: S.bgLower, padding: "8px 20px 20px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {TILES.map((tile) => {
+              const hasPlus = tile.state !== "product";
               const inner = (
-                <div style={{ background: S.bgPrimary, borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", boxSizing: "border-box", overflow: "hidden" }}>
-                  {/* Top row: image + optional income badge */}
+                <div style={{ background: hasPlus ? "#0d0e0f" : S.bgPrimary, borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", boxSizing: "border-box", overflow: "hidden" }}>
+                  {/* Top row: image + optional plus button */}
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                     <div style={{ background: S.bgSecondary, borderRadius: 16, overflow: "hidden", flexShrink: 0, width: 52, height: 52 }}>
                       <img alt="" style={{ width: 52, height: 52, display: "block", objectFit: "contain" }} src={tile.src} />
                     </div>
-                    {tile.income && (
-                      <div style={{ background: "rgba(38,205,88,0.12)", borderRadius: 6, padding: "2px 4px", display: "flex", alignItems: "center" }}>
-                        <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: S.green, lineHeight: "16px", whiteSpace: "nowrap" }}>{tile.income}</p>
+                    {hasPlus && (
+                      <div style={{ width: 24, height: 24, flexShrink: 0 }}>
+                        <img alt="" style={{ width: "100%", height: "100%" }} src={img.plusCircle} />
                       </div>
                     )}
                   </div>
-                  {/* Bottom: label + count + amount */}
+                  {/* Bottom: label + count + amount / subtitle */}
                   <div style={{ height: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                     <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                       <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: S.textPrimary, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tile.label}</p>
                       {tile.count && <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: S.textTertiary, lineHeight: "20px", flexShrink: 0 }}>{tile.count}</p>}
                     </div>
-                    <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 17, color: S.textPrimary, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tile.amount}</p>
+                    {tile.state === "cta"
+                      ? <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: S.textSecondary, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tile.subtitle}</p>
+                      : <p style={{ fontFamily: "'MTS Compact'", fontWeight: tile.state === "offer" ? 400 : 500, fontSize: tile.state === "offer" ? 14 : 17, color: tile.state === "offer" ? S.textSecondary : S.textPrimary, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tile.amount}</p>}
                   </div>
                 </div>
               );

@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Feature = {
   icon: string;
@@ -21,6 +21,13 @@ type ProductDetail = {
 };
 
 type BonusCell = { icon: string; title: string; desc: string };
+
+/* УПРИД: для продуктов, требующих карту МТС Деньги, первым буллитом — её оформление */
+const CARD_REQUIRED_FEATURE: Feature = {
+  icon: "/images/chip-card.png",
+  title: "Нужна карта МТС Деньги",
+  desc: "Закажите дебетовую карту онлайн, доставим в удобное место и время",
+};
 
 /* "Бонусы за накопления" (a4) — its own Figma layout, no hero */
 const BONUS_DETAIL = {
@@ -170,6 +177,16 @@ PRODUCTS.b2 = PRODUCTS.a2;
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  /* УПРИД / Аноним: «Бонусы за накопления» и «МТС Накопления» остаются без изменений */
+  const scenario = searchParams.get("scenario");
+  const needsCard = (scenario === "uprid" || scenario === "anon") && id !== "a4" && id !== "m1";
+  const needsIdentity = scenario === "anon" && (id === "a4" || id === "m1");
+  const UNLOCK_FEATURE: Feature = {
+    icon: "/images/chip-lock.png",
+    title: "Откройте доступ к продукту",
+    desc: "Подтвердите личность через госуслуги",
+  };
 
   if (id === "a4") {
     const b = BONUS_DETAIL;
@@ -221,7 +238,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <p className="pd-card-title">{b.howTitle}</p>
               </div>
               <div className="pd-features">
-                {b.steps.map((s, i) => (
+                {(needsIdentity ? [UNLOCK_FEATURE, ...b.steps] : b.steps).map((s, i) => (
                   <div key={i} className="pd-feature">
                     <div className="pd-feature-icon-wrap">
                       <img src={s.icon} alt="" className="pd-feature-icon" />
@@ -245,7 +262,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         {/* Fixed bottom — CTA */}
         <div className="pd-bottom pd-bottom-stacked">
           <div className="pd-cta-btn-wrap">
-            <button className="pd-cta-btn pd-cta-red">Продолжить</button>
+            <button className="pd-cta-btn" onClick={() => {
+              if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
+            }}>{needsIdentity ? "Подтвердить личность" : "Продолжить"}</button>
           </div>
           <div className="pd-bottom-handle-wrap">
             <div className="pd-bottom-handle" />
@@ -298,7 +317,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           {/* Features */}
           <div className="pd-features">
-            {product.features.map((f, i) => (
+            {(needsIdentity ? [UNLOCK_FEATURE, ...product.features] : needsCard ? [CARD_REQUIRED_FEATURE, ...product.features] : product.features).map((f, i) => (
               <div key={i} className="pd-feature">
                 <div className="pd-feature-icon-wrap">
                   <img src={f.icon} alt="" className="pd-feature-icon" />
@@ -320,7 +339,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
       {/* Fixed bottom CTA */}
       <div className="pd-bottom">
-        <button className="pd-cta-btn">Продолжить</button>
+        <button className="pd-cta-btn" onClick={() => {
+          if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
+          else if (needsCard) router.push(`/card${scenario ? `?scenario=${scenario}` : ""}`);
+        }}>{needsIdentity ? "Подтвердить личность" : needsCard ? "Оформить карту" : "Продолжить"}</button>
       </div>
     </div>
   );

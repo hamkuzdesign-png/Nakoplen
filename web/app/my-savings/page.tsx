@@ -177,7 +177,7 @@ export default function MySavingsPage() {
             </div>
             {/* Row 2: chips */}
             <div style={{ display: "flex", gap: 4, width: "100%" }}>
-              <ChipBtn icon={A.analytics} label="Аналитика" />
+              <ChipBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
               <ChipBtn icon={A.goal}      label="Цель" />
               <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push("/catalog")} />
             </div>

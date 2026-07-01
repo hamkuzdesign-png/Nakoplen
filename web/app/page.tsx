@@ -4,18 +4,18 @@ import Link from "next/link";
 const STATUSES = [
   {
     title: "Аноним",
-    desc: "Пользователь без авторизации",
-    href: null,
+    desc: "Главная → Каталог",
+    href: "/home-anon",
   },
   {
     title: "УПРИД",
-    desc: "Упрощённая идентификация",
-    href: null,
+    desc: "Главная → Каталог",
+    href: "/home-uprid",
   },
   {
     title: "Идентифицированный",
-    desc: "Полная идентификация",
-    href: null,
+    desc: "Главная → Каталог → Карточка продукта",
+    href: "/home-identified",
   },
   {
     title: "Имеет продукты",
