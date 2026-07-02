@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 
 const S = {
@@ -14,20 +14,22 @@ const S = {
   purple: "#8f8fff",
   fieldBg: "rgba(98,108,119,0.25)",
   fieldBorder: "rgba(127,140,153,0.35)",
+  accentActive: "#007cff",
 };
 
 type CategoryId = "car" | "house" | "education" | "travel" | "piggy" | "other";
 
-/* Порядок задан так, чтобы у "Недвижимость" (дефолтная выбранная категория
-   в макете Figma) соседями по каруселе были именно "Автомобиль" и
-   "Образование" — как на исходном экране. */
-const CATEGORIES: { id: CategoryId; label: string; illustration: string; icon: string }[] = [
-  { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       icon: asset("/images/goal/icon-car.png") },
-  { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     icon: asset("/images/goal/icon-house.png") },
+/* "Недвижимость" — первая в списке и дефолтная выбранная категория. Автомобиль
+   поставлен последним, чтобы при обёртке по кругу (prev = последний элемент)
+   соседями домика по каруселе остались именно "Автомобиль" слева и
+   "Образование" справа — как на исходном экране в Figma. */
+const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?: string; videoWebm?: string; icon: string }[] = [
+  { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     video: asset("/images/goal/illustration-house-video.mp4"), videoWebm: asset("/images/goal/illustration-house-video.webm"), icon: asset("/images/goal/icon-house.png") },
   { id: "education", label: "Образование",  illustration: asset("/images/goal/illustration-education.png"), icon: asset("/images/goal/icon-education.png") },
   { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/icon-travel.png"),            icon: asset("/images/goal/icon-travel.png") },
   { id: "piggy",     label: "Копилка",      illustration: asset("/images/goal/illustration-piggy.png"),     icon: asset("/images/goal/icon-piggy.png") },
   { id: "other",     label: "Другое",       illustration: asset("/images/goal/icon-other.png"),             icon: asset("/images/goal/icon-other.png") },
+  { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       icon: asset("/images/goal/icon-car.png") },
 ];
 
 type SourceId = "mts-schet" | "vklad-plus" | "cfa";
@@ -276,7 +278,7 @@ function SuccessCard({ onTopUp, onGoToSavings }: { onTopUp: () => void; onGoToSa
 
 export default function NewGoalPage() {
   const router = useRouter();
-  const [categoryIdx, setCategoryIdx] = useState(1); // "Недвижимость" — дефолт из макета Figma
+  const [categoryIdx, setCategoryIdx] = useState(0); // "Недвижимость" — дефолт из макета Figma
   const [amountRaw, setAmountRaw] = useState("");
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [selectedSources, setSelectedSources] = useState<Set<SourceId>>(new Set());
@@ -285,18 +287,40 @@ export default function NewGoalPage() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [created, setCreated] = useState(false);
+  const [amountFocused, setAmountFocused] = useState(false);
+  const [amountWidth, setAmountWidth] = useState(0);
+  const amountMeasureRef = useRef<HTMLSpanElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  /* Measures the rendered pixel width of the typed digits (via a hidden
+     twin span, since "ch" units don't match a proportional font's actual
+     glyph widths) so the input can be sized exactly to its content — that's
+     what makes the ₽ sign sit right after the amount instead of the row's edge. */
+  useEffect(() => {
+    if (amountMeasureRef.current) setAmountWidth(amountMeasureRef.current.offsetWidth);
+  }, [amountRaw]);
 
   const category = CATEGORIES[categoryIdx];
   const prevCategory = CATEGORIES[(categoryIdx + CATEGORIES.length - 1) % CATEGORIES.length];
   const nextCategory = CATEGORIES[(categoryIdx + 1) % CATEGORIES.length];
   const amountNum = Number(amountRaw.replace(/\s/g, "")) || 0;
 
+  /* Some browsers won't honour the `autoPlay` attribute on a freshly (re)mounted
+     <video> — e.g. after client-side navigation or a category switch — so we
+     also kick playback explicitly and swallow the rejection if autoplay is
+     blocked (it'll just show the poster frame instead of erroring). */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play()?.catch(() => {});
+  }, [category.video]);
+
   const now = new Date();
   const effectiveTarget = targetDate ?? new Date(now.getFullYear(), 11, 31);
   const monthsRemaining = Math.max(1, Math.ceil((effectiveTarget.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30.44)));
   const perMonth = amountNum / monthsRemaining;
   const dateLabelText = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()} года` : `до конца ${now.getFullYear()} года`;
-  const datePillLabel = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()}` : "дата накопления";
+  const datePillLabel = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()}` : "Добавить дату";
 
   function openSourceSheet() {
     setDraftSources(selectedSources.size ? new Set(selectedSources) : new Set<SourceId>(["mts-schet"]));
@@ -357,13 +381,36 @@ export default function NewGoalPage() {
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "8px 0" }}>
-          <img alt="" src={prevCategory.illustration} style={{ width: 118, height: 118, opacity: 0.3, objectFit: "contain" }} />
-          <img alt="" src={category.illustration} style={{ width: 200, height: 200, objectFit: "contain" }} />
-          <img alt="" src={nextCategory.illustration} style={{ width: 104, height: 104, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)" }} />
+        <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "0" }}>
+          <img alt="" src={prevCategory.illustration} style={{ width: 118, height: 118, opacity: 0.3, objectFit: "contain", flexShrink: 0 }} />
+          {category.video ? (
+            /* Real per-pixel alpha (webm/vp9, keyed out of the source's black
+               background) is the primary source, so it composites cleanly with
+               no box and no colour-matching hacks. The mp4 is only a fallback
+               for browsers without alpha-webm support (e.g. Safari); it still
+               has an opaque black background, so mix-blend-mode:lighten there
+               fades that black away — it's a no-op on the already-transparent
+               webm since "lighten" only affects composited (opaque) pixels. */
+            <video
+              key={category.id}
+              ref={videoRef}
+              autoPlay loop muted playsInline
+              poster={category.illustration}
+              style={{ width: 260, height: 260, objectFit: "contain", mixBlendMode: "lighten", flexShrink: 0 }}
+            >
+              <source src={category.videoWebm} type="video/webm" />
+              <source src={category.video} type="video/mp4" />
+            </video>
+          ) : (
+            /* Same 260px box as the video (not just the old 200px) so switching
+               categories never changes the illustration row's height — that's
+               what was making the bottom block and the dots jump up and down. */
+            <img alt="" src={category.illustration} style={{ width: 260, height: 260, objectFit: "contain", flexShrink: 0 }} />
+          )}
+          <img alt="" src={nextCategory.illustration} style={{ width: 104, height: 104, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)", flexShrink: 0 }} />
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center", paddingBottom: 12 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: -26, paddingBottom: 4 }}>
           {CATEGORIES.map((c, i) => {
             const isSelected = i === categoryIdx;
             const size = isSelected ? 32 : 20;
@@ -381,7 +428,7 @@ export default function NewGoalPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {/* amount field */}
           <div style={{ padding: "0 20px" }}>
-            <div style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, height: 64, boxSizing: "border-box", padding: "0 12px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+            <div style={{ background: S.fieldBg, border: `1px solid ${amountFocused ? S.accentActive : S.fieldBorder}`, borderRadius: 16, height: 64, boxSizing: "border-box", padding: "0 12px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, transition: "border-color 0.15s ease" }}>
               {amountRaw && <label htmlFor="goal-amount" style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textSecondary }}>Сколько нужно накопить?</label>}
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <input
@@ -389,10 +436,23 @@ export default function NewGoalPage() {
                   className="goal-amount-input"
                   value={amountRaw}
                   onChange={(e) => setAmountRaw(formatAmountInput(e.target.value))}
+                  onFocus={() => setAmountFocused(true)}
+                  onBlur={() => setAmountFocused(false)}
                   placeholder="Сколько нужно накопить?"
                   inputMode="numeric"
-                  style={{ background: "transparent", border: "none", outline: "none", color: S.textPrimary, fontFamily: "'MTS Compact', sans-serif", fontSize: 17, lineHeight: "24px", width: "100%", padding: 0 }}
+                  style={{
+                    background: "transparent", border: "none", outline: "none", color: S.textPrimary,
+                    fontFamily: "'MTS Compact', sans-serif", fontSize: 17, lineHeight: "24px", padding: 0,
+                    /* Sized to the digits themselves (not the full row) so the ₽ sign
+                       sticks right after the amount instead of floating at the row's edge. */
+                    width: amountRaw ? amountWidth : "100%",
+                    flexShrink: 0,
+                  }}
                 />
+                {/* Hidden twin of the input's text, used only to measure its exact rendered width */}
+                <span ref={amountMeasureRef} aria-hidden style={{ position: "absolute", visibility: "hidden", whiteSpace: "pre", fontFamily: "'MTS Compact', sans-serif", fontSize: 17, lineHeight: "24px" }}>
+                  {amountRaw}
+                </span>
                 {amountRaw && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 17, color: S.textPrimary, flexShrink: 0 }}>₽</span>}
               </div>
             </div>
