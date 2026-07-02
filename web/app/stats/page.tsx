@@ -215,6 +215,10 @@ function Heatmap({ clicks }: { clicks: ClickEvent[] }) {
   );
 }
 
+function StatChip({ label, color }: { label: string; color?: string }) {
+  return <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: color ?? S.textSecondary }}>{label}</span>;
+}
+
 const TABS = [
   { key: "screens", label: "Экраны" },
   { key: "participants", label: "Участники" },
@@ -222,23 +226,150 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
+/** Drill-down inside the "Участники" tab: pick a participant → pick one of
+ *  their scenarios → see that scenario's screens for that person → pick a
+ *  screen for its heatmap. Each level's stats are the same aggregate
+ *  functions used elsewhere, just run on a progressively narrower slice
+ *  of events (all of theirs → theirs in that scenario → theirs on that screen). */
+type Drill =
+  | { level: "list" }
+  | { level: "scenarios"; pid: string }
+  | { level: "screens"; pid: string; scenario: Scenario }
+  | { level: "heatmap"; pid: string; scenario: Scenario; path: string };
+
+function ParticipantDrilldown({ allEvents, participantStats }: { allEvents: AnalyticsEvent[]; participantStats: ParticipantStats[] }) {
+  const [drill, setDrill] = useState<Drill>({ level: "list" });
+
+  // Hooks must run unconditionally on every render, so this is computed
+  // before any of the early returns below (even though "list" doesn't need it).
+  const drillPid = drill.level !== "list" ? drill.pid : null;
+  const pidEvents = useMemoized(allEvents, (e) => e.pid === drillPid);
+
+  if (drill.level === "list") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {participantStats.map((p) => (
+          <button
+            key={p.pid}
+            onClick={() => setDrill({ level: "scenarios", pid: p.pid })}
+            style={{ textAlign: "left", background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer" }}
+          >
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{p.pid} →</p>
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary, marginBottom: 4 }}>
+              {p.scenarios.map(scenarioLabel).join(", ")}
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+              <StatChip label={`сессия ${formatDuration(p.sessionMs)}`} />
+              <StatChip label={`${p.screens} экранов`} />
+              <StatChip label={`${p.clicks} кликов`} />
+              {p.deadClicks > 0 && <StatChip label={`${p.deadClicks} мёртвых`} color={S.orange} />}
+              {p.rageClicks > 0 && <StatChip label={`${p.rageClicks} rage-click`} color={S.red} />}
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (drill.level === "scenarios") {
+    const scenarios = aggregateByScenario(pidEvents);
+    return (
+      <div>
+        <Breadcrumb onBack={() => setDrill({ level: "list" })} label="← Участники" />
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 16, color: S.textPrimary, margin: "4px 0 12px" }}>{drill.pid}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {scenarios.map((s) => (
+            <button
+              key={scenarioLabel(s.scenario)}
+              onClick={() => setDrill({ level: "screens", pid: drill.pid, scenario: s.scenario })}
+              style={{ textAlign: "left", background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer" }}
+            >
+              <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{scenarioLabel(s.scenario)} →</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                <StatChip label={`${s.visits} посещ.`} />
+                <StatChip label={`всего ${formatDuration(s.totalMs)}`} />
+                <StatChip label={`${s.clicks} кликов`} />
+                {s.deadClicks > 0 && <StatChip label={`${s.deadClicks} мёртвых`} color={S.orange} />}
+                {s.rageClicks > 0 && <StatChip label={`${s.rageClicks} rage-click`} color={S.red} />}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const scenarioEvents = pidEvents.filter((e) => e.scenario === drill.scenario);
+
+  if (drill.level === "screens") {
+    const screens = aggregateByScreen(scenarioEvents);
+    return (
+      <div>
+        <Breadcrumb onBack={() => setDrill({ level: "scenarios", pid: drill.pid })} label={`← ${drill.pid}`} />
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 16, color: S.textPrimary, margin: "4px 0 12px" }}>
+          {drill.pid} · {scenarioLabel(drill.scenario)}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {screens.map((s) => (
+            <button
+              key={s.path}
+              onClick={() => setDrill({ level: "heatmap", pid: drill.pid, scenario: drill.scenario, path: s.path })}
+              style={{ textAlign: "left", background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer" }}
+            >
+              <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{s.path} →</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                <StatChip label={`${s.visits} посещ.`} />
+                <StatChip label={`ср. ${formatDuration(s.avgMs)}`} />
+                <StatChip label={`${s.clicks} кликов`} />
+                {s.deadClicks > 0 && <StatChip label={`${s.deadClicks} мёртвых`} color={S.orange} />}
+                {s.rageClicks > 0 && <StatChip label={`${s.rageClicks} rage-click`} color={S.red} />}
+                {s.maxScrollPercent > 0 && <StatChip label={`скролл до ${s.maxScrollPercent}%`} />}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // drill.level === "heatmap"
+  const clicks = scenarioEvents.filter((e): e is ClickEvent => e.type === "click" && e.path === drill.path);
+  return (
+    <div>
+      <Breadcrumb onBack={() => setDrill({ level: "screens", pid: drill.pid, scenario: drill.scenario })} label={`← ${scenarioLabel(drill.scenario)}`} />
+      <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 16, color: S.textPrimary, margin: "4px 0 12px" }}>
+        {drill.pid} · {scenarioLabel(drill.scenario)} · {drill.path}
+      </p>
+      <Heatmap clicks={clicks} />
+    </div>
+  );
+}
+
+function Breadcrumb({ onBack, label }: { onBack: () => void; label: string }) {
+  return (
+    <button onClick={onBack} style={{ background: "none", border: "none", color: S.purple, fontFamily: "'MTS Compact', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
+      {label}
+    </button>
+  );
+}
+
+/** Tiny helper so each drill level's filter reads as a one-liner above. */
+function useMemoized(events: AnalyticsEvent[], predicate: (e: AnalyticsEvent) => boolean) {
+  return useMemo(() => events.filter(predicate), [events, predicate]);
+}
+
 export default function StatsPage() {
   const [events, setEvents] = useState<AnalyticsEvent[] | null>(null);
   const [tab, setTab] = useState<Tab>("screens");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [pidFilter, setPidFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setEvents(getEvents());
   }, []);
 
   const allEvents = events ?? [];
-  const filteredEvents = useMemo(
-    () => (pidFilter ? allEvents.filter((e) => e.pid === pidFilter) : allEvents),
-    [allEvents, pidFilter]
-  );
 
-  const screenStats = useMemo(() => aggregateByScreen(filteredEvents), [filteredEvents]);
+  const screenStats = useMemo(() => aggregateByScreen(allEvents), [allEvents]);
   const participantStats = useMemo(() => aggregateByParticipant(allEvents), [allEvents]);
   const scenarioStats = useMemo(() => aggregateByScenario(allEvents), [allEvents]);
   const totalDeadClicks = participantStats.reduce((sum, p) => sum + p.deadClicks, 0);
@@ -246,15 +377,14 @@ export default function StatsPage() {
 
   const activePath = selectedPath ?? screenStats[0]?.path ?? null;
   const activeClicks = useMemo(
-    () => filteredEvents.filter((e): e is ClickEvent => e.type === "click" && e.path === activePath),
-    [filteredEvents, activePath]
+    () => allEvents.filter((e): e is ClickEvent => e.type === "click" && e.path === activePath),
+    [allEvents, activePath]
   );
 
   function handleClear() {
     clearEvents();
     setEvents([]);
     setSelectedPath(null);
-    setPidFilter(null);
   }
 
   function handleNewParticipant() {
@@ -322,13 +452,6 @@ export default function StatsPage() {
             </div>
           )}
 
-          {pidFilter && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(143,143,255,0.12)", border: `1px solid ${S.purple}`, borderRadius: 12, padding: "8px 12px", marginBottom: 16 }}>
-              <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 13, color: S.textPrimary }}>Фильтр: {pidFilter}</span>
-              <button onClick={() => setPidFilter(null)} style={{ background: "none", border: "none", color: S.purple, fontFamily: "'MTS Compact', sans-serif", fontSize: 13, cursor: "pointer" }}>Сбросить</button>
-            </div>
-          )}
-
           <div style={{ display: "flex", gap: 4, marginBottom: 16, background: S.fieldBg, borderRadius: 14, padding: 4 }}>
             {TABS.map((t) => (
               <button
@@ -370,12 +493,12 @@ export default function StatsPage() {
                   >
                     <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{s.path}</p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
-                      <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.visits} посещ.</span>
-                      <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>ср. {formatDuration(s.avgMs)}</span>
-                      <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.clicks} кликов</span>
-                      {s.deadClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.orange }}>{s.deadClicks} мёртвых</span>}
-                      {s.rageClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.red }}>{s.rageClicks} rage-click</span>}
-                      {s.maxScrollPercent > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>скролл до {s.maxScrollPercent}%</span>}
+                      <StatChip label={`${s.visits} посещ.`} />
+                      <StatChip label={`ср. ${formatDuration(s.avgMs)}`} />
+                      <StatChip label={`${s.clicks} кликов`} />
+                      {s.deadClicks > 0 && <StatChip label={`${s.deadClicks} мёртвых`} color={S.orange} />}
+                      {s.rageClicks > 0 && <StatChip label={`${s.rageClicks} rage-click`} color={S.red} />}
+                      {s.maxScrollPercent > 0 && <StatChip label={`скролл до ${s.maxScrollPercent}%`} />}
                     </div>
                   </button>
                 ))}
@@ -392,33 +515,7 @@ export default function StatsPage() {
             </>
           )}
 
-          {tab === "participants" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {participantStats.map((p) => (
-                <div key={p.pid} style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                    <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary }}>{p.pid}</p>
-                    <button
-                      onClick={() => { setPidFilter(p.pid); setTab("screens"); setSelectedPath(null); }}
-                      style={{ background: "none", border: "none", color: S.purple, fontFamily: "'MTS Compact', sans-serif", fontSize: 12, cursor: "pointer" }}
-                    >
-                      экраны →
-                    </button>
-                  </div>
-                  <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary, marginBottom: 4 }}>
-                    {p.scenarios.map(scenarioLabel).join(", ")}
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>сессия {formatDuration(p.sessionMs)}</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{p.screens} экранов</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{p.clicks} кликов</span>
-                    {p.deadClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.orange }}>{p.deadClicks} мёртвых</span>}
-                    {p.rageClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.red }}>{p.rageClicks} rage-click</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {tab === "participants" && <ParticipantDrilldown allEvents={allEvents} participantStats={participantStats} />}
 
           {tab === "scenarios" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -426,13 +523,13 @@ export default function StatsPage() {
                 <div key={scenarioLabel(s.scenario)} style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px" }}>
                   <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{scenarioLabel(s.scenario)}</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.participants} участников</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.visits} посещ.</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>ср. {formatDuration(s.avgMs)}</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>всего {formatDuration(s.totalMs)}</span>
-                    <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.clicks} кликов</span>
-                    {s.deadClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.orange }}>{s.deadClicks} мёртвых</span>}
-                    {s.rageClicks > 0 && <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.red }}>{s.rageClicks} rage-click</span>}
+                    <StatChip label={`${s.participants} участников`} />
+                    <StatChip label={`${s.visits} посещ.`} />
+                    <StatChip label={`ср. ${formatDuration(s.avgMs)}`} />
+                    <StatChip label={`всего ${formatDuration(s.totalMs)}`} />
+                    <StatChip label={`${s.clicks} кликов`} />
+                    {s.deadClicks > 0 && <StatChip label={`${s.deadClicks} мёртвых`} color={S.orange} />}
+                    {s.rageClicks > 0 && <StatChip label={`${s.rageClicks} rage-click`} color={S.red} />}
                   </div>
                 </div>
               ))}
