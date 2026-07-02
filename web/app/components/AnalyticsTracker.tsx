@@ -2,36 +2,83 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { logEvent } from "@/lib/analytics";
+import { getParticipantId, getScenario, logEvent, setScenario, type Scenario } from "@/lib/analytics";
 
 const RAGE_CLICK_WINDOW_MS = 600;
 const RAGE_CLICK_RADIUS_PX = 24;
 
+/** The 4 entry points on the "/" scenario picker. Landing on one of these
+ *  tags every event from here on as belonging to that scenario, until the
+ *  participant either lands on another entry point or goes back to "/". */
+const SCENARIO_ENTRY_ROUTES: Record<string, Scenario> = {
+  "/home-anon": "anon",
+  "/home-uprid": "uprid",
+  "/home-identified": "identified",
+  "/home": "has_products",
+};
+
+function resolveScenario(pathname: string, prevScenario: Scenario): Scenario {
+  if (pathname === "/") return null; // back at the picker — no active scenario
+  if (pathname in SCENARIO_ENTRY_ROUTES) return SCENARIO_ENTRY_ROUTES[pathname];
+  return prevScenario; // shared screens (catalog, transfer, ...) keep whatever scenario led here
+}
+
+/** No button/link/role/cursor:pointer anywhere up the tree — the user
+ *  tapped something that visibly gave no affordance to be tappable. */
+function isInteractive(target: EventTarget | null): boolean {
+  let node = target as Element | null;
+  let depth = 0;
+  while (node && depth < 6) {
+    const tag = node.tagName?.toLowerCase();
+    if (tag && ["button", "a", "input", "select", "textarea", "label"].includes(tag)) return true;
+    const role = node.getAttribute?.("role");
+    if (role && ["button", "link", "checkbox", "radio", "tab", "switch"].includes(role)) return true;
+    if (node instanceof HTMLElement && window.getComputedStyle(node).cursor === "pointer") return true;
+    node = node.parentElement;
+    depth++;
+  }
+  return false;
+}
+
 /**
- * Mounted once in the root layout. Tracks, per route, how long a screen
- * stayed on-screen, where clicks land (normalized for the heatmap in
- * /stats), rapid same-spot re-clicks ("rage clicks" — a proxy for a user
- * expecting something to happen and it not happening), and max scroll
- * depth. All of it is best-effort client telemetry, see lib/analytics.ts.
+ * Mounted once in the root layout. Tracks, per participant (pid) and
+ * scenario, how long a screen stayed on-screen, where clicks land
+ * (normalized for the heatmap in /stats), rapid same-spot re-clicks
+ * ("rage clicks"), clicks with no interactive affordance ("dead clicks"),
+ * and max scroll depth. All best-effort client telemetry — lib/analytics.ts.
  */
 export default function AnalyticsTracker() {
   const pathname = usePathname();
+  const pidRef = useRef<string>("");
+  const scenarioRef = useRef<Scenario>(null);
   const enteredAtRef = useRef(Date.now());
   const prevPathRef = useRef(pathname);
   const maxScrollRef = useRef(0);
   const lastClickRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
+  // One-time setup: resolve pid + whatever scenario was already active this session.
+  useEffect(() => {
+    pidRef.current = getParticipantId();
+    scenarioRef.current = resolveScenario(pathname, getScenario());
+    setScenario(scenarioRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function flushScreenTime(path: string, enteredAt: number) {
-    logEvent({ type: "screen_time", path, durationMs: Date.now() - enteredAt, timestamp: Date.now() });
+    const base = { pid: pidRef.current, scenario: scenarioRef.current, timestamp: Date.now() };
+    logEvent({ type: "screen_time", path, durationMs: Date.now() - enteredAt, ...base });
     if (maxScrollRef.current > 0) {
-      logEvent({ type: "scroll_depth", path, maxDepthPercent: maxScrollRef.current, timestamp: Date.now() });
+      logEvent({ type: "scroll_depth", path, maxDepthPercent: maxScrollRef.current, ...base });
     }
   }
 
-  // Screen time — flush the PREVIOUS path's duration whenever the route changes.
+  // Screen time — flush the PREVIOUS path's duration whenever the route changes,
+  // and re-resolve the active scenario for the new path.
   useEffect(() => {
     if (prevPathRef.current !== pathname) {
       flushScreenTime(prevPathRef.current, enteredAtRef.current);
+      scenarioRef.current = resolveScenario(pathname, scenarioRef.current);
+      setScenario(scenarioRef.current);
       enteredAtRef.current = Date.now();
       prevPathRef.current = pathname;
       maxScrollRef.current = 0;
@@ -73,6 +120,9 @@ export default function AnalyticsTracker() {
         xNorm: e.clientX / vw,
         yPage: e.clientY + window.scrollY,
         rageClick,
+        deadClick: !isInteractive(e.target),
+        pid: pidRef.current,
+        scenario: scenarioRef.current,
         timestamp: now,
       });
     }
