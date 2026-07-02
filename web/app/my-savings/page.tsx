@@ -67,9 +67,9 @@ function MoneyIcon() {
 }
 
 /* action button (top row) */
-function BigBtn({ icon, label }: { icon: string; label: string }) {
+function BigBtn({ icon, label, onClick }: { icon: string; label: string; onClick?: () => void }) {
   return (
-    <div className="glass-chip" style={{ flex: 1, borderRadius: 20, padding: "10px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0, boxSizing: "border-box" }}>
+    <div className="glass-chip" onClick={onClick} style={{ flex: 1, borderRadius: 20, padding: "10px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0, boxSizing: "border-box", cursor: onClick ? "pointer" : "default" }}>
       <Img src={icon} size={24} opacity={0.7} />
       <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: "#fafafa", lineHeight: "16px", textAlign: "center", whiteSpace: "nowrap", width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</p>
     </div>
@@ -173,8 +173,8 @@ export default function MySavingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "0 20px", width: "100%" }}>
             {/* Row 1: Пополнить / Перевести */}
             <div style={{ display: "flex", gap: 4, width: "100%" }}>
-              <BigBtn icon={A.plus}    label="Пополнить" />
-              <BigBtn icon={A.arrowUp} label="Перевести" />
+              <BigBtn icon={A.plus}    label="Пополнить" onClick={() => router.push("/topup")} />
+              <BigBtn icon={A.arrowUp} label="Перевести" onClick={() => router.push("/transfer")} />
             </div>
             {/* Row 2: chips */}
             <div style={{ display: "flex", gap: 4, width: "100%" }}>

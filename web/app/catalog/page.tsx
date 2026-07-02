@@ -397,7 +397,7 @@ function PageInner() {
                 <p className="cat-subtitle">Накопительный счёт с повышением ставки</p>
               </div>
               <div className="cat-hero-content cat-hero-content-slide2">
-                <img src={asset("/images/prod-keshboks.png")} alt="Кешбокс" className="cat-slide2-img" />
+                <img src={asset("/images/prod-keshboks-dial.png")} alt="Кешбокс" className="cat-slide2-img" />
                 <button className="cat-slide2-btn">Открыть счёт</button>
                 <SlideDots fillProgress={fillProgress} disabled={!autoPlay} />
               </div>
