@@ -132,6 +132,22 @@ export default function MenuPage() {
             );
           })}
         </div>
+
+        <Link
+          href="/stats"
+          style={{
+            display: "block",
+            textAlign: "center",
+            marginTop: 20,
+            textDecoration: "none",
+            fontFamily: "'MTS Compact', sans-serif",
+            fontWeight: 500,
+            fontSize: 14,
+            color: "#8f8fff",
+          }}
+        >
+          Аналитика прототипа →
+        </Link>
       </div>
     </div>
   );

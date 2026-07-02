@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import VolumeKeyHandler from "./components/VolumeKeyHandler";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 export const metadata: Metadata = {
   title: "Накопления — МТС Банк",
@@ -23,7 +25,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        <VolumeKeyHandler />
+        <AnalyticsTracker />
+        {children}
+      </body>
     </html>
   );
 }
