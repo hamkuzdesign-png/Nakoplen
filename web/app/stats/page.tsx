@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { asset } from "@/lib/asset";
 import {
   fetchAllEvents,
   startNewParticipant,
@@ -170,7 +171,7 @@ function buildParticipantLabels(events: AnalyticsEvent[]): Map<string, string> {
  *  canvas (see Heatmap) when no screenshot exists for a path. */
 function screenshotForPath(path: string): string {
   const slug = path === "/" ? "root" : path.replace(/^\//, "").replace(/\//g, "-");
-  return `/images/screenshots/${slug}.png`;
+  return asset(`/images/screenshots/${slug}.png`);
 }
 
 type ParticipantStats = {
