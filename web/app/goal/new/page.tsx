@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { asset } from "@/lib/asset";
 
 const S = {
@@ -23,13 +23,18 @@ type CategoryId = "car" | "house" | "education" | "travel" | "piggy" | "other";
    поставлен последним, чтобы при обёртке по кругу (prev = последний элемент)
    соседями домика по каруселе остались именно "Автомобиль" слева и
    "Образование" справа — как на исходном экране в Figma. */
-const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?: string; videoWebm?: string; icon: string }[] = [
-  { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     video: asset("/images/goal/illustration-house-video.mp4"), videoWebm: asset("/images/goal/illustration-house-video.webm"), icon: asset("/images/goal/icon-house.png") },
+const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?: string; icon: string }[] = [
+  /* webm only — no mp4 fallback. The mp4 has an opaque black background (mp4/H.264
+     can't carry alpha), and browsers that can't decode alpha-webm can't be fixed with
+     mix-blend-mode either (Safari doesn't apply blend modes to <video>). So instead of
+     risking that black square, canPlayVp9Alpha() below gates the video entirely — browsers
+     that fail the check get the plain (genuinely transparent) PNG, never the video. */
+  { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     video: asset("/images/goal/illustration-house-video.webm"),   icon: asset("/images/goal/icon-house.png") },
   { id: "education", label: "Образование",  illustration: asset("/images/goal/illustration-education.png"), icon: asset("/images/goal/icon-education.png") },
-  { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/icon-travel.png"),            icon: asset("/images/goal/icon-travel.png") },
-  { id: "piggy",     label: "Копилка",      illustration: asset("/images/goal/illustration-piggy.png"),     icon: asset("/images/goal/icon-piggy.png") },
-  { id: "other",     label: "Другое",       illustration: asset("/images/goal/icon-other.png"),             icon: asset("/images/goal/icon-other.png") },
-  { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       icon: asset("/images/goal/icon-car.png") },
+  { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/illustration-travel.png"),    video: asset("/images/goal/illustration-travel-video.webm"),  icon: asset("/images/goal/icon-travel.png") },
+  { id: "piggy",     label: "Копилка",      illustration: asset("/images/goal/illustration-piggy.png"),     video: asset("/images/goal/illustration-piggy-video.webm"),   icon: asset("/images/goal/icon-piggy.png") },
+  { id: "other",     label: "Другое",       illustration: asset("/images/goal/illustration-other.png"),     icon: asset("/images/goal/icon-other.png") },
+  { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       video: asset("/images/goal/illustration-car-video.webm"),     icon: asset("/images/goal/icon-car.png") },
 ];
 
 type SourceId = "mts-schet" | "vklad-plus" | "cfa";
@@ -52,6 +57,13 @@ function formatAmount(n: number) {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
+/** True only for browsers that report they can decode alpha-channel VP9 webm
+ *  (Chrome, Firefox, Edge, Android...). Safari reports "" for video/webm
+ *  entirely, so it correctly falls through to the plain PNG illustration. */
+function canPlayVp9Alpha() {
+  return document.createElement("video").canPlayType('video/webm; codecs="vp9"') !== "";
+}
+
 function buildCalendarWeeks(year: number, month: number) {
   const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
   const totalDays = new Date(year, month + 1, 0).getDate();
@@ -66,8 +78,9 @@ function buildCalendarWeeks(year: number, month: number) {
 /* ── small inline icons, matching the stroke-icon style already used in analytics/page.tsx ── */
 function PencilIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="#FAFAFA" strokeWidth="1.4" strokeLinejoin="round" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M14.6029 4.11708C15.4177 3.41227 15.8251 3.05987 16.4788 3.00747C17.1326 2.95506 17.4972 3.18019 18.2264 3.63044C18.6421 3.88712 19.0658 4.19852 19.4335 4.56604C19.8011 4.93356 20.1126 5.35721 20.3694 5.77279C20.8198 6.50177 21.045 6.86626 20.9925 7.5198C20.9401 8.17335 20.5876 8.58061 19.8826 9.39512C19.5232 9.81034 19.1122 10.2801 18.6706 10.7759L13.2217 5.32872C13.7177 4.8872 14.1876 4.47638 14.6029 4.11708Z" fill="#FAFAFA" fillOpacity="0.72" />
+      <path d="M11.7375 6.67467C11.1232 7.24337 10.5106 7.82686 9.94648 8.39079C8.44386 9.89294 6.80245 11.7392 5.67146 13.0458C5.36675 13.3978 5.12787 13.6738 4.95063 13.9264C4.62569 14.3329 4.3956 15.0901 4.04235 16.2527L3.51463 17.9895C3.03526 19.5671 2.79558 20.356 3.2199 20.7802C3.64422 21.2044 4.43329 20.9647 6.01145 20.4855L7.74876 19.958C8.98041 19.584 9.75726 19.3481 10.1441 18.9914C10.377 18.8205 10.633 18.599 10.9511 18.3238C12.2582 17.1932 14.1049 15.5523 15.6076 14.0501C16.1717 13.4862 16.7553 12.8738 17.3242 12.2596L11.7375 6.67467Z" fill="#FAFAFA" fillOpacity="0.72" />
     </svg>
   );
 }
@@ -98,14 +111,14 @@ function CheckboxIcon({ checked }: { checked: boolean }) {
   if (checked) {
     return (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="12" fill={S.purple} />
+        <rect x="1" y="1" width="22" height="22" rx="7" fill={S.purple} />
         <path d="M7.5 12.3L10.3 15L16.5 8.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="11" stroke="rgba(255,255,255,0.24)" strokeWidth="1.4" />
+      <rect x="1.3" y="1.3" width="21.4" height="21.4" rx="6.7" stroke="rgba(255,255,255,0.24)" strokeWidth="1.4" />
     </svg>
   );
 }
@@ -291,6 +304,13 @@ export default function NewGoalPage() {
   const [amountWidth, setAmountWidth] = useState(0);
   const amountMeasureRef = useRef<HTMLSpanElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const dragStartX = useRef<number | null>(null);
+  /* Starts false (matches the server-rendered PNG, avoiding a hydration
+     mismatch) and flips true on mount if the browser passes canPlayVp9Alpha(). */
+  const [canShowVideo, setCanShowVideo] = useState(false);
+  useEffect(() => {
+    setCanShowVideo(canPlayVp9Alpha());
+  }, []);
 
   /* Measures the rendered pixel width of the typed digits (via a hidden
      twin span, since "ch" units don't match a proportional font's actual
@@ -303,7 +323,11 @@ export default function NewGoalPage() {
   const category = CATEGORIES[categoryIdx];
   const prevCategory = CATEGORIES[(categoryIdx + CATEGORIES.length - 1) % CATEGORIES.length];
   const nextCategory = CATEGORIES[(categoryIdx + 1) % CATEGORIES.length];
+  const showVideo = !!category.video && canShowVideo;
   const amountNum = Number(amountRaw.replace(/\s/g, "")) || 0;
+  /* Amount + savings source are required; target date stays optional
+     (defaults to the end of the year — see effectiveTarget below). */
+  const canCreate = amountNum > 0 && selectedSources.size > 0;
 
   /* Some browsers won't honour the `autoPlay` attribute on a freshly (re)mounted
      <video> — e.g. after client-side navigation or a category switch — so we
@@ -313,7 +337,7 @@ export default function NewGoalPage() {
     const v = videoRef.current;
     if (!v) return;
     v.play()?.catch(() => {});
-  }, [category.video]);
+  }, [showVideo]);
 
   const now = new Date();
   const effectiveTarget = targetDate ?? new Date(now.getFullYear(), 11, 31);
@@ -323,7 +347,7 @@ export default function NewGoalPage() {
   const datePillLabel = targetDate ? `до ${targetDate.getDate()} ${MONTHS_GEN[targetDate.getMonth()]} ${targetDate.getFullYear()}` : "Добавить дату";
 
   function openSourceSheet() {
-    setDraftSources(selectedSources.size ? new Set(selectedSources) : new Set<SourceId>(["mts-schet"]));
+    setDraftSources(new Set(selectedSources));
     setSourceSheetOpen(true);
   }
   function toggleDraft(id: SourceId) {
@@ -336,6 +360,20 @@ export default function NewGoalPage() {
   function confirmSources() {
     setSelectedSources(new Set(draftSources));
     setSourceSheetOpen(false);
+  }
+
+  /* Swipe left/right over the illustration switches goal category — the
+     small dots below are now display-only, mirroring the pattern already
+     used for the catalog carousel's manual swipe. */
+  function onIllustrationPointerDown(e: PointerEvent<HTMLDivElement>) {
+    dragStartX.current = e.clientX;
+  }
+  function onIllustrationPointerUp(e: PointerEvent<HTMLDivElement>) {
+    if (dragStartX.current == null) return;
+    const dx = e.clientX - dragStartX.current;
+    dragStartX.current = null;
+    if (Math.abs(dx) < 40) return;
+    setCategoryIdx((i) => (dx < 0 ? (i + 1) % CATEGORIES.length : (i + CATEGORIES.length - 1) % CATEGORIES.length));
   }
 
   function openCalendar() {
@@ -361,7 +399,7 @@ export default function NewGoalPage() {
       <div className="top-gradient" />
 
       {/* ── header: back, title + edit, date pill, illustration, category picker ── */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: 16 }}>
         <div style={{ display: "flex", width: "100%", padding: "44px 20px 0" }}>
           <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", border: "none", borderRadius: 12, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24 }} />
@@ -371,7 +409,7 @@ export default function NewGoalPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", paddingTop: 12 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24, color: S.textPrimary }}>{category.label}</p>
-            <button onClick={() => setCategoryIdx((i) => (i + 1) % CATEGORIES.length)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Сменить категорию цели">
+            <button onClick={() => setCategoryIdx((i) => (i + 1) % CATEGORIES.length)} style={{ background: "none", border: "none", borderRadius: 12, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Сменить категорию цели">
               <PencilIcon />
             </button>
           </div>
@@ -381,43 +419,40 @@ export default function NewGoalPage() {
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "0" }}>
+        <div
+          onPointerDown={onIllustrationPointerDown}
+          onPointerUp={onIllustrationPointerUp}
+          style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center", width: "100%", padding: "0", touchAction: "pan-y" }}
+        >
           <img alt="" src={prevCategory.illustration} style={{ width: 118, height: 118, opacity: 0.3, objectFit: "contain", flexShrink: 0 }} />
-          {category.video ? (
-            /* Real per-pixel alpha (webm/vp9, keyed out of the source's black
-               background) is the primary source, so it composites cleanly with
-               no box and no colour-matching hacks. The mp4 is only a fallback
-               for browsers without alpha-webm support (e.g. Safari); it still
-               has an opaque black background, so mix-blend-mode:lighten there
-               fades that black away — it's a no-op on the already-transparent
-               webm since "lighten" only affects composited (opaque) pixels. */
+          {showVideo ? (
             <video
               key={category.id}
               ref={videoRef}
               autoPlay loop muted playsInline
               poster={category.illustration}
-              style={{ width: 260, height: 260, objectFit: "contain", mixBlendMode: "lighten", flexShrink: 0 }}
+              style={{ width: 260, height: 260, objectFit: "contain", flexShrink: 0 }}
             >
-              <source src={category.videoWebm} type="video/webm" />
-              <source src={category.video} type="video/mp4" />
+              <source src={category.video} type="video/webm" />
             </video>
           ) : (
-            /* Same 260px box as the video (not just the old 200px) so switching
-               categories never changes the illustration row's height — that's
-               what was making the bottom block and the dots jump up and down. */
+            /* Same 260px box as the video so switching categories never changes
+               the illustration row's height — that's what was making the bottom
+               block and the dots jump up and down. */
             <img alt="" src={category.illustration} style={{ width: 260, height: 260, objectFit: "contain", flexShrink: 0 }} />
           )}
           <img alt="" src={nextCategory.illustration} style={{ width: 104, height: 104, opacity: 0.3, objectFit: "contain", transform: "scaleX(-1)", flexShrink: 0 }} />
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: -26, paddingBottom: 4 }}>
+        {/* Display-only — switching category is done by swiping the illustration above, not by tapping a dot. */}
+        <div style={{ display: "flex", gap: 5, alignItems: "center", marginTop: -38, paddingBottom: 4 }}>
           {CATEGORIES.map((c, i) => {
             const isSelected = i === categoryIdx;
-            const size = isSelected ? 32 : 20;
+            const size = isSelected ? 22 : 14;
             return (
-              <button key={c.id} onClick={() => setCategoryIdx(i)} style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", opacity: isSelected ? 1 : 0.7, border: "none", padding: 0, cursor: "pointer", flexShrink: 0, transition: "width 0.2s, height 0.2s" }}>
+              <div key={c.id} style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", opacity: isSelected ? 1 : 0.7, flexShrink: 0, transition: "width 0.2s, height 0.2s" }}>
                 <img alt="" src={c.icon} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              </button>
+              </div>
             );
           })}
         </div>
@@ -482,11 +517,12 @@ export default function NewGoalPage() {
           )}
         </div>
 
-        {/* CTA — всегда активна и прижата к низу карточки */}
+        {/* CTA — прижата к низу карточки; активна только когда указаны сумма и источник */}
         <div style={{ padding: "12px 20px 0" }}>
           <button
-            onClick={() => setCreated(true)}
-            style={{ width: "100%", height: 52, background: S.purple, border: "none", borderRadius: 16, cursor: "pointer" }}
+            onClick={() => canCreate && setCreated(true)}
+            disabled={!canCreate}
+            style={{ width: "100%", height: 52, background: S.purple, opacity: canCreate ? 1 : 0.4, border: "none", borderRadius: 16, cursor: canCreate ? "pointer" : "default" }}
           >
             <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: "#fff" }}>Создать цель</span>
           </button>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import VolumeKeyHandler from "./components/VolumeKeyHandler";
+import CornerHoldHandler from "./components/CornerHoldHandler";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <body>
         <VolumeKeyHandler />
+        <CornerHoldHandler />
         <AnalyticsTracker />
         {children}
       </body>

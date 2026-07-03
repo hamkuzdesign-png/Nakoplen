@@ -493,11 +493,6 @@ html, body {
   padding: 12px 0 4px;
   position: relative;
   z-index: 1;
-  opacity: 1;
-  transition: opacity 0.25s ease;
-}
-.slide-dots-disabled {
-  opacity: 0.35;
 }
 .dot { background: rgba(127, 140, 153, 0.35); border-radius: 32px; flex-shrink: 0; }
 .dot-sm { width: 4px; height: 4px; }
@@ -1154,11 +1149,17 @@ html, body {
   z-index: 1;
 }
 
-.cat-hero-content .cat-period-tabs {
+/* Wraps both filter rows (period tabs + chips) in one full-width rectangle —
+   see the banner-swipe exclusion in catalog/page.tsx's onCarouselPointerDown. */
+.cat-filters-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
   margin-top: 24px;
 }
 
-.cat-hero-content .cat-chips-scroll {
+.cat-filters-block .cat-chips-scroll {
   margin-top: 12px;
 }
 

@@ -213,17 +213,16 @@ function Section({ label, star, icon, cards, first, onCardClick }: {
   );
 }
 
-/* Carousel pagination — exactly one dot per slide, always symmetric.
-   The active dot fills up live (fillProgress 0–100) and the slide
-   switches the instant it completes. */
-function SlideDots({ fillProgress, disabled }: { fillProgress: number; disabled?: boolean }) {
+/* Carousel pagination — static indicator, no auto-advance. Switching
+   between slides is swipe-only (see onCarouselPointerDown/Up below). */
+function SlideDots() {
   return (
-    <div className={`slide-dots${disabled ? " slide-dots-disabled" : ""}`} style={{ paddingTop: 0 }}>
+    <div className="slide-dots" style={{ paddingTop: 0 }}>
       <div className="dot dot-sm" />
       <div className="dot dot-md" />
       <div className="dot-active">
         <div className="dot-active-bg" />
-        <div className="dot-active-fill" style={{ width: `${fillProgress}%` }} />
+        <div className="dot-active-fill" style={{ width: "100%" }} />
       </div>
       <div className="dot dot-md" />
       <div className="dot dot-sm" />
@@ -250,40 +249,9 @@ function PageInner() {
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
-  const [fillProgress, setFillProgress] = useState(0); // 0–100, drives the active dot's fill
   const [showSkeleton, setShowSkeleton] = useState(false);
   const skeletonTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragStartX = useRef<number | null>(null);
-
-  const SLIDE_DURATION_MS = 10000;
-  const TICK_MS = 100;
-
-  /* Carousel autoplay is disabled by ANY filter touch, and only re-enabled
-     once filters are back at their base state (period "all", no chips) —
-     or on a fresh page load, which starts there already. */
-  useEffect(() => {
-    const isDefault = period === "all" && activeChips.size === 0;
-    setAutoPlay(isDefault);
-    if (isDefault) setFillProgress(0);
-  }, [period, activeChips]);
-
-  /* Ticks the active dot's fill while autoplay is on. Paused (frozen, not
-     reset) the moment a filter is touched — see selectPeriod/toggleChip. */
-  useEffect(() => {
-    if (!autoPlay) return;
-    const id = setInterval(() => {
-      setFillProgress(p => Math.min(p + (100 * TICK_MS) / SLIDE_DURATION_MS, 100));
-    }, TICK_MS);
-    return () => clearInterval(id);
-  }, [autoPlay]);
-
-  /* Slide switches exactly when the fill completes. */
-  useEffect(() => {
-    if (fillProgress < 100) return;
-    setSlide(s => (s + 1) % 2);
-    setFillProgress(0);
-  }, [fillProgress]);
 
   const triggerSkeleton = () => {
     if (skeletonTimer.current) clearTimeout(skeletonTimer.current);
@@ -291,8 +259,11 @@ function PageInner() {
     skeletonTimer.current = setTimeout(() => setShowSkeleton(false), 500);
   };
 
-  /* Manual swipe */
+  /* Manual swipe — ignored anywhere inside the full-width filters rectangle
+     (period tabs + chips row, incl. the gap between them), so scrolling
+     filters never also flips the hero banner underneath. */
   const onCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest(".cat-filters-block")) return;
     dragStartX.current = e.clientX;
   };
   const onCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
@@ -300,7 +271,6 @@ function PageInner() {
     const dx = e.clientX - dragStartX.current;
     dragStartX.current = null;
     if (Math.abs(dx) < 40) return;
-    setFillProgress(0);
     setSlide(s => (dx < 0 ? Math.min(s + 1, 1) : Math.max(s - 1, 0)));
   };
 
@@ -401,32 +371,38 @@ function PageInner() {
                   <span className="cat-pct-prefix">до</span>
                   <img src={heroRateImg} alt={`${heroRateKey}%`} className="cat-pct-img" />
                 </div>
-                <div className="cat-period-tabs">
-                  {PERIOD_TABS.map(tab => (
-                    <button
-                      key={tab.key}
-                      className={`cat-tab${period === tab.key ? " active" : ""}`}
-                      onClick={() => selectPeriod(tab.key)}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
+                {/* Full-width block spanning both filter rows — a single hit
+                    region so the banner-swipe exclusion below covers the
+                    whole rectangle, not just the two rows' own narrower
+                    hitboxes (see onCarouselPointerDown). */}
+                <div className="cat-filters-block">
+                  <div className="cat-period-tabs">
+                    {PERIOD_TABS.map(tab => (
+                      <button
+                        key={tab.key}
+                        className={`cat-tab${period === tab.key ? " active" : ""}`}
+                        onClick={() => selectPeriod(tab.key)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="cat-chips-scroll">
+                    {visibleChips.map(chip => (
+                      <button
+                        key={chip.key}
+                        className={`cat-chip${activeChips.has(chip.key) ? " active" : ""}`}
+                        onClick={() => toggleChip(chip.key)}
+                      >
+                        <div className="cat-chip-icon-wrap">
+                          <img src={chip.icon} alt="" className="cat-chip-icon-img" />
+                        </div>
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="cat-chips-scroll">
-                  {visibleChips.map(chip => (
-                    <button
-                      key={chip.key}
-                      className={`cat-chip${activeChips.has(chip.key) ? " active" : ""}`}
-                      onClick={() => toggleChip(chip.key)}
-                    >
-                      <div className="cat-chip-icon-wrap">
-                        <img src={chip.icon} alt="" className="cat-chip-icon-img" />
-                      </div>
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-                <SlideDots fillProgress={fillProgress} disabled={!autoPlay} />
+                <SlideDots />
               </div>
             </div>
           </div>
@@ -442,7 +418,7 @@ function PageInner() {
               <div className="cat-hero-content cat-hero-content-slide2">
                 <img src={asset("/images/prod-keshboks-dial.png")} alt="Кешбокс" className="cat-slide2-img" />
                 <button className="cat-slide2-btn">Открыть счёт</button>
-                <SlideDots fillProgress={fillProgress} disabled={!autoPlay} />
+                <SlideDots />
               </div>
             </div>
           </div>
