@@ -57,7 +57,7 @@ const TILES = [
   { label: "Кредитные карты", count: "1", amount: "532 144 ₽",     src: asset("/images/home/tiles/credit-cards.png"), income: null,        href: null },
   { label: "МТС Флекс",       count: null, amount: "54 331 ₽",     src: asset("/images/home/tiles/flex.png"),         income: null,        href: null },
   { label: "Кредиты и займы", count: null, amount: "221 521 ₽",    src: asset("/images/home/tiles/loans.png"),        income: null,        href: null },
-  { label: "Накопления",      count: "4",  amount: "652 000,88 ₽", src: img.savings,                           income: "+8 546 ₽",  href: "/my-savings" },
+  { label: "Накопления",      count: "4",  amount: "652 000,88 ₽", src: img.savings,                           income: "+12 719 ₽",  href: "/my-savings" },
   { label: "Инвестиции",      count: null, amount: "473 144 ₽",    src: asset("/images/home/tiles/invest.png"),       income: null,        href: null },
   { label: "Мой телефон",     count: null, amount: "100 ₽",        src: asset("/images/home/tiles/phone.png"),        income: null,        href: null },
   { label: "Мой кошелёк",     count: null, amount: "150 ₽",        src: asset("/images/prod-06.png"),                 income: null,        href: null },

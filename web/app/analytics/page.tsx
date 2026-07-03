@@ -133,9 +133,9 @@ const LIFETIME_TOTAL = "12 719 ₽";
 
 type Category = "accounts" | "deposits";
 
-const CATEGORIES: Record<Category, { label: string; total: string; chipBg: string }> = {
-  accounts: { label: "Счета", total: "10 673 ₽", chipBg: "rgba(18,134,217,0.2)" },
-  deposits: { label: "Вклады", total: "2 046 ₽", chipBg: "rgba(119,119,255,0.2)" },
+const CATEGORIES: Record<Category, { label: string; total: string; chipBg: string; chipBgActive: string }> = {
+  accounts: { label: "Счета", total: "10 673 ₽", chipBg: "rgba(18,134,217,0.2)", chipBgActive: "rgba(18,134,217,0.4)" },
+  deposits: { label: "Вклады", total: "2 046 ₽", chipBg: "rgba(119,119,255,0.2)", chipBgActive: "rgba(119,119,255,0.4)" },
 };
 
 const TRANSACTIONS: { date: string; month: string; items: { title: string; sub: string; amount: string; category: Category }[] }[] = [
@@ -185,51 +185,57 @@ function formatAmount(n: number) {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-function CrossIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M4 4L12 12M12 4L4 12" stroke="#FAFAFA" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 /* Bar entrance timing */
 const BAR_ANIM_DURATION = 900;
 const BAR_ANIM_STAGGER = 45;
 
-/* A bar column whose height and value label are driven by the same `progress` value (0→1),
-   so the sum visibly rides up together with the growing bar instead of sitting static above it.
-   The rise plays exactly once, on mount, independent of the `amount`/`targetHeight` props —
-   later prop changes (filter/month toggles) just re-render at progress=1 with the new numbers,
-   instead of resetting progress to 0 and re-animating (which briefly collapsed the bar to
-   nothing and made the value drop down near the bottom of the chart). */
+/* A bar column whose height and value label rebuild together, driven by the same
+   interpolation — so the sum visibly rides up (or down) with the bar instead of
+   snapping to the new numbers. On mount this animates from 0 → target. When `amount`/
+   `targetHeight` change later (product-type filter click), it replays the same rise,
+   but starting from wherever the bar currently sits — never resetting to 0, so the
+   column doesn't collapse to nothing between filters. Month-selection clicks don't
+   touch `amount`/`targetHeight`, so they don't retrigger this (only opacity changes).
+   The refs below track the live interpolated value on every frame (not just on
+   completion), so if a new toggle interrupts a run mid-flight, the next run picks up
+   from wherever the bar actually was instead of snapping back to the pre-interruption
+   value — that snap-back is what broke the animation on fast repeated clicks. */
 function AnimatedBar({ amount, prefix, targetHeight, background, valueColor, isSelected, delayMs, onClick }: {
   amount: number; prefix: string; targetHeight: number; background: string; valueColor: string; isSelected: boolean; delayMs: number; onClick: () => void;
 }) {
-  const [progress, setProgress] = useState(0);
+  const [displayAmount, setDisplayAmount] = useState(0);
+  const [displayHeight, setDisplayHeight] = useState(0);
+  const liveAmount = useRef(0);
+  const liveHeight = useRef(0);
 
   useEffect(() => {
     let raf = 0;
     let start: number | null = null;
+    const startAmount = liveAmount.current;
+    const startHeight = liveHeight.current;
     const timer = setTimeout(() => {
       const step = (ts: number) => {
         if (start === null) start = ts;
         const t = Math.min(1, (ts - start) / BAR_ANIM_DURATION);
-        setProgress(t);
+        const nextAmount = startAmount + (amount - startAmount) * t;
+        const nextHeight = startHeight + (targetHeight - startHeight) * t;
+        liveAmount.current = nextAmount;
+        liveHeight.current = nextHeight;
+        setDisplayAmount(nextAmount);
+        setDisplayHeight(nextHeight);
         if (t < 1) raf = requestAnimationFrame(step);
       };
       raf = requestAnimationFrame(step);
     }, delayMs);
     return () => { clearTimeout(timer); if (raf) cancelAnimationFrame(raf); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [amount, targetHeight, delayMs]);
 
   return (
     <button onClick={onClick} style={{ width: 56, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", padding: 0, cursor: "pointer" }}>
       <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: valueColor, lineHeight: "16px", textAlign: "center", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {prefix}{formatAmount(Math.round(amount * progress))} ₽
+        {prefix}{formatAmount(Math.round(displayAmount))} ₽
       </span>
-      <div style={{ width: "100%", height: Math.round(targetHeight * progress), background, borderRadius: "16px 16px 0 0", opacity: isSelected ? 1 : 0.3 }} />
+      <div style={{ width: "100%", height: Math.round(displayHeight), background, borderRadius: "16px 16px 0 0", opacity: isSelected ? 1 : 0.3 }} />
     </button>
   );
 }
@@ -280,7 +286,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
   const headerSubtitle = selectedBar ? `Доход за ${selectedBar.label}` : "Доход за всё время";
 
   return (
-    <div style={{ minHeight: "100svh", background: "#000", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100svh", background: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Navbar (dark rounded block) */}
       <div style={{ background: S.bgPrimary, borderRadius: "0 0 32px 32px", flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", padding: "44px 20px 20px", position: "relative" }}>
@@ -291,7 +297,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
       </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0 40px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 0 40px", display: "flex", flexDirection: "column", gap: 12 }}>
         {/* Chart card */}
         <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", paddingBottom: 20 }}>
           {/* Total */}
@@ -300,13 +306,6 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
               <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, lineHeight: "24px", marginBottom: 4 }}>{headerTotal}</p>
               <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 400, fontSize: 14, color: S.textSecondary, lineHeight: "20px" }}>{headerSubtitle}</p>
             </div>
-            {/* Active filter chip — click × to reset */}
-            {filter !== "all" && (
-              <button onClick={() => setFilter("all")} style={{ background: "rgba(127,140,153,0.35)", border: "none", borderRadius: 12, padding: "6px 10px", display: "flex", gap: 2, alignItems: "center", cursor: "pointer" }}>
-                <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textPrimary, lineHeight: "20px" }}>{CATEGORIES[filter].label}</span>
-                <CrossIcon />
-              </button>
-            )}
           </div>
 
           {/* Bar chart — scrollable, 56px wide each. Bars and labels are separate rows
@@ -322,17 +321,20 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
                     ? "linear-gradient(180deg, rgba(255,255,255,0.8) 36.7%, #1d2023 100%)"
                     : "linear-gradient(180deg, #26cd58 36.7%, #1d2023 100%)";
                   const valueColor = bar.current ? S.textSecondary : "#74df8b";
-                  /* Forecast bar (current/ongoing period) gets a dotted texture on top of the gradient —
-                     uniform ~15px square grid (matches Figma), clipped to 3 columns by the bar's own width/radius */
+                  const targetHeight = barHeightFor(amount);
+                  /* Forecast bar (current/ongoing period) gets a dotted texture on top of the gradient.
+                     Row spacing is derived from the bar's own height (not a fixed 15px) so exactly
+                     3 rows are always visible, evenly spread, no matter how short the bar gets. */
+                  const dotRowH = targetHeight / 3;
                   const background = bar.current
-                    ? `radial-gradient(circle, rgba(255,255,255,0.5) 1.2px, transparent 1.2px) 11px 12px / 15px 15px, ${gradBg}`
+                    ? `radial-gradient(circle, rgba(255,255,255,0.5) 1.2px, transparent 1.2px) 11px ${dotRowH / 2}px / 15px ${dotRowH}px, ${gradBg}`
                     : gradBg;
                   return (
                     <AnimatedBar
                       key={i}
                       amount={amount}
                       prefix={bar.current ? "~" : ""}
-                      targetHeight={barHeightFor(amount)}
+                      targetHeight={targetHeight}
                       background={background}
                       valueColor={valueColor}
                       isSelected={isSelected}
@@ -351,17 +353,21 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Category chips — click to filter analytics by product type */}
-          {filter === "all" && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 20px" }}>
-              {(Object.keys(CATEGORIES) as Category[]).map((key) => (
-                <button key={key} onClick={() => setFilter(key)} style={{ background: CATEGORIES[key].chipBg, border: "none", borderRadius: 12, padding: "6px 8px", display: "flex", gap: 2, alignItems: "center", cursor: "pointer" }}>
-                  <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: "#fff", lineHeight: "20px" }}>{CATEGORIES[key].label}</span>
-                  <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff", lineHeight: "20px" }}>{CATEGORIES[key].total}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Category chips — click to filter analytics by product type. The clicked
+              chip stays in place and just gets brighter (full opacity); the others dim.
+              Clicking the already-active chip resets the filter back to "all". */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 20px" }}>
+            {(Object.keys(CATEGORIES) as Category[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => setFilter((cur) => (cur === key ? "all" : key))}
+                style={{ background: filter === key ? CATEGORIES[key].chipBgActive : CATEGORIES[key].chipBg, border: "none", borderRadius: 12, padding: "6px 8px", display: "flex", gap: 2, alignItems: "center", cursor: "pointer", opacity: filter === "all" || filter === key ? 1 : 0.4, transition: "opacity 0.2s ease, background 0.2s ease" }}
+              >
+                <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: "#fff", lineHeight: "20px" }}>{CATEGORIES[key].label}</span>
+                <span style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff", lineHeight: "20px" }}>{CATEGORIES[key].total}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Transactions list — filtered by selected product type / month */}
@@ -373,8 +379,8 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
 
           if (groups.length === 0) {
             return (
-              <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "20px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", padding: "4px 0 16px" }}>
+              <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "20px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
                   <img src={asset("/images/analytics/empty-payouts.png")} alt="" style={{ width: 100, height: 100, mixBlendMode: "lighten" }} />
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
                     <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, lineHeight: "24px", textAlign: "center" }}>Начислений нет</p>
@@ -386,7 +392,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
           }
 
           return (
-            <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "8px 0 20px" }}>
+            <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "8px 0 20px", flex: 1 }}>
               {groups.map((group, gi) => (
                 <div key={group.date}>
                   {/* Section date header */}

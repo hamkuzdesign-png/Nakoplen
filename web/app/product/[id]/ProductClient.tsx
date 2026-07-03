@@ -59,11 +59,11 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "МТС Счёт — доход каждый день",
     subtitle: "Начисляем проценты на ежедневный остаток. Снимайте и пополняйте без ограничений",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 15,5% годовых",     desc: "Начисляем проценты на ежедневный остаток на счёте" },
-      { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Проценты выплачиваем ежедневно на карту МТС Деньги" },
+      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 15,2% годовых",     desc: "Начисляем проценты на ежедневный остаток на счёте" },
+      { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Начисляем проценты каждый день, выплачиваем в конце месяца" },
       { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время без потери процентов" },
       { icon: asset("/images/chip-refill.png"),   title: "Пополнение в любое время",    desc: "Пополняйте счёт когда угодно, проценты начнут начисляться сразу" },
-      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
+      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Счёт застрахован АСВ на сумму до 1,4 млн рублей" },
     ],
   },
   a2: {
@@ -73,11 +73,11 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Кешбокс — карта заряжает счёт",
     subtitle: "Ежедневно зачисляем проценты. Для открытия счёта нужна карта МТС Деньги",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 15% годовых",        desc: "Начните с базовой ставки 9% и увеличивайте её каждый день" },
+      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14% годовых",        desc: "Начните с базовой ставки 9% и увеличивайте её каждый день" },
       { icon: asset("/images/chip-card.png"),     title: "Как начисляются проценты",     desc: "Покупайте по карте МТС Деньги каждый день на сумму от 350 ₽" },
-      { icon: asset("/images/chip-high-rate.png"),title: "Если не потратить 350 ₽",     desc: "Ставка станет 11%, но её снова можно увеличить" },
+      { icon: asset("/images/chip-high-rate.png"),title: "Если не потратить 350 ₽",     desc: "Ставка станет 9%, но её снова можно увеличить" },
       { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Выплачиваем доход каждый день на карту МТС Деньги" },
-      { icon: asset("/images/chip-pillow.png"),   title: "Максимальный доход",           desc: "Ставка 20% действует на любую сумму, которая лежит на счёте" },
+      { icon: asset("/images/chip-pillow.png"),   title: "Максимальный доход",           desc: "Ставка 14% действует на любую сумму, которая лежит на счёте" },
     ],
   },
   a3: {
@@ -87,11 +87,11 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "МТС Счёт — на минимальный остаток",
     subtitle: "Начисляем проценты на минимальный остаток за расчётный период",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 12,5% годовых",      desc: "Начисляем проценты на минимальный остаток за месяц" },
+      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 13% годовых",      desc: "Начисляем проценты на минимальный остаток за месяц" },
       { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Проценты выплачиваем ежемесячно на карту МТС Деньги" },
       { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время" },
       { icon: asset("/images/chip-refill.png"),   title: "Пополнение в любое время",    desc: "Пополняйте счёт без ограничений по сумме" },
-      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
+      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Счёт застрахован АСВ на сумму до 1,4 млн рублей" },
     ],
   },
   d1: {
@@ -100,7 +100,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Вклад Плюс — выбирайте валюту",
     subtitle: "Фиксированная доходность в рублях, юанях или дирхамах",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14,7% годовых",      desc: "Фиксированная ставка на весь срок вклада" },
+      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14% годовых",      desc: "Фиксированная ставка на весь срок вклада" },
       { icon: asset("/images/chip-stable.png"),   title: "Выбор валюты",                  desc: "Открывайте в рублях, китайских юанях или дирхамах ОАЭ" },
       { icon: asset("/images/chip-refill.png"),   title: "Пополнение вклада",            desc: "Пополняйте вклад в течение первых 30 дней" },
       { icon: asset("/images/chip-lock.png"),     title: "Частичное снятие",             desc: "Возможность частичного снятия без потери процентов" },
@@ -113,7 +113,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Вклад МТС Деньги",
     subtitle: "Фиксированная ставка в рублях. Без снятия и пополнения",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14,5% годовых",      desc: "Максимальная ставка на срок 90 дней" },
+      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 13,5% годовых",      desc: "Максимальная ставка на срок 90 дней" },
       { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Проценты выплачиваются в конце срока" },
       { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
       { icon: asset("/images/chip-stable.png"),   title: "Фиксированная ставка",         desc: "Ставка зафиксирована на весь срок и не меняется" },
@@ -125,7 +125,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Вклад МТС Максимум",
     subtitle: "Динамическая доходность — ставка растёт вместе с суммой",
     features: [
-      { icon: asset("/images/chip-percent.png"),   title: "Ставка до 14,5% годовых",     desc: "Ставка зависит от суммы и срока вклада" },
+      { icon: asset("/images/chip-percent.png"),   title: "Ставка до 14,2% годовых",     desc: "Ставка зависит от суммы и срока вклада" },
       { icon: asset("/images/chip-high-rate.png"), title: "Динамическая доходность",     desc: "Чем больше сумма на счёте, тем выше ставка" },
       { icon: asset("/images/chip-shield.png"),    title: "Застрахован государством",    desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
       { icon: asset("/images/chip-stable.png"),    title: "Рублёвый вклад",              desc: "Открывается только в рублях" },
@@ -137,7 +137,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "МТС Накопления",
     subtitle: "Рыночный инструмент с динамической доходностью и ежедневным начислением",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Доходность до 15,5% годовых", desc: "Динамическая доходность зависит от рынка" },
+      { icon: asset("/images/chip-percent.png"),  title: "Доходность до 15% годовых", desc: "Динамическая доходность зависит от рынка" },
       { icon: asset("/images/chip-coins.png"),    title: "Ежедневное начисление",        desc: "Проценты начисляются каждый день" },
       { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время" },
       { icon: asset("/images/chip-refill.png"),   title: "Пополнение счёта",             desc: "Пополняйте счёт без ограничений" },
@@ -149,7 +149,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Цифровые активы",
     subtitle: "Инвестируйте в активы новым способом с фиксированной доходностью",
     features: [
-      { icon: asset("/images/chip-percent.png"), title: "Доходность до 21% годовых",     desc: "Фиксированная доходность на срок владения" },
+      { icon: asset("/images/chip-percent.png"), title: "Доходность до 20% годовых",     desc: "Фиксированная доходность на срок владения" },
       { icon: asset("/images/chip-stable.png"),  title: "Новый вид активов",             desc: "ЦФА — цифровые финансовые активы на блокчейне" },
       { icon: asset("/images/chip-coins.png"),   title: "Выплата в конце срока",         desc: "Доход выплачивается по истечении срока" },
       { icon: asset("/images/chip-access.png"),  title: "Досрочное погашение",           desc: "Возможность погашения до истечения срока" },
@@ -162,7 +162,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Металлы",
     subtitle: "Сделки с золотом, серебром, платиной и палладием 24/7",
     features: [
-      { icon: asset("/images/chip-percent.png"), title: "Доходность до 20% годовых",     desc: "Доходность зависит от динамики цен на металлы" },
+      { icon: asset("/images/chip-percent.png"), title: "Рыночная доходность",     desc: "Доходность зависит от динамики цен на металлы" },
       { icon: asset("/images/chip-stable.png"),  title: "Выбор металла",                 desc: "Торгуйте золотом, серебром, платиной и палладием" },
       { icon: asset("/images/chip-lock.png"),    title: "Торговля 24/7",                 desc: "Совершайте сделки круглосуточно" },
       { icon: asset("/images/chip-coins.png"),   title: "Без хранения металла",          desc: "Обезличенный металлический счёт без физической выдачи" },

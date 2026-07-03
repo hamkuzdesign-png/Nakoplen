@@ -64,7 +64,7 @@ const TILES = [
   { label: "Кредитные карты", count: "1", amount: "532 144 ₽", subtitle: null,            src: asset("/images/home/tiles/credit-cards.png"), href: null,        state: "product" },
   { label: "МТС Флекс",       count: null, amount: null,       subtitle: "оплата частями", src: img.flexEmpty,                         href: null,        state: "cta" },
   { label: "Кредиты и займы", count: null, amount: null,       subtitle: "до 5 000 000 ₽", src: img.loansEmpty,                        href: null,        state: "cta" },
-  { label: "Накопления",      count: null, amount: null,       subtitle: "до 21%",         src: img.savingsEmptyBox,                   href: "/catalog?scenario=uprid", state: "gov" },
+  { label: "Накопления",      count: null, amount: null,       subtitle: "до 20%",         src: img.savingsEmptyBox,                   href: "/catalog?scenario=uprid", state: "gov" },
   { label: "Инвестиции",      count: null, amount: null,       subtitle: "комиссия от 0,04%", src: img.investEmpty,                    href: null,        state: "cta" },
 ];
 

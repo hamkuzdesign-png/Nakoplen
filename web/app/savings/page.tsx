@@ -11,7 +11,7 @@ const ACCOUNTS = [
     initials: "М",
     name: "МТС Счёт",
     balance: "52 000,32 ₽",
-    subtitle: "16% на ежедневный остаток",
+    subtitle: "15,2% на ежедневный остаток",
     income: "+10,23 ₽",
   },
   {
@@ -29,7 +29,7 @@ const ACCOUNTS = [
     initials: "В",
     name: "Вклад МТС Максимум",
     balance: "154 900 ₽",
-    subtitle: "18,3%, потратьте до 15.02, ещё 38 000 ₽",
+    subtitle: "14,2%, потратьте до 15.02, ещё 38 000 ₽",
     income: "+10,23 ₽",
   },
   {
@@ -124,7 +124,7 @@ export default function SavingsPage() {
           <div className="sv-add-icon">+</div>
           <div className="sv-product-meta">
             <p className="sv-product-name">Накопительный счёт «Кешбокс»</p>
-            <p className="sv-product-sub">до 15% с ежедневной выплатой</p>
+            <p className="sv-product-sub">до 14% с ежедневной выплатой</p>
           </div>
         </Link>
       </div>

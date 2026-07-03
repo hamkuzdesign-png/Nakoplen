@@ -47,8 +47,8 @@ const sections = [
   {
     label: 'СЧЕТА И БОНУСЫ',
     products: [
-      { id: 'daily',     name: 'Ежедневный остаток',    subtitle: 'Если часто снимаете деньги',              rate: 'До 16%',   illus: 'daily',       badge: 1 },
-      { id: 'cashbox',   name: 'Кешбокс',               subtitle: 'Ставка растёт каждый день',               rate: 'До 15%',   illus: 'cashbox',     badge: 1 },
+      { id: 'daily',     name: 'Ежедневный остаток',    subtitle: 'Если часто снимаете деньги',              rate: 'До 15,2%', illus: 'daily',       badge: 1 },
+      { id: 'cashbox',   name: 'Кешбокс',               subtitle: 'Ставка растёт каждый день',               rate: 'До 14%',   illus: 'cashbox',     badge: 1 },
       { id: 'mts-bonus', name: 'Бонусы МТС',            subtitle: 'Кешбэк за остаток на счёте',             rate: 'До 10%',   illus: 'daily',       badge: 0 },
       { id: 'mts-prem',  name: 'МТС Premium',           subtitle: 'Повышенный процент для Premium',         rate: 'До 18%',   illus: 'cashbox',     badge: 0 },
     ],
@@ -56,16 +56,16 @@ const sections = [
   {
     label: 'ВКЛАДЫ',
     products: [
-      { id: 'vklad',     name: 'Вклад Плюс',            subtitle: 'В рублях, юанях или дирхамах',            rate: 'До 14,7%', illus: 'vklad',       badge: 1 },
-      { id: 'mts-money', name: 'МТС Деньги',            subtitle: 'В рублях. Без снятия и пополнения',       rate: 'До 14,5%', illus: 'mts_money',   badge: 1 },
-      { id: 'vklad-max', name: 'Вклад Максимум',        subtitle: 'Максимальная ставка на срок',             rate: 'До 18,3%', illus: 'vklad',       badge: 0 },
+      { id: 'vklad',     name: 'Вклад Плюс',            subtitle: 'В рублях, юанях или дирхамах',            rate: 'До 14%',   illus: 'vklad',       badge: 1 },
+      { id: 'mts-money', name: 'МТС Деньги',            subtitle: 'В рублях. Без снятия и пополнения',       rate: 'До 13,5%', illus: 'mts_money',   badge: 1 },
+      { id: 'vklad-max', name: 'Вклад Максимум',        subtitle: 'Максимальная ставка на срок',             rate: 'До 14,2%', illus: 'vklad',       badge: 0 },
     ],
   },
   {
     label: 'РЫНОЧНЫЕ ИНСТРУМЕНТЫ',
     products: [
-      { id: 'savings',   name: 'МТС Накопления',        subtitle: 'Получайте кешбэк за деньги на счету',     rate: 'До 16,5%', illus: 'mts_savings', badge: 1 },
-      { id: 'digital',   name: 'Цифровые активы',       subtitle: 'Как облигации, только на блокчейне',      rate: 'до 21%',   illus: 'digital',     badge: 1 },
+      { id: 'savings',   name: 'МТС Накопления',        subtitle: 'Получайте кешбэк за деньги на счету',     rate: 'До 15%',   illus: 'mts_savings', badge: 1 },
+      { id: 'digital',   name: 'Цифровые активы',       subtitle: 'Как облигации, только на блокчейне',      rate: 'до 20%',   illus: 'digital',     badge: 1 },
       { id: 'gold',      name: 'Золото',                subtitle: 'Инвестиции в драгоценные металлы',        rate: 'Рыночная', illus: 'mts_savings', badge: 0 },
     ],
   },

@@ -86,12 +86,12 @@ function ChipBtn({ icon, label, onClick }: { icon: string; label: string; onClic
   );
 }
 
-/* product row — links to its owned-product detail card (balance, расчётный доход, mini-analytics) */
-function ProductRow({ href, icon, name, amount, subtitle, income }: {
-  href: string; icon: React.ReactNode; name: string; amount: string; subtitle: string; income?: string;
+/* product row — owned product, доступ к своему детальному экрану заблокирован */
+function ProductRow({ icon, name, amount, subtitle, income }: {
+  icon: React.ReactNode; name: string; amount: string; subtitle: string; income?: string;
 }) {
   return (
-    <Link href={href} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px", overflow: "hidden", textDecoration: "none", cursor: "pointer" }}>
+    <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px", overflow: "hidden" }}>
       {icon}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0, whiteSpace: "nowrap" }}>
         <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>{name}</p>
@@ -101,7 +101,7 @@ function ProductRow({ href, icon, name, amount, subtitle, income }: {
       {income && (
         <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#74df8b", lineHeight: "20px", whiteSpace: "nowrap", flexShrink: 0 }}>{income}</p>
       )}
-    </Link>
+    </div>
   );
 }
 
@@ -189,31 +189,29 @@ export default function MySavingsPage() {
         <div style={{ background: "#1d2023", borderRadius: 32, overflow: "hidden", flexShrink: 0, position: "relative", paddingTop: 12, zIndex: 1 }}>
           <SectionLabel label="Накопительные счета" />
           <ProductRow
-            href="/my-product/os1"
             icon={<DiscountIcon />}
             name="МТС Счёт"
             amount="467 100 ₽"
-            subtitle="15,5% на ежедневный остаток"
+            subtitle="15,2% на ежедневный остаток"
             income="+10 032 ₽"
           />
           <ProductRow
-            href="/my-product/os2"
             icon={<DiscountIcon />}
             name="МТС Счёт"
             amount="30 000,32 ₽"
-            subtitle="12,5% на минимальный остаток"
+            subtitle="13% на минимальный остаток"
             income="+641 ₽"
           />
-          {/* Add product row */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px" }}>
+          {/* Гостоффер — ведёт на детальный экран продукта в каталоге */}
+          <Link href="/product/a2" style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px 20px", textDecoration: "none", cursor: "pointer" }}>
             <div style={{ background: "rgba(98,108,119,0.25)", borderRadius: 16, width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Img src={A.add} size={24} />
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#fafafa", lineHeight: "18px" }}>Накопительный счёт «Кешбокс»</p>
-              <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>до 15% с ежедневной выплатой</p>
+              <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>до 14% с ежедневной выплатой</p>
             </div>
-          </div>
+          </Link>
           <div style={{ height: 4 }} />
         </div>
 
@@ -221,30 +219,28 @@ export default function MySavingsPage() {
         <div style={{ background: "#1d2023", borderRadius: 32, overflow: "hidden", flexShrink: 0, position: "relative", paddingTop: 12, zIndex: 1 }}>
           <SectionLabel label="Вклады" />
           <ProductRow
-            href="/my-product/dep1"
             icon={<MoneyIcon />}
             name="Вклад МТС Плюс"
             amount="0 ₽"
             subtitle="Пополните до 25 августа 2026"
           />
           <ProductRow
-            href="/my-product/dep2"
             icon={<MoneyIcon />}
             name="Вклад МТС Максимум"
             amount="154 900 ₽"
-            subtitle="18,3%, потратьте до 15.02 ещё 38 000 ₽"
+            subtitle="14,2%, потратьте до 15.02 ещё 38 000 ₽"
             income="+2 046 ₽"
           />
-          {/* Вклад «Плюс» — generic icon, no amount */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px" }}>
+          {/* Гостоффер — ведёт на детальный экран продукта в каталоге */}
+          <Link href="/product/d1" style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px 20px", textDecoration: "none", cursor: "pointer" }}>
             <div style={{ background: "rgba(98,108,119,0.25)", borderRadius: 16, width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Img src={A.add} size={24} />
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#fafafa", lineHeight: "18px" }}>Вклад «Плюс»</p>
-              <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>до 14,7% в рублях, юанях или дирхамах</p>
+              <p style={{ fontFamily: "'MTS Compact'", fontWeight: 400, fontSize: 14, color: "#969fa8", lineHeight: "18px" }}>до 14% в рублях, юанях или дирхамах</p>
             </div>
-          </div>
+          </Link>
           <div style={{ height: 4 }} />
         </div>
 

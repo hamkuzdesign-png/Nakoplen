@@ -866,7 +866,7 @@ html, body {
   flex-direction: column;
   align-items: flex-start;
   overflow: hidden;
-  padding: 20px 0;
+  padding: 8px 0 20px;    /* 8px + title-row's own 12px = 20px, matching the "Лучшие предложения" gap in .cat-lower */
   border-radius: 32px;
   flex-shrink: 0;
   width: 100%;
@@ -881,11 +881,12 @@ html, body {
   width: 100%;
 }
 .faq-title {
-  font-family: 'MTS Wide', sans-serif;
+  font-family: 'MTS Compact', sans-serif;
   font-weight: 500;
-  font-size: 20px;
-  line-height: 24px;
-  color: #fafafa;
+  font-size: 14px;
+  line-height: 20px;
+  text-transform: uppercase;
+  color: #969fa8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1023,10 +1024,12 @@ html, body {
    CATALOG PAGE  (/)
 ══════════════════════════════════════════════════════════════ */
 
-/* Carousel wrapper */
+/* Carousel wrapper — fixed banner height so both slides are guaranteed equal
+   regardless of their content (slide 2 no longer fills to the bottom). */
 .cat-carousel-wrap {
   position: relative;
   width: 100%;
+  height: 465px;
   overflow: hidden;
   z-index: 1;
 }
@@ -1035,6 +1038,7 @@ html, body {
   flex-direction: row;
   align-items: stretch;
   width: 100%;
+  height: 100%;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
@@ -1056,9 +1060,6 @@ html, body {
 .cat-hero-slide2-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/images/slide2-bg.png');
-  background-size: cover;
-  background-position: center top;
   border-radius: 0 0 32px 32px;
   overflow: hidden;
   z-index: 0;
@@ -1068,8 +1069,8 @@ html, body {
   justify-content: center;
 }
 .cat-slide2-img {
-  width: 181px;
-  height: 181px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
   pointer-events: none;
   position: relative;
@@ -1079,8 +1080,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 40px);
-  height: 52px;
+  width: auto;
+  padding: 0 32px;
+  height: 44px;
   background: #ffffff;
   border: none;
   border-radius: 16px;
@@ -1167,6 +1169,15 @@ html, body {
 .cat-hero-content-slide2 {
   gap: 16px;
   padding: 0 20px;
+  /* Top-align (not centered) and pull up so the button lands on the same level as
+     the second filter-chip row of slide 1, and the dots line up with its slider. */
+  justify-content: flex-start;
+  margin-top: -20px;
+}
+/* The 16px flex gap already spaces the dots from the button — cancel the extra
+   margin-top so they sit at the same level as slide 1's slider. */
+.cat-hero-content-slide2 .slide-dots {
+  margin-top: 0;
 }
 
 /* 3D metallic percentage row */

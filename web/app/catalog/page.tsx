@@ -18,33 +18,33 @@ type CardData = {
 
 /* ── DATA ── */
 const BEST: CardData[] = [
-  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/prod-ejednevny.png") },
-  { id: "b2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: asset("/images/prod-keshboks.png") },
+  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,2%", img: asset("/images/prod-ejednevny.png") },
+  { id: "b2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 14%", img: asset("/images/prod-keshboks.png") },
 ];
 
 const ACCOUNTS: CardData[] = [
-  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/prod-ejednevny.png") },
-  { id: "a2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 15%", img: asset("/images/prod-keshboks.png") },
-  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 12,5%", img: asset("/images/prod-minimalny.png") },
+  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,2%", img: asset("/images/prod-ejednevny.png") },
+  { id: "a2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 14%", img: asset("/images/prod-keshboks.png") },
+  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 13%", img: asset("/images/prod-minimalny.png") },
   { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
 ];
 
 const DEPOSITS: CardData[] = [
-  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14,7%", img: asset("/images/prod-vklad-plus.png") },
-  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 14,5%", img: asset("/images/prod-mts-dengi.png") },
-  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,5%", img: asset("/images/prod-mts-maksimum.png"), wide: true },
+  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14%", img: asset("/images/prod-vklad-plus.png") },
+  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 13,5%", img: asset("/images/prod-mts-dengi.png") },
+  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,2%", img: asset("/images/prod-mts-maksimum.png"), wide: true },
 ];
 
 /* УПРИД: уже доступные продукты, не требующие полной идентификации */
 const AVAILABLE_NOW: CardData[] = [
   { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
-  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: asset("/images/prod-mts-nakopleniya.png") },
+  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15%", img: asset("/images/prod-mts-nakopleniya.png") },
 ];
 
 const ALTERNATIVE: CardData[] = [
-  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15,5%", img: asset("/images/prod-mts-nakopleniya.png") },
-  { id: "m2", title: "Цифровые активы", desc: "Инвестируйте в активы новым способом", badge: "До 21%", img: asset("/images/prod-tsifrovye.png") },
-  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "До 20%", img: asset("/images/prod-metally.png"), wide: true },
+  { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15%", img: asset("/images/prod-mts-nakopleniya.png") },
+  { id: "m2", title: "Цифровые активы", desc: "Инвестируйте в активы новым способом", badge: "До 20%", img: asset("/images/prod-tsifrovye.png") },
+  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "", img: asset("/images/prod-metally.png"), wide: true },
 ];
 
 const FAQ_ITEMS = [
@@ -81,7 +81,7 @@ const CHIP_FILTER_MAP: Record<string, Set<string>> = {
   daily:    new Set(["b2", "a2", "m1"]),
   withdraw: new Set(["b1", "b2", "a1", "a2", "a3", "a4", "d1", "m3"]),
   refill:   new Set(["b1", "b2", "a1", "a2", "a3", "a4", "d1", "m1", "m2", "m3"]),
-  nomin:    new Set(["b1", "b2", "a1", "a2", "a3"]),
+  nomin:    new Set(["b1", "b2", "a1", "a2", "a3", "m2"]),
   insured:  new Set(["b1", "b2", "a1", "a2", "a3", "d1", "d2", "d3"]),
 };
 
@@ -100,6 +100,39 @@ function filterByChips(cards: CardData[], chips: Set<string>): CardData[] {
   return cards.filter(card =>
     [...chips].every(chip => CHIP_FILTER_MAP[chip]?.has(card.id))
   );
+}
+
+/* ── ДИНАМИЧЕСКАЯ 3D-СТАВКА В ШАПКЕ ── */
+/* 3D-рендеры конкретных чисел — под каждую ставку, которая встречается в карточках ниже. */
+const RATE_HERO_IMAGES: Record<string, string> = {
+  "13":   asset("/images/rates/rate-13.png"),
+  "13,5": asset("/images/rates/rate-13,5.png"),
+  "14":   asset("/images/rates/rate-14.png"),
+  "14,2": asset("/images/rates/rate-14,2.png"),
+  "15":   asset("/images/rates/rate-15.png"),
+  "15,2": asset("/images/rates/rate-15,2.png"),
+  "20":   asset("/images/rates/rate-20.png"),
+};
+const DEFAULT_HERO_RATE = "20";
+
+function parseRate(badge: string): number | null {
+  const match = badge.match(/[\d]+(?:,\d+)?/);
+  if (!match) return null;
+  return parseFloat(match[0].replace(",", "."));
+}
+
+/* Максимальная ставка среди видимых карточек — определяет, какую 3D-картинку показать сверху */
+function maxVisibleRateKey(cards: CardData[]): string {
+  let bestValue = -Infinity;
+  let bestKey = DEFAULT_HERO_RATE;
+  for (const card of cards) {
+    const value = parseRate(card.badge);
+    if (value !== null && value > bestValue) {
+      bestValue = value;
+      bestKey = card.badge.match(/[\d]+(?:,\d+)?/)![0];
+    }
+  }
+  return bestValue === -Infinity ? DEFAULT_HERO_RATE : bestKey;
 }
 
 /* ── SKELETON ── */
@@ -318,6 +351,16 @@ function PageInner() {
   /* УПРИД: «Доступно прямо сейчас» — только для сценария УПРИД, в дефолтном состоянии */
   const visibleAvailableNow = isUprid && chips.size === 0 && period === "all" ? AVAILABLE_NOW : [];
 
+  /* 3D-ставка в шапке = максимальная ставка среди карточек, показанных ниже прямо сейчас */
+  const heroRateKey = maxVisibleRateKey([
+    ...visibleBest,
+    ...visibleAvailableNow,
+    ...visibleAccounts,
+    ...visibleDeposits,
+    ...visibleAlt,
+  ]);
+  const heroRateImg = RATE_HERO_IMAGES[heroRateKey];
+
   return (
     <div className="screen page-enter" id="top">
       <div className="top-gradient" />
@@ -356,7 +399,7 @@ function PageInner() {
               <div className="cat-hero-content">
                 <div className="cat-pct-row">
                   <span className="cat-pct-prefix">до</span>
-                  <img src={asset("/images/hero-21.png")} alt="21%" className="cat-pct-img" />
+                  <img src={heroRateImg} alt={`${heroRateKey}%`} className="cat-pct-img" />
                 </div>
                 <div className="cat-period-tabs">
                   {PERIOD_TABS.map(tab => (

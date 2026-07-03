@@ -175,7 +175,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.productMeta}>
                 <Text style={styles.productName}>Накопительный счёт «Кэшбокс»</Text>
-                <Text style={styles.productSubtitle}>до 15% с ежедневной выплатой</Text>
+                <Text style={styles.productSubtitle}>до 14% с ежедневной выплатой</Text>
               </View>
             </AnimatedPressable>
           </Animated.View>
