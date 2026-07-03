@@ -27,8 +27,8 @@ const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?:
   /* webm only — no mp4 fallback. The mp4 has an opaque black background (mp4/H.264
      can't carry alpha), and browsers that can't decode alpha-webm can't be fixed with
      mix-blend-mode either (Safari doesn't apply blend modes to <video>). So instead of
-     risking that black square, canPlayVp9Alpha() below gates the video entirely — browsers
-     that fail the check get the plain (genuinely transparent) PNG, never the video. */
+     risking that black square, detectAlphaVideoSupport() below gates the video entirely —
+     browsers that fail the check get the plain (genuinely transparent) PNG, never the video. */
   { id: "house",     label: "Недвижимость", illustration: asset("/images/goal/illustration-house.png"),     video: asset("/images/goal/illustration-house-video.webm"),   icon: asset("/images/goal/icon-house.png") },
   { id: "education", label: "Образование",  illustration: asset("/images/goal/illustration-education.png"), icon: asset("/images/goal/icon-education.png") },
   { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/illustration-travel.png"),    video: asset("/images/goal/illustration-travel-video.webm"),  icon: asset("/images/goal/icon-travel.png") },
@@ -57,11 +57,53 @@ function formatAmount(n: number) {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-/** True only for browsers that report they can decode alpha-channel VP9 webm
- *  (Chrome, Firefox, Edge, Android...). Safari reports "" for video/webm
- *  entirely, so it correctly falls through to the plain PNG illustration. */
-function canPlayVp9Alpha() {
-  return document.createElement("video").canPlayType('video/webm; codecs="vp9"') !== "";
+/** 4x4 single-frame VP9 webm, every pixel red at ~50% alpha — used to test
+ *  whether this browser actually *composites* webm alpha, not just whether
+ *  it claims to decode VP9 at all. Recent Safari/iOS added baseline VP9
+ *  hardware decode and reports canPlayType('video/webm; codecs="vp9"') as
+ *  playable, but still doesn't composite the alpha track — it renders fully
+ *  opaque black. That false positive is exactly what caused the black-square
+ *  regression, so the real fix is decoding a known-transparent pixel and
+ *  checking it, not trusting canPlayType. */
+const ALPHA_TEST_WEBM =
+  "data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAIVEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHWTbuMU6uEElTDZ1OsggEnTbuMU6uEHFO7a1OsggH/7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxMYXZmNjEuNy4xMDBXQYxMYXZmNjEuNy4xMDBEiYhARAAAAAAAABZUrmvMrgEAAAAAAABD14EBc8WICPr3Fp6iGVqcgQAitZyDdW5kiIEAhoVWX1ZQOYOBASPjg4QCYloA4JSwgQS6gQSagQJTwIEBVbCEVbmBARJUw2dAf3Nzn2PAgGfImUWjh0VOQ09ERVJEh4xMYXZmNjEuNy4xMDBzc9pjwItjxYgI+vcWnqIZWmfIpUWjh0VOQ09ERVJEh5hMYXZjNjEuMTkuMTAwIGxpYnZweC12cDlnyKFFo4hEVVJBVElPTkSHkzAwOjAwOjAwLjA0MDAwMDAwMAAfQ7Z1zueBAKDJoaeBAAAAgkmDQgAAMAA2ADgkHBiMAAAgAAAVL/+IwKb//BH////LgAB1oZ2mm+6BAaWWgkmDQgAAMAA2ADgkHBiMAAAgIABIQBxTu2uRu4+zgQC3iveBAfGCAazwgQM=";
+
+let alphaSupportPromise: Promise<boolean> | null = null;
+
+/** Runs the real decode-and-read-a-pixel test above exactly once per page
+ *  load (cached), regardless of how many times the effect that calls this
+ *  re-runs or how many category videos mount. */
+function detectAlphaVideoSupport(): Promise<boolean> {
+  if (alphaSupportPromise) return alphaSupportPromise;
+  alphaSupportPromise = (async () => {
+    try {
+      const v = document.createElement("video");
+      v.muted = true;
+      v.playsInline = true;
+      v.src = ALPHA_TEST_WEBM;
+      await new Promise<void>((resolve, reject) => {
+        v.addEventListener("loadeddata", () => resolve(), { once: true });
+        v.addEventListener("error", () => reject(v.error), { once: true });
+        setTimeout(() => reject(new Error("timeout")), 2000);
+      });
+      // Some browsers only decode a frame once playback has actually
+      // started — drawImage on a merely-loaded, never-played video reads back blank.
+      await v.play().catch(() => {});
+      await new Promise((r) => setTimeout(r, 150));
+      v.pause();
+      const canvas = document.createElement("canvas");
+      canvas.width = 4;
+      canvas.height = 4;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return false;
+      ctx.drawImage(v, 0, 0, 4, 4);
+      const alpha = ctx.getImageData(1, 1, 1, 1).data[3];
+      return alpha < 250;
+    } catch {
+      return false;
+    }
+  })();
+  return alphaSupportPromise;
 }
 
 function buildCalendarWeeks(year: number, month: number) {
@@ -306,10 +348,17 @@ export default function NewGoalPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const dragStartX = useRef<number | null>(null);
   /* Starts false (matches the server-rendered PNG, avoiding a hydration
-     mismatch) and flips true on mount if the browser passes canPlayVp9Alpha(). */
+     mismatch) and flips true once detectAlphaVideoSupport() confirms this
+     browser actually composites webm alpha, not just that it can play VP9. */
   const [canShowVideo, setCanShowVideo] = useState(false);
   useEffect(() => {
-    setCanShowVideo(canPlayVp9Alpha());
+    let cancelled = false;
+    detectAlphaVideoSupport().then((ok) => {
+      if (!cancelled) setCanShowVideo(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* Measures the rendered pixel width of the typed digits (via a hidden
