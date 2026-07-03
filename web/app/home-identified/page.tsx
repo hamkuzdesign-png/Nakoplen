@@ -80,7 +80,7 @@ export default function HomeIdentifiedPage() {
   const [promoClosed, setPromoClosed] = useState(false);
 
   return (
-    <div className="page-enter phone-width" style={{ height: "calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
+    <div className="page-enter phone-width" style={{ height: "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
 
       {/* ─── scrollable area ─── */}
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 86, background: "#000000" }}>

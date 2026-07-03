@@ -1,7 +1,12 @@
 /**
- * Lightweight client-only analytics for the prototype — no backend, so
- * events are appended to localStorage and read back by /stats. Capped at
- * MAX_EVENTS so a long test session can't grow it unbounded.
+ * Lightweight analytics for the prototype. Every event is appended to this
+ * browser's localStorage (instant, always works) and — when
+ * NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY are set at build
+ * time — also sent to a shared Supabase table, so /stats can show every
+ * participant's session, not just this device's. See web/supabase/schema.sql
+ * for the table + RLS policies, and README-analytics.md for setup.
+ * Without those env vars (e.g. plain local dev) it silently falls back to
+ * localStorage-only, exactly like before.
  */
 
 export type Scenario = "anon" | "uprid" | "identified" | "has_products" | null;
@@ -45,6 +50,14 @@ const PID_KEY = "nakoplen_pid";
 const SCENARIO_KEY = "nakoplen_scenario";
 const MAX_EVENTS = 6000;
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const REMOTE_TABLE = "events";
+
+export function isRemoteConfigured(): boolean {
+  return !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
 function readEvents(): AnalyticsEvent[] {
   if (typeof window === "undefined") return [];
   try {
@@ -63,14 +76,85 @@ function writeEvents(events: AnalyticsEvent[]) {
   }
 }
 
+/** Flat row shape matching web/supabase/schema.sql's `events` table. */
+function toRow(e: AnalyticsEvent) {
+  return {
+    pid: e.pid,
+    scenario: e.scenario,
+    ts: e.timestamp,
+    type: e.type,
+    path: e.type === "click" || e.type === "screen_time" || e.type === "scroll_depth" ? e.path : null,
+    duration_ms: e.type === "screen_time" ? e.durationMs : null,
+    x_norm: e.type === "click" ? e.xNorm : null,
+    y_page: e.type === "click" ? e.yPage : null,
+    rage_click: e.type === "click" ? e.rageClick : null,
+    dead_click: e.type === "click" ? e.deadClick : null,
+    max_depth_percent: e.type === "scroll_depth" ? e.maxDepthPercent : null,
+  };
+}
+
+function fromRow(r: Record<string, unknown>): AnalyticsEvent | null {
+  const base = { pid: r.pid as string, scenario: (r.scenario as Scenario) ?? null, timestamp: r.ts as number };
+  switch (r.type) {
+    case "screen_time":
+      return { ...base, type: "screen_time", path: r.path as string, durationMs: r.duration_ms as number };
+    case "click":
+      return {
+        ...base,
+        type: "click",
+        path: r.path as string,
+        xNorm: r.x_norm as number,
+        yPage: r.y_page as number,
+        rageClick: !!r.rage_click,
+        deadClick: !!r.dead_click,
+      };
+    case "scroll_depth":
+      return { ...base, type: "scroll_depth", path: r.path as string, maxDepthPercent: r.max_depth_percent as number };
+    default:
+      return null;
+  }
+}
+
+/** Fire-and-forget insert into the shared Supabase table. `keepalive` lets
+ *  this survive the page-hide/beforeunload flush that fires on tab close. */
+function pushRemote(event: AnalyticsEvent) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  fetch(`${SUPABASE_URL}/rest/v1/${REMOTE_TABLE}`, {
+    method: "POST",
+    keepalive: true,
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(toRow(event)),
+  }).catch(() => {
+    // best-effort telemetry — dropped events don't block the UI
+  });
+}
+
 export function logEvent(event: AnalyticsEvent) {
   const events = readEvents();
   events.push(event);
   writeEvents(events);
+  pushRemote(event);
 }
 
-export function getEvents(): AnalyticsEvent[] {
-  return readEvents();
+/** Every participant's events when Supabase is configured, falling back to
+ *  this browser's localStorage otherwise (or if the fetch fails). */
+export async function fetchAllEvents(): Promise<AnalyticsEvent[]> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return readEvents();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${REMOTE_TABLE}?select=*&order=ts.asc`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    });
+    if (!res.ok) throw new Error(`Supabase fetch failed: ${res.status}`);
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return rows.map(fromRow).filter((e): e is AnalyticsEvent => e !== null);
+  } catch {
+    return readEvents();
+  }
 }
 
 export function clearEvents() {

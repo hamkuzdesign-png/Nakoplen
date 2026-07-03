@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   clearEvents,
-  getEvents,
+  fetchAllEvents,
+  isRemoteConfigured,
   startNewParticipant,
   type AnalyticsEvent,
   type ClickEvent,
@@ -364,7 +365,7 @@ export default function StatsPage() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   useEffect(() => {
-    setEvents(getEvents());
+    fetchAllEvents().then(setEvents);
   }, []);
 
   const allEvents = events ?? [];
@@ -383,8 +384,10 @@ export default function StatsPage() {
 
   function handleClear() {
     clearEvents();
-    setEvents([]);
     setSelectedPath(null);
+    // Only wipes this browser's local cache — the shared Supabase table (if
+    // configured) is untouched, so re-fetch instead of zeroing the view.
+    fetchAllEvents().then(setEvents);
   }
 
   function handleNewParticipant() {
@@ -407,7 +410,10 @@ export default function StatsPage() {
       <Link href="/" style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.purple, textDecoration: "none" }}>← Сценарии</Link>
       <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24, color: S.textPrimary, margin: "8px 0 4px" }}>Аналитика прототипа</p>
       <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textSecondary, margin: "0 0 20px" }}>
-        Время на экране, клики, тепловая карта. Копится в localStorage этого браузера.
+        Время на экране, клики, тепловая карта.{" "}
+        {isRemoteConfigured()
+          ? "Общие данные всех участников, заходивших по ссылке."
+          : "Копится в localStorage этого браузера (Supabase не настроен — см. web/README-analytics.md)."}
       </p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -415,7 +421,7 @@ export default function StatsPage() {
           Экспорт JSON
         </button>
         <button onClick={handleClear} style={{ flex: 1, height: 40, background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 12, color: S.red, fontFamily: "'MTS Compact', sans-serif", fontSize: 13, cursor: "pointer" }}>
-          Очистить всё
+          {isRemoteConfigured() ? "Очистить кеш устройства" : "Очистить всё"}
         </button>
       </div>
       <button
