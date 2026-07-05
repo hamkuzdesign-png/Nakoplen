@@ -49,7 +49,7 @@ function SkeletonScreen({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0 40px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0 env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", gap: 12 }}>
         {/* Chart card skeleton */}
         <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", paddingBottom: 20 }}>
           {/* Title skeleton */}
@@ -283,7 +283,9 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
   const headerTotal = selectedBar
     ? `${selectedBar.current ? "~" : ""}${formatAmount(amountForBar(selectedBar, filter))} ₽`
     : filter === "all" ? LIFETIME_TOTAL : CATEGORIES[filter].total;
-  const headerSubtitle = selectedBar ? `Доход за ${selectedBar.label}` : "Доход за всё время";
+  const headerSubtitle = selectedBar
+    ? (selectedBar.current ? `Прогноз на ${selectedBar.label}` : `Доход за ${selectedBar.label}`)
+    : "Доход за всё время";
 
   return (
     <div style={{ height: "100svh", background: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -297,7 +299,7 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
       </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 0 40px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 0 env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", gap: 12 }}>
         {/* Chart card */}
         <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", paddingBottom: 20 }}>
           {/* Total */}
@@ -378,13 +380,19 @@ function AnalyticsScreen({ onBack }: { onBack: () => void }) {
             .filter((group) => group.items.length > 0);
 
           if (groups.length === 0) {
+            const isForecast = selectedBar?.current ?? false;
+            const emptyTitle = isForecast ? "Прогнозная сумма" : "Начислений нет";
+            const emptySubtitle = isForecast
+              ? "Так будет, если остаток в накоплениях останется неизменным"
+              : "Покажем их здесь, как только они появятся";
+            const emptyImg = isForecast ? "/images/analytics/empty-payouts-forecast.png" : "/images/analytics/empty-payouts.png";
             return (
               <div style={{ background: S.bgPrimary, borderRadius: 32, overflow: "hidden", padding: "20px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-                  <img src={asset("/images/analytics/empty-payouts.png")} alt="" style={{ width: 100, height: 100, mixBlendMode: "lighten" }} />
+                  <img src={asset(emptyImg)} alt="" style={{ width: 100, height: 100, mixBlendMode: "lighten" }} />
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-                    <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, lineHeight: "24px", textAlign: "center" }}>Начислений нет</p>
-                    <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 400, fontSize: 14, color: S.textSecondary, lineHeight: "20px", textAlign: "center" }}>Покажем их здесь, как только они появятся</p>
+                    <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 20, color: S.textPrimary, lineHeight: "24px", textAlign: "center" }}>{emptyTitle}</p>
+                    <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 400, fontSize: 14, color: S.textSecondary, lineHeight: "20px", textAlign: "center" }}>{emptySubtitle}</p>
                   </div>
                 </div>
               </div>
