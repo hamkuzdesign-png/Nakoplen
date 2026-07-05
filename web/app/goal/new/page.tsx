@@ -106,12 +106,15 @@ function detectAlphaVideoSupport(): Promise<boolean> {
   return alphaSupportPromise;
 }
 
+/* Always pads to a fixed 6 rows (the most any month can need) so the
+   calendar sheet's height — and therefore its position, since it's
+   pinned to the bottom of the screen — never jumps as you flip months. */
 function buildCalendarWeeks(year: number, month: number) {
   const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
   const totalDays = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [...Array(firstWeekday).fill(null)];
   for (let d = 1; d <= totalDays; d++) cells.push(d);
-  while (cells.length % 7 !== 0) cells.push(null);
+  while (cells.length < 42) cells.push(null);
   const weeks: (number | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
@@ -123,6 +126,16 @@ function PencilIcon() {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path d="M14.6029 4.11708C15.4177 3.41227 15.8251 3.05987 16.4788 3.00747C17.1326 2.95506 17.4972 3.18019 18.2264 3.63044C18.6421 3.88712 19.0658 4.19852 19.4335 4.56604C19.8011 4.93356 20.1126 5.35721 20.3694 5.77279C20.8198 6.50177 21.045 6.86626 20.9925 7.5198C20.9401 8.17335 20.5876 8.58061 19.8826 9.39512C19.5232 9.81034 19.1122 10.2801 18.6706 10.7759L13.2217 5.32872C13.7177 4.8872 14.1876 4.47638 14.6029 4.11708Z" fill="#FAFAFA" fillOpacity="0.72" />
       <path d="M11.7375 6.67467C11.1232 7.24337 10.5106 7.82686 9.94648 8.39079C8.44386 9.89294 6.80245 11.7392 5.67146 13.0458C5.36675 13.3978 5.12787 13.6738 4.95063 13.9264C4.62569 14.3329 4.3956 15.0901 4.04235 16.2527L3.51463 17.9895C3.03526 19.5671 2.79558 20.356 3.2199 20.7802C3.64422 21.2044 4.43329 20.9647 6.01145 20.4855L7.74876 19.958C8.98041 19.584 9.75726 19.3481 10.1441 18.9914C10.377 18.8205 10.633 18.599 10.9511 18.3238C12.2582 17.1932 14.1049 15.5523 15.6076 14.0501C16.1717 13.4862 16.7553 12.8738 17.3242 12.2596L11.7375 6.67467Z" fill="#FAFAFA" fillOpacity="0.72" />
+    </svg>
+  );
+}
+/* Clear button shown next to the title input once it has text — matches the
+   Figma "enter goal name" state, which only shows a trailing icon once
+   there's something typed to clear. */
+function ClearIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M6 6L18 18M18 6L6 18" stroke="#FAFAFA" strokeOpacity="0.72" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -334,6 +347,11 @@ function SuccessCard({ onTopUp, onGoToSavings }: { onTopUp: () => void; onGoToSa
 export default function NewGoalPage() {
   const router = useRouter();
   const [categoryIdx, setCategoryIdx] = useState(0); // "Недвижимость" — дефолт из макета Figma
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [titleWidth, setTitleWidth] = useState(0);
+  const titleMeasureRef = useRef<HTMLSpanElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [amountRaw, setAmountRaw] = useState("");
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [selectedSources, setSelectedSources] = useState<Set<SourceId>>(new Set());
@@ -369,9 +387,23 @@ export default function NewGoalPage() {
     if (amountMeasureRef.current) setAmountWidth(amountMeasureRef.current.offsetWidth);
   }, [amountRaw]);
 
+  /* Same measuring trick for the goal-title input — sized to whatever's
+     actually on screen (typed text, or the placeholder while empty) so it
+     never clips and never reserves more width than it needs. */
+  useEffect(() => {
+    if (titleMeasureRef.current) setTitleWidth(titleMeasureRef.current.offsetWidth);
+  }, [titleDraft, editingTitle]);
+
+  /* Autofocus the moment editing starts, and commit (fall back to the
+     category label if left blank) the moment it stops. */
+  useEffect(() => {
+    if (editingTitle) titleInputRef.current?.focus();
+  }, [editingTitle]);
+
   const category = CATEGORIES[categoryIdx];
   const prevCategory = CATEGORIES[(categoryIdx + CATEGORIES.length - 1) % CATEGORIES.length];
   const nextCategory = CATEGORIES[(categoryIdx + 1) % CATEGORIES.length];
+  const displayTitle = titleDraft.trim() || category.label;
   const showVideo = !!category.video && canShowVideo;
   const amountNum = Number(amountRaw.replace(/\s/g, "")) || 0;
   /* Amount + savings source are required; target date stays optional
@@ -457,10 +489,46 @@ export default function NewGoalPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", paddingTop: 12 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24, color: S.textPrimary }}>{category.label}</p>
-            <button onClick={() => setCategoryIdx((i) => (i + 1) % CATEGORIES.length)} style={{ background: "none", border: "none", borderRadius: 12, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Сменить категорию цели">
-              <PencilIcon />
-            </button>
+            {editingTitle ? (
+              <>
+                <input
+                  ref={titleInputRef}
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onBlur={() => setEditingTitle(false)}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                  placeholder="Введите цель"
+                  style={{
+                    background: "transparent", border: "none", outline: "none", padding: 0,
+                    fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24,
+                    color: S.textPrimary, textAlign: "center",
+                    width: Math.max(titleWidth, 24),
+                  }}
+                />
+                {/* Hidden twin of whatever's currently shown (typed text, or the
+                    placeholder while empty), used only to measure its rendered width */}
+                <span ref={titleMeasureRef} aria-hidden style={{ position: "absolute", visibility: "hidden", whiteSpace: "pre", fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24 }}>
+                  {titleDraft || "Введите цель"}
+                </span>
+                {titleDraft && (
+                  <button
+                    onMouseDown={(e) => e.preventDefault() /* keep focus in the input instead of blurring to the button */}
+                    onClick={() => { setTitleDraft(""); titleInputRef.current?.focus(); }}
+                    style={{ background: "none", border: "none", borderRadius: 12, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    aria-label="Очистить название цели"
+                  >
+                    <ClearIcon />
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <p onClick={() => setEditingTitle(true)} style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 24, color: S.textPrimary, cursor: "pointer" }}>{displayTitle}</p>
+                <button onClick={() => setEditingTitle(true)} style={{ background: "none", border: "none", borderRadius: 12, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Редактировать название цели">
+                  <PencilIcon />
+                </button>
+              </>
+            )}
           </div>
           <button onClick={openCalendar} style={{ display: "flex", gap: 6, alignItems: "center", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, padding: "8px 12px", cursor: "pointer" }}>
             <CalendarIcon />
