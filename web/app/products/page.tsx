@@ -92,9 +92,9 @@ function ProductsPageInner() {
   const catalogHref = `/catalog${CATALOG_QUERY[from] ?? ""}`;
 
   return (
-    <div className="page-enter phone-width" style={{ height: "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
+    <div className="page-enter phone-width" style={{ height: "calc(100dvh - env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
 
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 86 }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 68 }}>
 
         {/* HERO — «Кредитная карта МТС Деньги» */}
         <div style={{ position: "relative", overflow: "hidden", backgroundImage: "linear-gradient(160deg, rgb(60,65,168) 0%, rgb(90,80,220) 55%, rgb(140,120,255) 100%)", padding: "24px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
@@ -149,7 +149,7 @@ function ProductsPageInner() {
       </div>
 
       {/* TAB BAR — zIndex above the grid panel (which sits at zIndex:1 for its rounded-corner overlap with the hero) so it isn't painted underneath it */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 2, background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 2, background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0, paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div style={{ display: "flex", alignItems: "center", height: 52, padding: "0 4px" }}>
           {[
             { src: img.tabHome, label: "Главная",  active: false, href: homeHref as string | null },
@@ -169,9 +169,6 @@ function ProductsPageInner() {
               ? <Link key={tab.label} href={tab.href} style={tabStyle}>{content}</Link>
               : <div key={tab.label} style={tabStyle}>{content}</div>;
           })}
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 16px" }}>
-          <div style={{ width: 134, height: 5, borderRadius: 999, background: "rgba(255,255,255,0.12)" }} />
         </div>
       </div>
 
