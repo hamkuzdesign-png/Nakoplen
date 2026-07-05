@@ -75,10 +75,10 @@ export default function HomePage() {
   const [promoClosed, setPromoClosed] = useState(false);
 
   return (
-    <div className="page-enter phone-width" style={{ height: "calc(100dvh - env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
+    <div className="page-enter phone-width" style={{ height: "100dvh", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
 
       {/* ─── scrollable area ─── */}
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 68, background: "#000000" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: "#000000" }}>
 
         {/* NAVBAR */}
         <div style={{ background: S.bgLower }}>
@@ -332,7 +332,7 @@ export default function HomePage() {
       </div>{/* end scroll */}
 
       {/* TAB BAR */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0, paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div style={{ background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", height: 52, padding: "0 4px" }}>
           {[
             { src: img.tabHome, label: "Главная",  active: true,  href: null as string | null },
