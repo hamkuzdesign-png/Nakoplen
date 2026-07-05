@@ -213,16 +213,24 @@ function Section({ label, star, icon, cards, first, onCardClick }: {
   );
 }
 
-/* Carousel pagination — static indicator, no auto-advance. Switching
-   between slides is swipe-only (see onCarouselPointerDown/Up below). */
-function SlideDots() {
+/* Carousel pagination. The active dot's fill animates as a 15s countdown to
+   the next auto-advance — frozen mid-fill while "paused", reset to empty
+   once "disabled" (a real control has been used, see PageInner). */
+function SlideDots({ progressKey, state }: { progressKey: number; state: "running" | "paused" | "disabled" }) {
   return (
     <div className="slide-dots" style={{ paddingTop: 0 }}>
       <div className="dot dot-sm" />
       <div className="dot dot-md" />
       <div className="dot-active">
         <div className="dot-active-bg" />
-        <div className="dot-active-fill" style={{ width: "100%" }} />
+        {state === "disabled" ? (
+          <div className="dot-active-fill" style={{ width: 0 }} />
+        ) : (
+          <div
+            key={progressKey}
+            className={`dot-active-fill dot-active-fill-animated${state === "paused" ? " dot-active-fill-paused" : ""}`}
+          />
+        )}
       </div>
       <div className="dot dot-md" />
       <div className="dot dot-sm" />
@@ -253,6 +261,29 @@ function PageInner() {
   const skeletonTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragStartX = useRef<number | null>(null);
 
+  /* While any filter is non-default (a period other than "all", or any chip
+     active), the banner carousel stops entirely — no more auto-advance, no
+     more swipe. Returning every filter back to default re-activates it.
+     Just scrolling the chips row to look at them first doesn't count; that
+     only pauses the countdown for as long as the scroll is happening. */
+  const controlsUsed = period !== "all" || activeChips.size > 0;
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [progressKey, setProgressKey] = useState(0);
+  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressState: "running" | "paused" | "disabled" =
+    controlsUsed ? "disabled" : isScrolling ? "paused" : "running";
+  const paused = controlsUsed || isScrolling;
+
+  /* Remaining time on the 15s countdown, preserved across pauses so a pause
+     freezes it in place instead of restarting it. Only reset to a full 15s
+     when a new cycle genuinely begins (auto-advance fires, the user swipes
+     manually, or the filters return to default after being disabled) — see
+     the effect and onCarouselPointerUp below. */
+  const remainingMsRef = useRef(15000);
+  const segmentStartRef = useRef(0);
+  const freshCycleRef = useRef(false);
+  const prevControlsUsedRef = useRef(controlsUsed);
+
   const triggerSkeleton = () => {
     if (skeletonTimer.current) clearTimeout(skeletonTimer.current);
     setShowSkeleton(true);
@@ -261,18 +292,65 @@ function PageInner() {
 
   /* Manual swipe — ignored anywhere inside the full-width filters rectangle
      (period tabs + chips row, incl. the gap between them), so scrolling
-     filters never also flips the hero banner underneath. */
+     filters never also flips the hero banner underneath. Disabled for good
+     once a control has been used. */
   const onCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (controlsUsed) return;
     if ((e.target as HTMLElement).closest(".cat-filters-block")) return;
     dragStartX.current = e.clientX;
   };
   const onCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-    if (dragStartX.current == null) return;
+    if (controlsUsed || dragStartX.current == null) return;
     const dx = e.clientX - dragStartX.current;
     dragStartX.current = null;
     if (Math.abs(dx) < 40) return;
+    freshCycleRef.current = true;
+    remainingMsRef.current = 15000;
+    setProgressKey(k => k + 1);
     setSlide(s => (dx < 0 ? Math.min(s + 1, 1) : Math.max(s - 1, 0)));
   };
+
+  /* Auto-advance the hero banner after a 15s countdown. Pausing (scroll or a
+     used control) freezes the remaining time via the cleanup below instead
+     of resetting it — only a genuine new cycle (this timer firing, or a
+     manual swipe) resets the countdown back to a full 15s. */
+  useEffect(() => {
+    if (!controlsUsed && prevControlsUsedRef.current) {
+      // Filters just returned to default after being disabled — start clean.
+      // (No live timer was running while disabled, so there's no pending
+      // cleanup to suppress here — unlike the timer-fire/swipe resets below.)
+      remainingMsRef.current = 15000;
+      setProgressKey(k => k + 1);
+    }
+    prevControlsUsedRef.current = controlsUsed;
+
+    if (paused) return;
+    segmentStartRef.current = Date.now();
+    const timer = setTimeout(() => {
+      freshCycleRef.current = true;
+      remainingMsRef.current = 15000;
+      setProgressKey(k => k + 1);
+      setSlide(s => (s + 1) % 2);
+    }, remainingMsRef.current);
+    return () => {
+      clearTimeout(timer);
+      if (freshCycleRef.current) {
+        freshCycleRef.current = false;
+      } else {
+        remainingMsRef.current = Math.max(0, remainingMsRef.current - (Date.now() - segmentStartRef.current));
+      }
+    };
+  }, [paused, slide]);
+
+  /* Scrolling the chips row (without pressing anything yet) just pauses the
+     countdown animation for as long as the scroll keeps moving. */
+  const onChipsScroll = () => {
+    if (controlsUsed) return;
+    setIsScrolling(true);
+    if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
+    scrollEndTimer.current = setTimeout(() => setIsScrolling(false), 150);
+  };
+  useEffect(() => () => { if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current); }, []);
 
   /* Period selection — deactivate chips hidden for new period */
   const selectPeriod = (key: Period) => {
@@ -387,7 +465,7 @@ function PageInner() {
                       </button>
                     ))}
                   </div>
-                  <div className="cat-chips-scroll">
+                  <div className="cat-chips-scroll" onScroll={onChipsScroll}>
                     {visibleChips.map(chip => (
                       <button
                         key={chip.key}
@@ -402,7 +480,7 @@ function PageInner() {
                     ))}
                   </div>
                 </div>
-                <SlideDots />
+                <SlideDots progressKey={progressKey} state={progressState} />
               </div>
             </div>
           </div>
@@ -417,8 +495,8 @@ function PageInner() {
               </div>
               <div className="cat-hero-content cat-hero-content-slide2">
                 <img src={asset("/images/prod-keshboks-dial.png")} alt="Кешбокс" className="cat-slide2-img" />
-                <button className="cat-slide2-btn">Открыть счёт</button>
-                <SlideDots />
+                <button className="cat-slide2-btn" onClick={() => router.push(`/product/a2${scenarioQuery}`)}>Открыть счёт</button>
+                <SlideDots progressKey={progressKey} state={progressState} />
               </div>
             </div>
           </div>

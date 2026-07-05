@@ -507,6 +507,12 @@ html, body {
 }
 .dot-active-bg { position: absolute; inset: 0; background: rgba(127, 140, 153, 0.35); border-radius: 32px; }
 .dot-active-fill { position: absolute; left: 0; top: 0; height: 6px; width: 9px; background: #fff; border-radius: 32px; }
+.dot-active-fill-animated { width: 0%; animation: dot-active-countdown 15s linear forwards; }
+.dot-active-fill-paused { animation-play-state: paused; }
+@keyframes dot-active-countdown {
+  from { width: 0%; }
+  to { width: 100%; }
+}
 
 /* ── LOWER PANEL ── */
 .lower-panel {
