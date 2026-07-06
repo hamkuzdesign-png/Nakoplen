@@ -174,6 +174,11 @@ function screenshotForPath(path: string): string {
   return asset(`/images/screenshots/${slug}.png`);
 }
 
+/** One-off cutoff (2026-07-06 10:00 MSK) separating the dev/test noise
+ *  accumulated before that point from real participant sessions — computed
+ *  at render time only, nothing is tagged or removed in Supabase. */
+const OLD_PARTICIPANT_CUTOFF_MS = 1783321200000;
+
 type ParticipantStats = {
   pid: string;
   scenarios: Scenario[];
@@ -361,28 +366,48 @@ function ParticipantDrilldown({ allEvents, participantStats, labels }: { allEven
   const drillLabel = drillPid ? labels.get(drillPid) ?? drillPid : "";
 
   if (drill.level === "list") {
+    const newParticipants = participantStats.filter((p) => p.lastSeenTs >= OLD_PARTICIPANT_CUTOFF_MS);
+    const oldParticipants = participantStats.filter((p) => p.lastSeenTs < OLD_PARTICIPANT_CUTOFF_MS);
+    const renderRow = (p: ParticipantStats) => (
+      <button
+        key={p.pid}
+        onClick={() => setDrill({ level: "scenarios", pid: p.pid })}
+        style={{ textAlign: "left", background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer" }}
+      >
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{labels.get(p.pid) ?? p.pid} →</p>
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary, marginBottom: 4 }}>
+          {p.scenarios.map(scenarioLabel).join(", ")}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+          <StatChip label={formatRelativeTime(p.lastSeenTs)} color={S.purple} />
+          <StatChip label={`сессия ${formatDuration(p.sessionMs)}`} />
+          <StatChip label={`${p.screens} экранов`} />
+          <StatChip label={`${p.clicks} кликов`} />
+          {p.deadClicks > 0 && <StatChip label={`${p.deadClicks} мёртвых`} color={S.orange} />}
+          {p.rageClicks > 0 && <StatChip label={`${p.rageClicks} rage-click`} color={S.red} />}
+        </div>
+      </button>
+    );
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {participantStats.map((p) => (
-          <button
-            key={p.pid}
-            onClick={() => setDrill({ level: "scenarios", pid: p.pid })}
-            style={{ textAlign: "left", background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer" }}
-          >
-            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 4 }}>{labels.get(p.pid) ?? p.pid} →</p>
-            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary, marginBottom: 4 }}>
-              {p.scenarios.map(scenarioLabel).join(", ")}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, textTransform: "uppercase" }}>
+            Новые участники ({newParticipants.length})
+          </p>
+          {newParticipants.length === 0 ? (
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 13, color: S.textSecondary }}>Пока никого</p>
+          ) : (
+            newParticipants.map(renderRow)
+          )}
+        </div>
+        {oldParticipants.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, textTransform: "uppercase" }}>
+              Старые участники, до 10:00 ({oldParticipants.length})
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
-              <StatChip label={formatRelativeTime(p.lastSeenTs)} color={S.purple} />
-              <StatChip label={`сессия ${formatDuration(p.sessionMs)}`} />
-              <StatChip label={`${p.screens} экранов`} />
-              <StatChip label={`${p.clicks} кликов`} />
-              {p.deadClicks > 0 && <StatChip label={`${p.deadClicks} мёртвых`} color={S.orange} />}
-              {p.rageClicks > 0 && <StatChip label={`${p.rageClicks} rage-click`} color={S.red} />}
-            </div>
-          </button>
-        ))}
+            {oldParticipants.map(renderRow)}
+          </div>
+        )}
       </div>
     );
   }
