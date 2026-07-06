@@ -19,10 +19,8 @@ const S = {
 
 type CategoryId = "car" | "house" | "education" | "travel" | "piggy" | "other";
 
-/* "Недвижимость" — первая в списке и дефолтная выбранная категория. Автомобиль
-   поставлен последним, чтобы при обёртке по кругу (prev = последний элемент)
-   соседями домика по каруселе остались именно "Автомобиль" слева и
-   "Образование" справа — как на исходном экране в Figma. */
+/* "Недвижимость" — первая в списке и дефолтная выбранная категория.
+   "Другое" стоит последним по запросу. */
 const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?: string; icon: string }[] = [
   /* webm only — no mp4 fallback. The mp4 has an opaque black background (mp4/H.264
      can't carry alpha), and browsers that can't decode alpha-webm can't be fixed with
@@ -33,8 +31,8 @@ const CATEGORIES: { id: CategoryId; label: string; illustration: string; video?:
   { id: "education", label: "Образование",  illustration: asset("/images/goal/illustration-education.png"), icon: asset("/images/goal/icon-education.png") },
   { id: "travel",    label: "Путешествия",  illustration: asset("/images/goal/illustration-travel.png"),    video: asset("/images/goal/illustration-travel-video.webm"),  icon: asset("/images/goal/icon-travel.png") },
   { id: "piggy",     label: "Копилка",      illustration: asset("/images/goal/illustration-piggy.png"),     video: asset("/images/goal/illustration-piggy-video.webm"),   icon: asset("/images/goal/icon-piggy.png") },
-  { id: "other",     label: "Другое",       illustration: asset("/images/goal/illustration-other.png"),     icon: asset("/images/goal/icon-other.png") },
   { id: "car",       label: "Автомобиль",   illustration: asset("/images/goal/illustration-car.png"),       video: asset("/images/goal/illustration-car-video.webm"),     icon: asset("/images/goal/icon-car.png") },
+  { id: "other",     label: "Другое",       illustration: asset("/images/goal/illustration-other.png"),     icon: asset("/images/goal/icon-other.png") },
 ];
 
 type SourceId = "mts-schet" | "vklad-plus" | "cfa";
@@ -142,8 +140,7 @@ function ClearIcon() {
 function CalendarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <rect x="2.5" y="3.5" width="11" height="10" rx="2" stroke="#FAFAFA" strokeWidth="1.3" />
-      <path d="M2.5 6.5H13.5M5.5 2V4M10.5 2V4" stroke="#FAFAFA" strokeWidth="1.3" strokeLinecap="round" />
+      <path fillRule="evenodd" clipRule="evenodd" d="M10.0039 1.75049V2.10144C9.81105 2.08549 9.60623 2.07025 9.38771 2.05399C8.93563 2.02034 8.46928 1.99995 8.00293 1.99995C7.53658 1.99995 7.07023 2.02034 6.61815 2.05399C6.40035 2.0702 6.19615 2.08539 6.00385 2.10128V1.75485C6.00385 1.34064 5.66806 1.00485 5.25385 1.00485C4.83963 1.00485 4.50385 1.34064 4.50385 1.75485V2.32083C3.97832 2.4638 3.553 2.69784 3.12691 3.12393C2.25166 3.99918 2.18676 4.87117 2.05697 6.61517C2.02332 7.06725 2.00293 7.5336 2.00293 7.99995C2.00293 8.4663 2.02332 8.93265 2.05697 9.38474C2.18676 11.1287 2.25166 12.0007 3.12691 12.876C4.00216 13.7512 4.87415 13.8161 6.61814 13.9459C7.07023 13.9796 7.53658 14 8.00293 14C8.46928 14 8.93563 13.9796 9.38771 13.9459C11.1317 13.8161 12.0037 13.7512 12.879 12.876C13.7542 12.0007 13.8191 11.1287 13.9489 9.38474C13.9825 8.93265 14.0029 8.4663 14.0029 7.99995C14.0029 7.5336 13.9825 7.06725 13.9489 6.61517C13.8191 4.87117 13.7542 3.99918 12.879 3.12393C12.4534 2.69835 12.0286 2.46436 11.5039 2.32134V1.75049C11.5039 1.33627 11.1681 1.00049 10.7539 1.00049C10.3397 1.00049 10.0039 1.33627 10.0039 1.75049ZM4.25 5.9709C3.83579 5.9709 3.5 6.30669 3.5 6.7209C3.5 7.13512 3.83579 7.4709 4.25 7.4709L11.75 7.5C12.1642 7.5 12.5 7.16421 12.5 6.75C12.5 6.33579 12.1642 6 11.75 6L4.25 5.9709ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9C9.44772 9 9 9.44771 9 10C9 10.5523 9.44772 11 10 11Z" fill="#FAFAFA" />
     </svg>
   );
 }
@@ -221,6 +218,7 @@ function SourceIcon({ kind }: { kind: "discount" | "money" | "image" }) {
 function SourceSheet({ draft, onToggle, onConfirm, onClose }: {
   draft: Set<SourceId>; onToggle: (id: SourceId) => void; onConfirm: () => void; onClose: () => void;
 }) {
+  const router = useRouter();
   return (
     <>
       <div className="goal-sheet-overlay" onClick={onClose} />
@@ -248,7 +246,7 @@ function SourceSheet({ draft, onToggle, onConfirm, onClose }: {
             <button onClick={onConfirm} style={{ width: "100%", background: S.purple, border: "none", borderRadius: 16, height: 52, cursor: "pointer" }}>
               <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: "#fff" }}>Выбрать</span>
             </button>
-            <button onClick={onClose} style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, height: 52, cursor: "pointer" }}>
+            <button onClick={() => router.push("/catalog")} style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 16, height: 52, cursor: "pointer" }}>
               <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.6px", textTransform: "uppercase", color: S.textPrimary }}>Открыть новый</span>
             </button>
           </div>
@@ -348,7 +346,9 @@ export default function NewGoalPage() {
   const router = useRouter();
   const [categoryIdx, setCategoryIdx] = useState(0); // "Недвижимость" — дефолт из макета Figma
   const [editingTitle, setEditingTitle] = useState(false);
-  const [titleDraft, setTitleDraft] = useState("");
+  /* Keyed by category id — typing a name while one illustration is showing
+     must not bleed into the name shown for the other illustrations. */
+  const [titleDrafts, setTitleDrafts] = useState<Partial<Record<CategoryId, string>>>({});
   const [titleWidth, setTitleWidth] = useState(0);
   const titleMeasureRef = useRef<HTMLSpanElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -392,7 +392,7 @@ export default function NewGoalPage() {
      never clips and never reserves more width than it needs. */
   useEffect(() => {
     if (titleMeasureRef.current) setTitleWidth(titleMeasureRef.current.offsetWidth);
-  }, [titleDraft, editingTitle]);
+  }, [titleDrafts, editingTitle]);
 
   /* Autofocus the moment editing starts, and commit (fall back to the
      category label if left blank) the moment it stops. */
@@ -403,6 +403,7 @@ export default function NewGoalPage() {
   const category = CATEGORIES[categoryIdx];
   const prevCategory = CATEGORIES[(categoryIdx + CATEGORIES.length - 1) % CATEGORIES.length];
   const nextCategory = CATEGORIES[(categoryIdx + 1) % CATEGORIES.length];
+  const titleDraft = titleDrafts[category.id] ?? "";
   const displayTitle = titleDraft.trim() || category.label;
   const showVideo = !!category.video && canShowVideo;
   const amountNum = Number(amountRaw.replace(/\s/g, "")) || 0;
@@ -494,7 +495,7 @@ export default function NewGoalPage() {
                 <input
                   ref={titleInputRef}
                   value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onChange={(e) => setTitleDrafts((prev) => ({ ...prev, [category.id]: e.target.value }))}
                   onBlur={() => setEditingTitle(false)}
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   placeholder="Введите цель"
@@ -513,7 +514,7 @@ export default function NewGoalPage() {
                 {titleDraft && (
                   <button
                     onMouseDown={(e) => e.preventDefault() /* keep focus in the input instead of blurring to the button */}
-                    onClick={() => { setTitleDraft(""); titleInputRef.current?.focus(); }}
+                    onClick={() => { setTitleDrafts((prev) => ({ ...prev, [category.id]: "" })); titleInputRef.current?.focus(); }}
                     style={{ background: "none", border: "none", borderRadius: 12, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }}
                     aria-label="Очистить название цели"
                   >
@@ -530,8 +531,10 @@ export default function NewGoalPage() {
               </>
             )}
           </div>
-          <button onClick={openCalendar} style={{ display: "flex", gap: 6, alignItems: "center", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, padding: "8px 12px", cursor: "pointer" }}>
-            <CalendarIcon />
+          <button onClick={openCalendar} style={{ display: "flex", gap: 6, alignItems: "center", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, padding: "8px 12px 8px 8px", cursor: "pointer" }}>
+            <span style={{ display: "flex", opacity: 0.72 }}>
+              <CalendarIcon />
+            </span>
             <span style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 700, fontSize: 10, letterSpacing: "0.5px", textTransform: "uppercase", color: S.textPrimary }}>{datePillLabel}</span>
           </button>
         </div>

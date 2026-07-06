@@ -127,7 +127,7 @@ function ProductsPageInner() {
               <Tile title="Ипотека" icon={img.mortgage} />
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-              <Tile title="Накопить" subtitle="до 16.5%" icon={img.save} href={catalogHref} />
+              <Tile title="Накопить" subtitle="до 20%" icon={img.save} href={catalogHref} />
               <Tile title="Инвестиции" icon={img.invest} tall />
             </div>
           </div>

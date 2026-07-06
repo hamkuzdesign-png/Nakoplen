@@ -25,14 +25,13 @@ const img = {
   close:      asset("/images/home/box3.svg"),
   transfer:   asset("/images/home/box4.svg"),
   qr:         asset("/images/home/box5.svg"),
-  mirStar:    asset("/images/home/box6.svg"),
   warn:       asset("/images/home/box7.svg"),
   heart:      asset("/images/home/box8.svg"),
   chevron:    asset("/images/home/box9.svg"),
   drop:       asset("/images/home/box10.svg"),
   card:       asset("/images/home/box12.svg"),
   notif:      asset("/images/home/notification.svg"),
-  mir:        asset("/images/home/mir-logo.svg"),
+  cardSkinMir: asset("/images/home/card-skin-mir.png"),
   promo:      asset("/images/home/promo-card.png"),
   arrowUp:    asset("/images/home/box13.svg"),
   card3d1:    asset("/images/home/card3d-1.png"),
@@ -81,10 +80,10 @@ export default function HomeUpridPage() {
   const [promoClosed, setPromoClosed] = useState(false);
 
   return (
-    <div className="page-enter phone-width" style={{ height: "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))", paddingTop: "env(safe-area-inset-top)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
+    <div className="page-enter phone-width" style={{ height: "100dvh", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
 
       {/* ─── scrollable area ─── */}
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 86, background: "#000000" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", background: "#000000" }}>
 
         <div style={{ background: S.bgLower }}>
 
@@ -158,14 +157,7 @@ export default function HomeUpridPage() {
           {/* МИР */}
           <div style={{ flex: 1, background: S.bgPrimary, borderRadius: 20, padding: "8px 12px 8px 8px", display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
             <div style={{ position: "relative", width: 52, height: 36, flexShrink: 0 }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: 10, overflow: "hidden", background: "#8f8fff" }}>
-                <div style={{ position: "absolute", bottom: 0, right: 0, width: 30, height: 18 }}>
-                  <img alt="" style={{ position: "absolute", inset: "31.25% 20% 35.42% 7.5%", width: "100%", height: "100%" }} src={img.mir} />
-                </div>
-              </div>
-              <div style={{ position: "absolute", top: -8, left: 4, width: 16, height: 16 }}>
-                <img alt="" style={{ width: "100%", height: "100%" }} src={img.mirStar} />
-              </div>
+              <img alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} src={img.cardSkinMir} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: S.textPrimary, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>16 106 ₽</p>
@@ -189,8 +181,10 @@ export default function HomeUpridPage() {
 
         {/* КЕШБЭК В МАРТЕ + МНЕ ОДОБРЕНО stacked cards */}
         <div>
-          {/* Кешбэк — gradient card with rounded top */}
-          <div style={{ borderRadius: "32px 32px 0 0", overflow: "hidden", backgroundImage: "linear-gradient(133.74deg, rgb(177,153,255) 0%, rgb(152,136,255) 40.41%, rgb(149,142,255) 58.31%, rgb(152,216,255) 100%)" }}>
+          {/* Кешбэк — gradient card with rounded top; extra bottom padding tucks
+              under the "Мне одобрено" card below so its square corners peek out
+              from behind that card's rounded ones */}
+          <div style={{ borderRadius: "32px 32px 0 0", backgroundImage: "linear-gradient(133.74deg, rgb(177,153,255) 0%, rgb(152,136,255) 40.41%, rgb(149,142,255) 58.31%, rgb(152,216,255) 100%)", paddingBottom: 28 }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
               <Icon src={img.heart} size={24} />
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
@@ -202,8 +196,9 @@ export default function HomeUpridPage() {
               <Icon src={img.chevron} size={24} />
             </div>
           </div>
-          {/* Мне одобрено — dark card, slightly overlapping */}
-          <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", overflow: "hidden", marginTop: -1 }}>
+          {/* Мне одобрено — dark card, overlapping further up to tuck over the cashback card;
+              extra bottom padding tucks under "Мои деньги" below the same way */}
+          <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", marginTop: -29, paddingBottom: 28 }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
               <Icon src={img.drop} size={24} />
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -214,8 +209,9 @@ export default function HomeUpridPage() {
           </div>
         </div>
 
-        {/* МОИ ДЕНЬГИ header — top of the rounded "vertical scroll" sheet */}
-        <div style={{ background: S.bgLower, borderRadius: "32px 32px 0 0", overflow: "hidden" }}>
+        {/* МОИ ДЕНЬГИ header — top of the rounded "vertical scroll" sheet; overlapping
+            further up to tuck over the "Мне одобрено" card */}
+        <div style={{ background: S.bgLower, borderRadius: "32px 32px 0 0", overflow: "hidden", marginTop: -29 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
             <Icon src={img.card} size={24} />
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -357,7 +353,7 @@ export default function HomeUpridPage() {
       </div>{/* end scroll */}
 
       {/* TAB BAR */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+      <div style={{ background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", height: 52, padding: "0 4px" }}>
           {[
             { src: img.tabHome, label: "Главная",  active: true,  href: null as string | null },
@@ -377,9 +373,6 @@ export default function HomeUpridPage() {
               ? <Link key={tab.label} href={tab.href} style={tabStyle}>{content}</Link>
               : <div key={tab.label} style={tabStyle}>{content}</div>;
           })}
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 16px" }}>
-          <div style={{ width: 134, height: 5, borderRadius: 999, background: "rgba(255,255,255,0.12)" }} />
         </div>
       </div>
 

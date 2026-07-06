@@ -176,8 +176,10 @@ export default function HomePage() {
 
         {/* КЕШБЭК В МАРТЕ + МНЕ ОДОБРЕНО stacked cards */}
         <div>
-          {/* Кешбэк — gradient card with rounded top */}
-          <div style={{ borderRadius: "32px 32px 0 0", overflow: "hidden", backgroundImage: "linear-gradient(133.74deg, rgb(177,153,255) 0%, rgb(152,136,255) 40.41%, rgb(149,142,255) 58.31%, rgb(152,216,255) 100%)" }}>
+          {/* Кешбэк — gradient card with rounded top; extra bottom padding tucks
+              under the "Мне одобрено" card below so its square corners peek out
+              from behind that card's rounded ones */}
+          <div style={{ borderRadius: "32px 32px 0 0", backgroundImage: "linear-gradient(133.74deg, rgb(177,153,255) 0%, rgb(152,136,255) 40.41%, rgb(149,142,255) 58.31%, rgb(152,216,255) 100%)", paddingBottom: 28 }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
               <Icon src={img.heart} size={24} />
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
@@ -189,8 +191,9 @@ export default function HomePage() {
               <Icon src={img.chevron} size={24} />
             </div>
           </div>
-          {/* Мне одобрено — dark card, slightly overlapping */}
-          <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", overflow: "hidden", marginTop: -1 }}>
+          {/* Мне одобрено — dark card, overlapping further up to tuck over the cashback card;
+              extra bottom padding tucks under "Мои деньги" below the same way */}
+          <div style={{ background: S.bgPrimary, borderRadius: "32px 32px 0 0", marginTop: -29, paddingBottom: 28 }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
               <Icon src={img.drop} size={24} />
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -201,8 +204,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* МОИ ДЕНЬГИ header — top of the rounded "vertical scroll" sheet */}
-        <div style={{ background: S.bgLower, borderRadius: "32px 32px 0 0", overflow: "hidden" }}>
+        {/* МОИ ДЕНЬГИ header — top of the rounded "vertical scroll" sheet; overlapping
+            further up to tuck over the "Мне одобрено" card */}
+        <div style={{ background: S.bgLower, borderRadius: "32px 32px 0 0", overflow: "hidden", marginTop: -29 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 52, padding: "10px 20px" }}>
             <Icon src={img.card} size={24} />
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
