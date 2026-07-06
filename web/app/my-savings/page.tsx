@@ -180,7 +180,7 @@ export default function MySavingsPage() {
             <div style={{ display: "flex", gap: 4, width: "100%" }}>
               <ChipBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
               <ChipBtn icon={A.goal}      label="Цель" onClick={() => router.push("/goal/new")} />
-              <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push("/catalog")} />
+              <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push("/catalog?scenario=owned")} />
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function MySavingsPage() {
             icon={<DiscountIcon />}
             name="МТС Счёт"
             amount="467 100 ₽"
-            subtitle="15,2% на ежедневный остаток"
+            subtitle="11,7% на ежедневный остаток"
             income="+10 032 ₽"
           />
           <ProductRow
@@ -247,7 +247,7 @@ export default function MySavingsPage() {
       {/* ── CTA ── */}
       <div style={{ padding: "0 20px", flexShrink: 0, position: "relative", zIndex: 1 }}>
         <Link
-          href="/catalog"
+          href="/catalog?scenario=owned"
           style={{
             display: "flex",
             textDecoration: "none",

@@ -14,9 +14,9 @@ export type OwnedProduct = {
 export const OWNED: Record<string, OwnedProduct> = {
   os1: {
     name: "МТС Счёт",
-    subtitle: "15,5% на ежедневный остаток",
+    subtitle: "11,7% на ежедневный остаток",
     amount: 467100,
-    rate: 15.5,
+    rate: 11.7,
     icon: "discount",
     lifetime: "+10 032 ₽",
     history: [

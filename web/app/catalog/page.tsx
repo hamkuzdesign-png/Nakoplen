@@ -111,6 +111,7 @@ const RATE_HERO_IMAGES: Record<string, string> = {
   "14,2": asset("/images/rates/rate-14,2.png"),
   "15":   asset("/images/rates/rate-15.png"),
   "15,2": asset("/images/rates/rate-15,2.png"),
+  "11,7": asset("/images/rates/rate-11,7.png"),
   "20":   asset("/images/rates/rate-20.png"),
 };
 const DEFAULT_HERO_RATE = "20";
@@ -252,6 +253,7 @@ function PageInner() {
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
   const isUprid = scenario === "uprid" || scenario === "anon";
+  const isOwned = scenario === "owned";
   const scenarioQuery = scenario ? `?scenario=${scenario}` : "";
   const [period, setPeriod] = useState<Period>("all");
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
@@ -399,11 +401,22 @@ function PageInner() {
   /* УПРИД: «Доступно прямо сейчас» — только для сценария УПРИД, в дефолтном состоянии */
   const visibleAvailableNow = isUprid && chips.size === 0 && period === "all" ? AVAILABLE_NOW : [];
 
-  /* 3D-ставка в шапке = максимальная ставка среди карточек, показанных ниже прямо сейчас */
+  /* Карточки "МТС Счёт" (ежедневный остаток, b1/a1) в сценарии "созданные продукты"
+     показывают уже открытую пользователю ставку 11,7% вместо маркетинговых 15,2%. */
+  const applyOwnedRate = (cards: CardData[]) =>
+    isOwned
+      ? cards.map(c => (c.id === "b1" || c.id === "a1") ? { ...c, badge: "До 11,7%" } : c)
+      : cards;
+  const displayBest     = applyOwnedRate(visibleBest);
+  const displayAccounts = applyOwnedRate(visibleAccounts);
+
+  /* 3D-ставка в шапке = максимальная ставка среди карточек, показанных ниже прямо сейчас.
+     Считаем по тем же (уже подменённым для "созданных продуктов") ставкам, что и в
+     карточках, иначе при фильтрации шапка и карточки могут разойтись. */
   const heroRateKey = maxVisibleRateKey([
-    ...visibleBest,
+    ...displayBest,
     ...visibleAvailableNow,
-    ...visibleAccounts,
+    ...displayAccounts,
     ...visibleDeposits,
     ...visibleAlt,
   ]);
@@ -508,9 +521,9 @@ function PageInner() {
       <div className="lower-panel cat-lower">
         {/* Always rendered — controls panel height, invisible under skeleton */}
         <div style={{ visibility: showSkeleton ? "hidden" : "visible", width: "100%" }}>
-          <Section label="Лучшие предложения" star cards={visibleBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Лучшие предложения" star cards={displayBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Доступно прямо сейчас" icon={asset("/images/icon-device-reservation.svg")} cards={visibleAvailableNow} first={visibleBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Накопительные счета" cards={visibleAccounts} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Накопительные счета" cards={displayAccounts} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Вклады" cards={visibleDeposits} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Альтернативные продукты" cards={visibleAlt} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
         </div>

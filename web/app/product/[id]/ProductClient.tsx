@@ -275,7 +275,18 @@ export default function ProductClient({ id }: { id: string }) {
     );
   }
 
-  const product = PRODUCTS[id];
+  const rawProduct = PRODUCTS[id];
+  /* Сценарий "созданные продукты": у пользователя уже открыт этот счёт по
+     ставке 11,7%, а не по маркетинговым 15,2% — подменяем только текст ставки. */
+  const product =
+    rawProduct && scenario === "owned" && (id === "a1" || id === "b1")
+      ? {
+          ...rawProduct,
+          features: rawProduct.features.map(f =>
+            f.title === "Ставка до 15,2% годовых" ? { ...f, title: "Ставка до 11,7% годовых" } : f
+          ),
+        }
+      : rawProduct;
 
   if (!product) {
     return (
