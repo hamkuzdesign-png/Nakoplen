@@ -141,16 +141,32 @@ export function logEvent(event: AnalyticsEvent) {
   pushRemote(event);
 }
 
+/** PostgREST caps any single response at 1000 rows by default. With ordering
+ *  by ts.asc, an unpaginated request silently returns only the *oldest* page
+ *  forever, hiding every event after it — this is what made every real
+ *  participant after the first ~1000 rows invisible on /stats. Page through
+ *  with Range headers until a short page tells us we've reached the end. */
+const REMOTE_PAGE_SIZE = 1000;
+
 /** Every participant's events when Supabase is configured, falling back to
  *  this browser's localStorage otherwise (or if the fetch fails). */
 export async function fetchAllEvents(): Promise<AnalyticsEvent[]> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return readEvents();
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${REMOTE_TABLE}?select=*&order=ts.asc`, {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-    });
-    if (!res.ok) throw new Error(`Supabase fetch failed: ${res.status}`);
-    const rows = (await res.json()) as Record<string, unknown>[];
+    const rows: Record<string, unknown>[] = [];
+    for (let offset = 0; ; offset += REMOTE_PAGE_SIZE) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${REMOTE_TABLE}?select=*&order=ts.asc`, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          Range: `${offset}-${offset + REMOTE_PAGE_SIZE - 1}`,
+        },
+      });
+      if (!res.ok && res.status !== 206) throw new Error(`Supabase fetch failed: ${res.status}`);
+      const page = (await res.json()) as Record<string, unknown>[];
+      rows.push(...page);
+      if (page.length < REMOTE_PAGE_SIZE) break;
+    }
     return rows.map(fromRow).filter((e): e is AnalyticsEvent => e !== null);
   } catch {
     return readEvents();

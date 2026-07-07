@@ -105,6 +105,17 @@ function formatRelativeTime(ts: number): string {
   return `${diffDay} дн назад`;
 }
 
+/** Screen-time events logged before the visibility-tracking fix in
+ *  AnalyticsTracker.tsx could count hours of a backgrounded/locked tab as
+ *  active dwell time. That bad data is already stored in Supabase and can't
+ *  be un-recorded, so clamp any single screen visit at read time — nothing
+ *  in this prototype plausibly holds someone's attention that long. */
+const MAX_PLAUSIBLE_SCREEN_MS = 10 * 60 * 1000;
+
+function plausibleDurationMs(ms: number): number {
+  return Math.min(ms, MAX_PLAUSIBLE_SCREEN_MS);
+}
+
 type ScreenStats = {
   path: string;
   visits: number;
@@ -130,7 +141,7 @@ function aggregateByScreen(events: AnalyticsEvent[]): ScreenStats[] {
     if (e.type === "screen_time") {
       const s = get(e.path);
       s.visits += 1;
-      s.totalMs += e.durationMs;
+      s.totalMs += plausibleDurationMs(e.durationMs);
     } else if (e.type === "click") {
       const s = get(e.path);
       s.clicks += 1;
@@ -174,10 +185,28 @@ function screenshotForPath(path: string): string {
   return asset(`/images/screenshots/${slug}.png`);
 }
 
-/** One-off cutoff (2026-07-06 10:00 MSK) separating the dev/test noise
- *  accumulated before that point from real participant sessions — computed
- *  at render time only, nothing is tagged or removed in Supabase. */
-const OLD_PARTICIPANT_CUTOFF_MS = 1783321200000;
+/** Midnight (local time) of the day containing `ts`, as an epoch key for
+ *  grouping participants by calendar day. */
+function startOfDay(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+const MONTHS_GENITIVE = [
+  "января", "февраля", "марта", "апреля", "мая", "июня",
+  "июля", "августа", "сентября", "октября", "ноября", "декабря",
+];
+
+/** "Сегодня" / "Вчера" / "3 июля" — the day-group header for a participant
+ *  list entry, based on their last-seen timestamp. */
+function dayLabel(ts: number): string {
+  const diffDays = Math.round((startOfDay(Date.now()) - startOfDay(ts)) / 86400000);
+  if (diffDays === 0) return "Сегодня";
+  if (diffDays === 1) return "Вчера";
+  const d = new Date(ts);
+  return `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
+}
 
 type ParticipantStats = {
   pid: string;
@@ -194,23 +223,24 @@ type ParticipantStats = {
  *  sees whoever just walked through the prototype at the top — not whoever
  *  happened to spend the longest session. */
 function aggregateByParticipant(events: AnalyticsEvent[]): ParticipantStats[] {
-  const byPid = new Map<string, { s: ParticipantStats; scenarioSet: Set<Scenario> }>();
-  function get(pid: string) {
+  const byPid = new Map<string, { s: ParticipantStats; scenarioSet: Set<Scenario>; firstSeenTs: number }>();
+  function get(pid: string, ts: number) {
     let entry = byPid.get(pid);
     if (!entry) {
-      entry = { s: { pid, scenarios: [], sessionMs: 0, screens: 0, clicks: 0, rageClicks: 0, deadClicks: 0, lastSeenTs: 0 }, scenarioSet: new Set() };
+      entry = { s: { pid, scenarios: [], sessionMs: 0, screens: 0, clicks: 0, rageClicks: 0, deadClicks: 0, lastSeenTs: 0 }, scenarioSet: new Set(), firstSeenTs: ts };
       byPid.set(pid, entry);
     }
+    entry.firstSeenTs = Math.min(entry.firstSeenTs, ts);
     return entry;
   }
   for (const e of events) {
     // Events logged before pid tracking existed have no pid — group them
     // under one label instead of a blank row.
-    const { s, scenarioSet } = get(e.pid || "без ID (старые данные)");
+    const { s, scenarioSet } = get(e.pid || "без ID (старые данные)", e.timestamp);
     scenarioSet.add(e.scenario);
     s.lastSeenTs = Math.max(s.lastSeenTs, e.timestamp);
     if (e.type === "screen_time") {
-      s.sessionMs += e.durationMs;
+      s.sessionMs += plausibleDurationMs(e.durationMs);
       s.screens += 1;
     } else if (e.type === "click") {
       s.clicks += 1;
@@ -219,7 +249,14 @@ function aggregateByParticipant(events: AnalyticsEvent[]): ParticipantStats[] {
     }
   }
   return [...byPid.values()]
-    .map(({ s, scenarioSet }) => ({ ...s, scenarios: [...scenarioSet] }))
+    .map(({ s, scenarioSet, firstSeenTs }) => ({
+      ...s,
+      scenarios: [...scenarioSet],
+      // Screen-time totals can't exceed how long the participant's whole
+      // visit actually spanned — a hard backstop against pre-fix events
+      // where clamping each one individually still leaves an impossible sum.
+      sessionMs: Math.min(s.sessionMs, s.lastSeenTs - firstSeenTs),
+    }))
     .sort((a, b) => b.lastSeenTs - a.lastSeenTs);
 }
 
@@ -250,7 +287,7 @@ function aggregateByScenario(events: AnalyticsEvent[]): ScenarioStats[] {
     pids.add(e.pid);
     if (e.type === "screen_time") {
       s.visits += 1;
-      s.totalMs += e.durationMs;
+      s.totalMs += plausibleDurationMs(e.durationMs);
     } else if (e.type === "click") {
       s.clicks += 1;
       if (e.rageClick) s.rageClicks += 1;
@@ -366,8 +403,18 @@ function ParticipantDrilldown({ allEvents, participantStats, labels }: { allEven
   const drillLabel = drillPid ? labels.get(drillPid) ?? drillPid : "";
 
   if (drill.level === "list") {
-    const newParticipants = participantStats.filter((p) => p.lastSeenTs >= OLD_PARTICIPANT_CUTOFF_MS);
-    const oldParticipants = participantStats.filter((p) => p.lastSeenTs < OLD_PARTICIPANT_CUTOFF_MS);
+    // participantStats is already sorted most-recently-active first, so
+    // grouping in order naturally yields day groups from newest to oldest.
+    const dayGroups: { key: number; label: string; participants: ParticipantStats[] }[] = [];
+    for (const p of participantStats) {
+      const key = startOfDay(p.lastSeenTs);
+      let group = dayGroups.find((g) => g.key === key);
+      if (!group) {
+        group = { key, label: dayLabel(p.lastSeenTs), participants: [] };
+        dayGroups.push(group);
+      }
+      group.participants.push(p);
+    }
     const renderRow = (p: ParticipantStats) => (
       <button
         key={p.pid}
@@ -390,23 +437,17 @@ function ParticipantDrilldown({ allEvents, participantStats, labels }: { allEven
     );
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, textTransform: "uppercase" }}>
-            Новые участники ({newParticipants.length})
-          </p>
-          {newParticipants.length === 0 ? (
-            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 13, color: S.textSecondary }}>Пока никого</p>
-          ) : (
-            newParticipants.map(renderRow)
-          )}
-        </div>
-        {oldParticipants.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, textTransform: "uppercase" }}>
-              Старые участники, до 10:00 ({oldParticipants.length})
-            </p>
-            {oldParticipants.map(renderRow)}
-          </div>
+        {dayGroups.length === 0 ? (
+          <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 13, color: S.textSecondary }}>Пока никого</p>
+        ) : (
+          dayGroups.map((g) => (
+            <div key={g.key} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, textTransform: "uppercase" }}>
+                {g.label} ({g.participants.length})
+              </p>
+              {g.participants.map(renderRow)}
+            </div>
+          ))
         )}
       </div>
     );

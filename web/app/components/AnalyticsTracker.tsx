@@ -55,6 +55,15 @@ export default function AnalyticsTracker() {
   const prevPathRef = useRef(pathname);
   const maxScrollRef = useRef(0);
   const lastClickRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  // Time the tab spent hidden (backgrounded/screen locked) while on the
+  // current path — subtracted from the raw elapsed time so a phone left
+  // locked for hours doesn't get logged as hours of screen time.
+  const hiddenMsRef = useRef(0);
+  const hiddenSinceRef = useRef<number | null>(null);
+
+  function currentHiddenMs() {
+    return hiddenMsRef.current + (hiddenSinceRef.current !== null ? Date.now() - hiddenSinceRef.current : 0);
+  }
 
   // One-time setup: resolve pid + whatever scenario was already active this session.
   useEffect(() => {
@@ -66,7 +75,8 @@ export default function AnalyticsTracker() {
 
   function flushScreenTime(path: string, enteredAt: number) {
     const base = { pid: pidRef.current, scenario: scenarioRef.current, timestamp: Date.now() };
-    logEvent({ type: "screen_time", path, durationMs: Date.now() - enteredAt, ...base });
+    const durationMs = Math.max(0, Date.now() - enteredAt - currentHiddenMs());
+    logEvent({ type: "screen_time", path, durationMs, ...base });
     if (maxScrollRef.current > 0) {
       logEvent({ type: "scroll_depth", path, maxDepthPercent: maxScrollRef.current, ...base });
     }
@@ -83,6 +93,8 @@ export default function AnalyticsTracker() {
       prevPathRef.current = pathname;
       maxScrollRef.current = 0;
       lastClickRef.current = null;
+      hiddenMsRef.current = 0;
+      hiddenSinceRef.current = document.hidden ? Date.now() : null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
@@ -99,6 +111,21 @@ export default function AnalyticsTracker() {
       window.removeEventListener("beforeunload", onHide);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Backgrounded tab / locked screen doesn't stop JS execution from firing
+  // route changes later, so track hidden spans directly and subtract them.
+  useEffect(() => {
+    function onVisibility() {
+      if (document.hidden) {
+        hiddenSinceRef.current = Date.now();
+      } else if (hiddenSinceRef.current !== null) {
+        hiddenMsRef.current += Date.now() - hiddenSinceRef.current;
+        hiddenSinceRef.current = null;
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   // Clicks — captured in the capture phase so it fires even if a handler
