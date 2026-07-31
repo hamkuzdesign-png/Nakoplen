@@ -22,6 +22,16 @@ const STATUSES = [
     desc: "Главная → Мои накопления → Каталог → Карточка продукта",
     href: "/home",
   },
+  {
+    title: "Новый каталог",
+    desc: "Фильтры гаснут при конфликте",
+    href: "/new-catalog",
+  },
+  {
+    title: "Новый каталог — пустое состояние",
+    desc: "Фильтры всегда доступны, каталог может быть пустым",
+    href: "/new-catalog-empty",
+  },
 ];
 
 export default function MenuPage() {

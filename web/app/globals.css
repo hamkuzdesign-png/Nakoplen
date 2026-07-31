@@ -1346,6 +1346,84 @@ html, body {
   background: rgba(242, 243, 247, 0.2);
 }
 
+/* Задизэйбленный чип (нет пересечения по продуктам со сроком/выбранными
+   чипами) — не скрывается, а гаснет и не нажимается. Figma: opacity 30%. */
+.cat-chip.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Новый каталог: в широкой карточке (Figma «Card Prop» 6479-164519, тип Medium)
+   текстовый блок занимает всю ширину — описание умещается в две строки над
+   80px-картинкой, поэтому запас под неё не нужен. Скоуп нужен, чтобы правило
+   не задело общий /catalog. */
+.nc-catalog .cat-card-wide .cat-card-text {
+  max-width: 100%;
+}
+
+/* Пустое состояние каталога (вариант /new-catalog-empty, где фильтры не
+   гаснут и любая комбинация допустима). Тот же визуальный язык, что у
+   «Конца каталога»: 3D-иллюстрация на lighten, MTS Wide заголовок. */
+.cat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 20px 20px 4px;
+  box-sizing: border-box;
+}
+.cat-empty-img {
+  width: 120px;
+  height: 120px;
+  mix-blend-mode: lighten;
+  flex-shrink: 0;
+  display: block;
+}
+.cat-empty-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.cat-empty-title {
+  font-family: 'MTS Wide', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 24px;
+  color: #fff;
+  text-align: center;
+}
+.cat-empty-subtitle {
+  font-family: 'MTS Compact', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 20px;
+  color: #969fa8;
+  text-align: center;
+}
+.cat-empty-btn {
+  margin-top: 12px;
+  background: rgba(127, 140, 153, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border-radius: 16px;
+  width: 100%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Крестик снятия у выбранного чипа. Figma: 16px, opacity 72%. */
+.cat-chip-cross {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.72;
+  display: block;
+}
+
 .cat-chip.active::before {
   background: linear-gradient(
     135deg,
