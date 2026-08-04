@@ -140,6 +140,21 @@ function parseRate(badge: string): number | null {
   return parseFloat(match[0].replace(",", "."));
 }
 
+/* Сколько карточек показывать в «Лучших предложениях» при активных фильтрах */
+const BEST_MAX = 2;
+
+/* Самые доходные карточки списка. Карточки без ставки отбрасываются — их не с
+   чем сравнивать. Сортировка стабильна, поэтому при равных ставках сохраняется
+   исходный порядок каталога. */
+function topByRate(cards: CardData[], limit: number): CardData[] {
+  return cards
+    .map(card => ({ card, rate: parseRate(card.badge) }))
+    .filter((x): x is { card: CardData; rate: number } => x.rate !== null)
+    .sort((a, b) => b.rate - a.rate)
+    .slice(0, limit)
+    .map(x => x.card);
+}
+
 /* Максимальная ставка среди видимых карточек — определяет, какую 3D-картинку показать сверху */
 function maxVisibleRateKey(cards: CardData[]): string {
   let bestValue = -Infinity;
@@ -357,9 +372,7 @@ function PageInner() {
   const visibleDeposits = filterCards(DEPOSITS, period, activeChips);
   const visibleAlt      = filterCards(ALTERNATIVE, period, activeChips);
 
-  /* BEST only shown in the default state (no period, no chips) */
   const isDefaultState = period === "all" && activeChips.length === 0;
-  const visibleBest = isDefaultState ? BEST : [];
 
   /* УПРИД: «Доступно прямо сейчас» — только для сценария УПРИД, в дефолтном состоянии */
   const visibleAvailableNow = isUprid && isDefaultState ? AVAILABLE_NOW : [];
@@ -370,8 +383,17 @@ function PageInner() {
     isOwned
       ? cards.map(c => (c.id === "b1" || c.id === "a1") ? { ...c, badge: "До 11,7%" } : c)
       : cards;
-  const displayBest     = applyOwnedRate(visibleBest);
   const displayAccounts = applyOwnedRate(visibleAccounts);
+
+  /* «Лучшие предложения» видны и при фильтрации: в дефолте это кураторская
+     пара BEST, а с активными фильтрами — самые доходные продукты из того, что
+     осталось в выдаче. Продукты без ставки (Бонусы, Металлы) сюда не попадают:
+     сравнивать их не по чему. Карточки намеренно повторяют секции ниже —
+     так же, как в макете. Ставки берём уже подменённые applyOwnedRate,
+     иначе порядок разойдётся с тем, что написано на карточках. */
+  const displayBest = isDefaultState
+    ? applyOwnedRate(BEST)
+    : topByRate([...displayAccounts, ...visibleDeposits, ...visibleAlt], BEST_MAX);
 
   /* 3D-ставка в шапке = максимальная ставка среди карточек, показанных ниже прямо сейчас.
      Считаем по тем же (уже подменённым для "созданных продуктов") ставкам, что и в
@@ -487,13 +509,13 @@ function PageInner() {
       <div className="lower-panel cat-lower">
         {/* Always rendered — controls panel height, invisible under skeleton */}
         <div style={{ visibility: showSkeleton ? "hidden" : "visible", width: "100%" }}>
-          <Section label="Лучшие предложения" star cards={displayBest} first={visibleBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Доступно прямо сейчас" icon={asset("/images/icon-device-reservation.svg")} cards={visibleAvailableNow} first={visibleBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Накопительные счета" cards={displayAccounts} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Вклады" cards={visibleDeposits} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Альтернативные продукты" cards={visibleAlt} first={visibleBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Лучшие предложения" star cards={displayBest} first={displayBest.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Доступно прямо сейчас" icon={asset("/images/icon-device-reservation.svg")} cards={visibleAvailableNow} first={displayBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Накопительные счета" cards={displayAccounts} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Вклады" cards={visibleDeposits} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Альтернативные продукты" cards={visibleAlt} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
         </div>
-        {showSkeleton && <SkeletonGrid sections={[visibleBest, visibleAvailableNow, visibleAccounts, visibleDeposits, visibleAlt]} />}
+        {showSkeleton && <SkeletonGrid sections={[displayBest, visibleAvailableNow, visibleAccounts, visibleDeposits, visibleAlt]} />}
       </div>
 
       {/* FAQ */}
