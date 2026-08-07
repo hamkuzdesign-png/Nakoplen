@@ -113,14 +113,17 @@ export default function MenuPage() {
                     <span
                       style={{
                         fontFamily: "'MTS Compact', sans-serif",
-                        fontWeight: 500,
+                        fontWeight: 700,
                         fontSize: 12,
-                        color: "#74df8b",
-                        background: "rgba(38,205,88,0.12)",
+                        color: "#1d2023",
+                        background: "#26cd58",
                         borderRadius: 6,
-                        padding: "2px 6px",
+                        padding: "2px 8px",
                         lineHeight: "16px",
                         whiteSpace: "nowrap",
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4,
+                        boxShadow: "0 0 12px rgba(38,205,88,0.5)",
                       }}
                     >
                       {s.badge}
