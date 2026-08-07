@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 
-const STATUSES = [
+type Status = { title: string; desc: string; href: string | null; badge?: string };
+
+const STATUSES: Status[] = [
   {
     title: "Аноним",
     desc: "Главная → Каталог",
@@ -23,9 +25,10 @@ const STATUSES = [
     href: "/home",
   },
   {
-    title: "Новый каталог",
-    desc: "Фильтры гаснут при конфликте",
-    href: "/new-catalog",
+    title: "Имеет продукты — новый каталог",
+    desc: "Главная → Мои накопления → Каталог → Карточка продукта",
+    href: "/home?catalog=new",
+    badge: "для ревью",
   },
   {
     title: "Новый каталог — пустое состояние",
@@ -104,6 +107,23 @@ export default function MenuPage() {
                       }}
                     >
                       скоро
+                    </span>
+                  )}
+                  {s.badge && (
+                    <span
+                      style={{
+                        fontFamily: "'MTS Compact', sans-serif",
+                        fontWeight: 500,
+                        fontSize: 12,
+                        color: "#74df8b",
+                        background: "rgba(38,205,88,0.12)",
+                        borderRadius: 6,
+                        padding: "2px 6px",
+                        lineHeight: "16px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {s.badge}
                     </span>
                   )}
                 </div>

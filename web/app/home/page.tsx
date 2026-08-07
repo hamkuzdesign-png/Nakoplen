@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 
@@ -72,7 +73,20 @@ function Icon({ src, size = 24 }: { src: string; size?: number }) {
 }
 
 export default function HomePage() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
   const [promoClosed, setPromoClosed] = useState(false);
+  /* Вариант каталога тащится через весь сценарий: меню открывает
+     /home?catalog=new, и переход в «Мои накопления» несёт флаг дальше,
+     чтобы оттуда открылся новый каталог, а не общий. Без параметра всё
+     работает ровно как раньше. */
+  const catalogQuery = useSearchParams().get("catalog") === "new" ? "?catalog=new" : "";
 
   return (
     <div className="page-enter phone-width" style={{ height: "100dvh", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
@@ -245,7 +259,7 @@ export default function HomePage() {
               );
               const tileStyle: React.CSSProperties = { flex: "1 0 calc(50% - 4px)", minWidth: 148, maxWidth: "calc(50% - 4px)", height: 140, textDecoration: "none", borderRadius: 20, overflow: "hidden" };
               return tile.href
-                ? <Link key={tile.label} href={tile.href} style={tileStyle}>{inner}</Link>
+                ? <Link key={tile.label} href={`${tile.href}${catalogQuery}`} style={tileStyle}>{inner}</Link>
                 : <div key={tile.label} style={tileStyle}>{inner}</div>;
             })}
           </div>

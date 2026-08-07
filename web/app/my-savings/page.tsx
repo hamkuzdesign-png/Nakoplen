@@ -1,5 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 
@@ -116,7 +117,21 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 export default function MySavingsPage() {
+  return (
+    <Suspense>
+      <MySavingsInner />
+    </Suspense>
+  );
+}
+
+function MySavingsInner() {
   const router = useRouter();
+  /* Сценарий «новый каталог» приходит сюда с /home?catalog=new — тогда обе
+     точки входа в каталог ведут на /new-catalog. Без параметра поведение
+     прежнее, общий каталог. */
+  const isNewCatalog = useSearchParams().get("catalog") === "new";
+  const catalogHref = `${isNewCatalog ? "/new-catalog" : "/catalog"}?scenario=owned`;
+  const homeHref = isNewCatalog ? "/home?catalog=new" : "/home";
 
   return (
     <div className="screen page-enter" style={{ gap: 12, paddingBottom: 32 }}>
@@ -130,7 +145,7 @@ export default function MySavingsPage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 0 16px", width: "100%" }}>
             <div style={{ flex: 1, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
               {/* Back button */}
-              <button onClick={() => router.push("/home")} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+              <button onClick={() => router.push(homeHref)} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
                 <div style={{ opacity: 0.7, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                   <Img src={A.back} size={24} />
                 </div>
@@ -180,7 +195,7 @@ export default function MySavingsPage() {
             <div style={{ display: "flex", gap: 4, width: "100%" }}>
               <ChipBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
               <ChipBtn icon={A.goal}      label="Цель" onClick={() => router.push("/goal/new")} />
-              <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push("/catalog?scenario=owned")} />
+              <ChipBtn icon={A.open}      label="Открыть" onClick={() => router.push(catalogHref)} />
             </div>
           </div>
         </div>
@@ -247,7 +262,7 @@ export default function MySavingsPage() {
       {/* ── CTA ── */}
       <div style={{ padding: "0 20px", flexShrink: 0, position: "relative", zIndex: 1 }}>
         <Link
-          href="/catalog?scenario=owned"
+          href={catalogHref}
           style={{
             display: "flex",
             textDecoration: "none",
