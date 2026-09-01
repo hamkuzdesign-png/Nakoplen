@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 
 type Status = { title: string; desc: string; href: string | null; badge?: string };
+type Segment = "base" | "test";
 
 const STATUSES: Status[] = [
   {
@@ -37,7 +39,18 @@ const STATUSES: Status[] = [
   },
 ];
 
+const TEST_STATUSES: Status[] = [
+  {
+    title: "Первый сценарий",
+    desc: "Сценарий пока не настроен",
+    href: null,
+  },
+];
+
 export default function MenuPage() {
+  const [segment, setSegment] = useState<Segment>("base");
+  const statuses = segment === "base" ? STATUSES : TEST_STATUSES;
+
   return (
     <div
       className="page-enter"
@@ -63,22 +76,57 @@ export default function MenuPage() {
             marginBottom: 4,
           }}
         >
-          Сценарии
-        </p>
-        <p
-          style={{
-            fontFamily: "'MTS Compact', sans-serif",
-            fontWeight: 400,
-            fontSize: 14,
-            color: "#969fa8",
-            marginBottom: 24,
-          }}
-        >
-          Выберите статус пользователя
+          Выберите прототип
         </p>
 
+        <div
+          role="tablist"
+          aria-label="Тип сценариев"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 4,
+            padding: 4,
+            marginTop: 20,
+            marginBottom: 24,
+            borderRadius: 20,
+            background: "rgba(98,108,119,0.25)",
+          }}
+        >
+          {([
+            { key: "base" as const, label: "Базовый" },
+            { key: "test" as const, label: "Тестовый" },
+          ]).map((item) => {
+            const active = segment === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSegment(item.key)}
+                style={{
+                  height: 40,
+                  border: 0,
+                  borderRadius: 16,
+                  background: active ? "#fafafa" : "transparent",
+                  color: active ? "#1d2023" : "#969fa8",
+                  fontFamily: "'MTS Compact', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 15,
+                  lineHeight: "20px",
+                  cursor: "pointer",
+                  transition: "background 180ms ease, color 180ms ease",
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {STATUSES.map((s) => {
+          {statuses.map((s) => {
             const inner = (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>

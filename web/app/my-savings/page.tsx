@@ -19,6 +19,15 @@ const A = {
   add:       asset("/images/savings2/add.svg"),
   spark:     asset("/images/savings2/spark.svg"),
   money:     asset("/images/savings2/money.svg"),
+  metalGold: asset("/images/savings2/metal-gold.svg"),
+  metalSilver: asset("/images/savings2/metal-silver.svg"),
+  metalPlatinum: asset("/images/savings2/metal-platinum.svg"),
+  metalPalladium: asset("/images/savings2/metal-palladium.svg"),
+  skinsSchet: asset("/images/savings2/skins-schet.svg"),
+  skinsVklad: asset("/images/savings2/skins-vklad.svg"),
+  cfaGlorinkor: asset("/images/savings2/cfa-glorinkor.svg"),
+  licevoy: asset("/images/savings2/licevoy.svg"),
+  ghost: asset("/images/savings2/ghost.svg"),
   wifi:      asset("/images/icon-wifi.svg"),
   cell:      asset("/images/icon-cell.svg"),
   battery:   asset("/images/icon-battery.svg"),
@@ -65,6 +74,28 @@ function MoneyIcon() {
       </div>
     </div>
   );
+}
+
+const METAL_ICON = {
+  gold: { image: A.metalGold, bg: "linear-gradient(135deg, rgba(255,235,147,0) 0.96%, rgba(255,251,147,.5) 100%)" },
+  silver: { image: A.metalSilver, bg: "linear-gradient(135deg, rgba(255,255,255,0) 0.96%, rgba(255,255,255,.5) 100%)" },
+  platinum: { image: A.metalPlatinum, bg: "linear-gradient(135deg, rgba(255,255,255,0) 0.96%, rgba(255,255,255,.5) 100%)" },
+  palladium: { image: A.metalPalladium, bg: "rgba(98,108,119,.25)" },
+} as const;
+
+function MetalIcon({ type }: { type: keyof typeof METAL_ICON }) {
+  const metal = METAL_ICON[type];
+  return (
+    <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 16, overflow: "hidden", background: metal.bg }} aria-hidden>
+      <div style={{ position: "relative", left: 0, top: 0, width: 52, height: 52 }}>
+        <Img src={metal.image} size={52} />
+      </div>
+    </div>
+  );
+}
+
+function ProductAssetIcon({ src }: { src: string }) {
+  return <Img src={src} size={52} />;
 }
 
 /* action button (top row) */
@@ -157,7 +188,9 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   // Одна непрерывная траектория как в Telegram: главный элемент начинает
   // движение до шторки, постепенно уменьшается и становится заголовком навбара.
   const HEADER_COLLAPSE_START = 0;
-  const HEADER_COLLAPSE_DISTANCE = 220;
+  // The Telegram reference completes the collapse before the first content
+  // card reaches the header, so the transition feels tied to the gesture.
+  const HEADER_COLLAPSE_DISTANCE = 180;
   const [headerCollapseProgress, setHeaderCollapseProgress] = useState(0);
   const [navProgress, setNavProgress] = useState(0);
   const [ctaProgress, setCtaProgress] = useState(0);
@@ -177,7 +210,10 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         // Подложка появляется чуть позже движения суммы — только когда под ней
         // начинает проходить контент.
         const rawNavProgress = Math.min(1, Math.max(0, (window.scrollY - 150) / 150));
-        const rawCtaProgress = Math.min(1, Math.max(0, window.scrollY / 400));
+        // Start expanding 80px before the document end and finish exactly at
+        // the end, so the button follows the user's scroll continuously.
+        const distanceToEnd = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+        const rawCtaProgress = Math.min(1, Math.max(0, 1 - distanceToEnd / 80));
         // Smoothstep даёт мягкое начало и окончание перехода, сохраняя
         // непосредственную связь навбара с движением пальца.
         const nextHeaderProgress = reduceMotion ? (rawHeaderProgress > 0 ? 1 : 0) : rawHeaderProgress * rawHeaderProgress * (3 - 2 * rawHeaderProgress);
@@ -199,14 +235,18 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
     };
   }, []);
 
-  const balanceScale = 1 - headerCollapseProgress * 0.5625;
+  // The collapsed navbar uses the compact 14/20 bold P4 amount style.
+  const balanceScale = 1;
+  const balanceFontSize = 32 - headerCollapseProgress * 18;
+  const balanceLineHeight = 36 - headerCollapseProgress * 16;
+  const balanceFontWeight = headerCollapseProgress > 0.65 ? 700 : 500;
   const balanceColor = `rgb(${Math.round(250 - navProgress * 221)}, ${Math.round(250 - navProgress * 218)}, ${Math.round(250 - navProgress * 215)})`;
   // Все второстепенные элементы повторяют движение Telegram: с первого пикселя
   // скролла одновременно уменьшаются, поднимаются и растворяются.
   const headerContentOpacity = 1 - headerCollapseProgress;
-  const headerControlScale = 1 - headerCollapseProgress * 0.16;
-  const headerTextScale = 1 - headerCollapseProgress * 0.12;
-  const headerActionsScale = 1 - headerCollapseProgress * 0.1;
+  const headerControlScale = 1 - headerCollapseProgress * 0.18;
+  const headerTextScale = 1 - headerCollapseProgress * 0.16;
+  const headerActionsScale = 1 - headerCollapseProgress * 0.14;
   const ctaWidth = 173 + 162 * ctaProgress;
   const ctaHeight = 44 + 8 * ctaProgress;
 
@@ -225,9 +265,9 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           transform: `translate(-50%, ${-106 * headerCollapseProgress}px) scale(${balanceScale})`,
           transformOrigin: "top center",
           fontFamily: "'MTS Wide'",
-          fontWeight: 500,
-          fontSize: 32,
-          lineHeight: "36px",
+          fontWeight: balanceFontWeight,
+          fontSize: balanceFontSize,
+          lineHeight: `${balanceLineHeight}px`,
           letterSpacing: `${0.7 * headerCollapseProgress}px`,
           color: balanceColor,
           textAlign: "center",
@@ -311,7 +351,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           <button onClick={() => router.push(homeHref)} style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.back} /></button>
           <button style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.hide} /></button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-36 * headerCollapseProgress}px) scale(${headerTextScale})`, transformOrigin: "top center", opacity: headerContentOpacity, willChange: "transform, opacity" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-106 * headerCollapseProgress}px) scale(${headerTextScale})`, transformOrigin: "top center", opacity: headerContentOpacity, willChange: "transform, opacity" }}>
           <p style={{ fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 20, color: "rgba(255,255,255,.56)", lineHeight: "24px" }}>Мои накопления</p>
           <div aria-hidden style={{ width: "100%", height: 36 }} />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -319,7 +359,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
             <span style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "rgba(250,250,250,.72)" }}>за всё время</span><Img src={A.sort} size={16} opacity={0.7} />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 4, padding: "40px 20px 0", opacity: headerContentOpacity, transform: `translateY(${-52 * headerCollapseProgress}px) scale(${headerActionsScale})`, transformOrigin: "top center", pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+        <div style={{ display: "flex", gap: 4, padding: "40px 20px 0", opacity: headerContentOpacity, transform: `translateY(${-106 * headerCollapseProgress}px) scale(${headerActionsScale})`, transformOrigin: "top center", pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
           <BigBtn icon={A.plus} label="Пополнить" onClick={() => router.push("/topup")} />
           <BigBtn icon={A.arrowUp} label="Перевести" onClick={() => router.push("/transfer")} />
           <BigBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
@@ -327,28 +367,29 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
       </div>
 
       <ReviewSection title="Накопительные счета">
-        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="467 100 ₽" subtitle="15,5% на ежедневный остаток" income="+2 848 ₽" />
-        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
-        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.skinsSchet} />} name="МТС Счёт" amount="467 100 ₽" subtitle="15,5% на ежедневный остаток" income="+2 848 ₽" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.skinsSchet} />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.skinsSchet} />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
         <ReviewOffer title="Кешбокс" subtitle="До 14% с ежедневной выплатой" href="/product/a2" />
       </ReviewSection>
 
       <ReviewSection title="Вклады">
-        <ReviewProductRow icon={<MoneyIcon />} name="Вклад МТС Плюс" amount="0 ₽" subtitle="Пополните до 25 августа 2026" />
-        <ReviewProductRow icon={<MoneyIcon />} name="Вклад МТС Максимум" amount="154 900 ₽" subtitle="18,3%, потратьте до 15.02 ещё 38 000 ₽" income="+2 848 ₽" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.skinsVklad} />} name="Вклад МТС Плюс" amount="0 ₽" subtitle="Пополните до 25 августа 2026" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.skinsVklad} />} name="Вклад МТС Максимум" amount="154 900 ₽" subtitle="18,3%, потратьте до 15.02 ещё 38 000 ₽" income="+2 848 ₽" />
         <ReviewOffer title="Вклад «Плюс»" subtitle="Доход с удобными условиями" href="/product/d1" />
       </ReviewSection>
 
       <ReviewSection title="Цифровые активы">
-        <ReviewProductRow icon={<MoneyIcon />} name="ЦФА Глоринкор" amount="30 000,32 ₽" subtitle="До 8 ноября 2024" />
-        <ReviewProductRow icon={<MoneyIcon />} name="Лицевой счёт для ЦФА" amount="0 ₽" subtitle="Бессрочный" />
-        <ReviewProductRow icon={<MoneyIcon />} name="ЦФА МТС ФИНТЕХ" amount="30 000 ₽" subtitle="21% на 6 месяцев" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.cfaGlorinkor} />} name="ЦФА Глоринкор" amount="30 000,32 ₽" subtitle="До 8 ноября 2024" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.licevoy} />} name="Лицевой счёт для ЦФА" amount="0 ₽" subtitle="Бессрочный" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.ghost} />} name="ЦФА МТС ФИНТЕХ" amount="30 000 ₽" subtitle="21% на 6 месяцев" />
       </ReviewSection>
 
       <ReviewSection title="Металлы">
-        <ReviewProductRow icon={<MoneyIcon />} name="Серебро" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
-        <ReviewProductRow icon={<MoneyIcon />} name="Платина" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
-        <ReviewProductRow icon={<MoneyIcon />} name="Палладий" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<MetalIcon type="gold" />} name="Золото" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<MetalIcon type="silver" />} name="Серебро" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<MetalIcon type="platinum" />} name="Платина" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<ProductAssetIcon src={A.ghost} />} name="Палладий" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
       </ReviewSection>
 
       <Link
