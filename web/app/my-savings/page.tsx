@@ -163,9 +163,9 @@ function ReviewProductRow({ icon, name, amount, subtitle, income }: {
   );
 }
 
-function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ReviewSection({ title, children, sectionRef }: { title: string; children: React.ReactNode; sectionRef?: React.Ref<HTMLElement> }) {
   return (
-    <section style={{ background: "#fff", borderRadius: 32, overflow: "hidden", padding: "12px 0 16px", position: "relative", zIndex: 2 }}>
+    <section ref={sectionRef} style={{ background: "#fff", borderRadius: 32, overflow: "hidden", padding: "12px 0 16px", position: "relative", zIndex: 2 }}>
       <div style={{ padding: "12px 20px 8px", fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#626c77", lineHeight: "20px", textTransform: "uppercase" }}>{title}</div>
       {children}
     </section>
@@ -195,6 +195,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const [navProgress, setNavProgress] = useState(0);
   const [ctaProgress, setCtaProgress] = useState(0);
   const scrollFrameRef = useRef<number | null>(null);
+  const lastSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const updateEndState = () => {
@@ -214,8 +215,10 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         // непосредственную связь навбара с движением пальца.
         const nextHeaderProgress = reduceMotion ? (rawHeaderProgress > 0 ? 1 : 0) : rawHeaderProgress * rawHeaderProgress * (3 - 2 * rawHeaderProgress);
         const nextNavProgress = reduceMotion ? (rawNavProgress >= 1 ? 1 : 0) : rawNavProgress * rawNavProgress * (3 - 2 * rawNavProgress);
-        const distanceToEnd = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
-        const rawCtaProgress = Math.min(1, Math.max(0, 1 - distanceToEnd / 80));
+        const lastSectionBottom = lastSectionRef.current?.getBoundingClientRect().bottom ?? window.innerHeight;
+        // Start 100px before the CTA's final point and clamp the progress so
+        // further scrolling cannot move it below the card's 12px gap.
+        const rawCtaProgress = Math.min(1, Math.max(0, (window.innerHeight - 96 - lastSectionBottom + 100) / 100));
 
         setHeaderCollapseProgress((current) => Math.abs(current - nextHeaderProgress) > 0.01 ? nextHeaderProgress : current);
         setNavProgress((current) => Math.abs(current - nextNavProgress) > 0.01 ? nextNavProgress : current);
@@ -386,7 +389,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         <ReviewProductRow icon={<ProductAssetIcon src={A.ghost} />} name="ЦФА МТС ФИНТЕХ" amount="30 000 ₽" subtitle="21% на 6 месяцев" />
       </ReviewSection>
 
-      <ReviewSection title="Металлы">
+      <ReviewSection title="Металлы" sectionRef={lastSectionRef}>
         <ReviewProductRow icon={<MetalIcon type="gold" />} name="Золото" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
         <ReviewProductRow icon={<MetalIcon type="silver" />} name="Серебро" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
         <ReviewProductRow icon={<MetalIcon type="platinum" />} name="Платина" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
@@ -422,7 +425,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           whiteSpace: "nowrap",
           boxShadow: "0 8px 24px rgba(29,32,35,.24)",
           willChange: "width, height",
-          transition: "width 80ms linear, height 80ms linear",
+          transition: "width 180ms cubic-bezier(0.22, 1, 0.36, 1), height 180ms cubic-bezier(0.22, 1, 0.36, 1), bottom 180ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >НОВЫЙ ПРОДУКТ</Link>
       </div>
