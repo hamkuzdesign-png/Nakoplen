@@ -156,7 +156,7 @@ function ReviewOffer({ title, subtitle, href }: { title: string; subtitle: strin
 function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: ReturnType<typeof useRouter>; homeHref: string; catalogHref: string }) {
   // Одна непрерывная траектория как в Telegram: главный элемент начинает
   // движение до шторки, постепенно уменьшается и становится заголовком навбара.
-  const HEADER_COLLAPSE_START = 80;
+  const HEADER_COLLAPSE_START = 0;
   const HEADER_COLLAPSE_DISTANCE = 220;
   const [headerCollapseProgress, setHeaderCollapseProgress] = useState(0);
   const [navProgress, setNavProgress] = useState(0);
@@ -177,7 +177,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         // Подложка появляется чуть позже движения суммы — только когда под ней
         // начинает проходить контент.
         const rawNavProgress = Math.min(1, Math.max(0, (window.scrollY - 150) / 150));
-        const rawCtaProgress = Math.min(1, Math.max(0, (window.scrollY - 80) / 360));
+        const rawCtaProgress = Math.min(1, Math.max(0, window.scrollY / 400));
         // Smoothstep даёт мягкое начало и окончание перехода, сохраняя
         // непосредственную связь навбара с движением пальца.
         const nextHeaderProgress = reduceMotion ? (rawHeaderProgress > 0 ? 1 : 0) : rawHeaderProgress * rawHeaderProgress * (3 - 2 * rawHeaderProgress);
@@ -201,9 +201,12 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
 
   const balanceScale = 1 - headerCollapseProgress * 0.5625;
   const balanceColor = `rgb(${Math.round(250 - navProgress * 221)}, ${Math.round(250 - navProgress * 218)}, ${Math.round(250 - navProgress * 215)})`;
-  // Второстепенные элементы исчезают постепенно в первой трети траектории;
-  // при обратном скролле они возвращаются только когда у суммы снова есть место.
-  const headerContentOpacity = 1 - Math.max(0, Math.min(1, (headerCollapseProgress - 0.06) / 0.28));
+  // Все второстепенные элементы повторяют движение Telegram: с первого пикселя
+  // скролла одновременно уменьшаются, поднимаются и растворяются.
+  const headerContentOpacity = 1 - headerCollapseProgress;
+  const headerControlScale = 1 - headerCollapseProgress * 0.16;
+  const headerTextScale = 1 - headerCollapseProgress * 0.12;
+  const headerActionsScale = 1 - headerCollapseProgress * 0.1;
   const ctaWidth = 173 + 162 * ctaProgress;
   const ctaHeight = 44 + 8 * ctaProgress;
 
@@ -304,11 +307,11 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           pointerEvents: "auto",
         }}
       >
-        <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 16px", opacity: headerContentOpacity, transform: `translateY(${-8 * (1 - headerContentOpacity)}px)`, pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+        <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 16px", opacity: headerContentOpacity, transform: `translateY(${-16 * headerCollapseProgress}px) scale(${headerControlScale})`, transformOrigin: "top center", pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
           <button onClick={() => router.push(homeHref)} style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.back} /></button>
           <button style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.hide} /></button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-20 * (1 - headerContentOpacity)}px)`, opacity: headerContentOpacity, willChange: "transform, opacity" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-36 * headerCollapseProgress}px) scale(${headerTextScale})`, transformOrigin: "top center", opacity: headerContentOpacity, willChange: "transform, opacity" }}>
           <p style={{ fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 20, color: "rgba(255,255,255,.56)", lineHeight: "24px" }}>Мои накопления</p>
           <div aria-hidden style={{ width: "100%", height: 36 }} />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -316,7 +319,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
             <span style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "rgba(250,250,250,.72)" }}>за всё время</span><Img src={A.sort} size={16} opacity={0.7} />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 4, padding: "40px 20px 0", opacity: headerContentOpacity, transform: `translateY(${-28 * (1 - headerContentOpacity)}px)`, pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+        <div style={{ display: "flex", gap: 4, padding: "40px 20px 0", opacity: headerContentOpacity, transform: `translateY(${-52 * headerCollapseProgress}px) scale(${headerActionsScale})`, transformOrigin: "top center", pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
           <BigBtn icon={A.plus} label="Пополнить" onClick={() => router.push("/topup")} />
           <BigBtn icon={A.arrowUp} label="Перевести" onClick={() => router.push("/transfer")} />
           <BigBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
