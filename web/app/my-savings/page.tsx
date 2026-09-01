@@ -210,14 +210,12 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         // Подложка появляется чуть позже движения суммы — только когда под ней
         // начинает проходить контент.
         const rawNavProgress = Math.min(1, Math.max(0, (window.scrollY - 150) / 150));
-        // Start expanding 80px before the document end and finish exactly at
-        // the end, so the button follows the user's scroll continuously.
-        const distanceToEnd = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
-        const rawCtaProgress = Math.min(1, Math.max(0, 1 - distanceToEnd / 80));
         // Smoothstep даёт мягкое начало и окончание перехода, сохраняя
         // непосредственную связь навбара с движением пальца.
         const nextHeaderProgress = reduceMotion ? (rawHeaderProgress > 0 ? 1 : 0) : rawHeaderProgress * rawHeaderProgress * (3 - 2 * rawHeaderProgress);
         const nextNavProgress = reduceMotion ? (rawNavProgress >= 1 ? 1 : 0) : rawNavProgress * rawNavProgress * (3 - 2 * rawNavProgress);
+        const distanceToEnd = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+        const rawCtaProgress = Math.min(1, Math.max(0, 1 - distanceToEnd / 80));
 
         setHeaderCollapseProgress((current) => Math.abs(current - nextHeaderProgress) > 0.01 ? nextHeaderProgress : current);
         setNavProgress((current) => Math.abs(current - nextNavProgress) > 0.01 ? nextNavProgress : current);
@@ -249,9 +247,10 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const headerActionsScale = 1 - headerCollapseProgress * 0.14;
   const ctaWidth = 173 + 162 * ctaProgress;
   const ctaHeight = 44 + 8 * ctaProgress;
+  const ctaBottom = 40 - 8 * ctaProgress;
 
   return (
-    <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 104, overflowX: "clip" }}>
+    <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 0, overflowX: "clip" }}>
       <div className="top-gradient" />
 
       {/* Одна и та же сумма морфится из крупного заголовка в центр навбара. */}
@@ -353,7 +352,9 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-106 * headerCollapseProgress}px) scale(${headerTextScale})`, transformOrigin: "top center", opacity: headerContentOpacity, willChange: "transform, opacity" }}>
           <p style={{ fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 20, color: "rgba(255,255,255,.56)", lineHeight: "24px" }}>Мои накопления</p>
-          <div aria-hidden style={{ width: "100%", height: 36 }} />
+          {/* Reserve the full compact amount line so the amount stays between
+              the title and income badge throughout the collapse. */}
+          <div aria-hidden style={{ width: "100%", height: 48 }} />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span style={{ background: "rgba(38,205,88,.12)", borderRadius: 8, padding: "2px 6px", fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#26cd58" }}>+8 546 ₽</span>
             <span style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "rgba(250,250,250,.72)" }}>за всё время</span><Img src={A.sort} size={16} opacity={0.7} />
@@ -392,15 +393,17 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         <ReviewProductRow icon={<ProductAssetIcon src={A.ghost} />} name="Палладий" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
       </ReviewSection>
 
-      <Link
-        href={catalogHref}
-        aria-label="Новый продукт"
-        style={{
+      {/* Page gap supplies 12px above; reserve button height plus 32px below. */}
+      <div style={{ height: 84, flexShrink: 0, position: "relative" }}>
+        <Link
+          href={catalogHref}
+          aria-label="Новый продукт"
+          style={{
           position: "fixed",
-          zIndex: 10,
           left: "50%",
-          bottom: "calc(40px + env(safe-area-inset-bottom))",
+          bottom: `calc(${ctaBottom}px + env(safe-area-inset-bottom))`,
           transform: "translateX(-50%)",
+          zIndex: 10,
           width: `min(calc(100vw - 40px), ${ctaWidth}px)`,
           height: ctaHeight,
           display: "flex",
@@ -420,8 +423,9 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           boxShadow: "0 8px 24px rgba(29,32,35,.24)",
           willChange: "width, height",
           transition: "width 80ms linear, height 80ms linear",
-        }}
-      >НОВЫЙ ПРОДУКТ</Link>
+          }}
+        >НОВЫЙ ПРОДУКТ</Link>
+      </div>
     </div>
   );
 }
