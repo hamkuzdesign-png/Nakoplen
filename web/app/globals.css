@@ -73,7 +73,7 @@
 }
 
 html, body {
-  background: #000;
+  background: #f2f3f7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
