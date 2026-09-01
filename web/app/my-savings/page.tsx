@@ -194,16 +194,18 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const [headerCollapseProgress, setHeaderCollapseProgress] = useState(0);
   const [navProgress, setNavProgress] = useState(0);
   const [ctaProgress, setCtaProgress] = useState(0);
+  const [isStandalone, setIsStandalone] = useState(false);
   const scrollFrameRef = useRef<number | null>(null);
   const lastSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
     const updateEndState = () => {
       if (scrollFrameRef.current !== null) return;
 
       scrollFrameRef.current = window.requestAnimationFrame(() => {
         scrollFrameRef.current = null;
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || window.matchMedia("(display-mode: standalone)").matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
         // Шапка остаётся неподвижной, пока пользователь видит весь верхний
         // блок. Затем навбар проявляется чуть раньше суммы: у неё всегда есть
         // подложка, и она не пересекается с карточками контента.
@@ -425,7 +427,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           whiteSpace: "nowrap",
           boxShadow: "0 8px 24px rgba(29,32,35,.24)",
           willChange: "width, height",
-          transition: "width 180ms cubic-bezier(0.22, 1, 0.36, 1), height 180ms cubic-bezier(0.22, 1, 0.36, 1), bottom 180ms cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: isStandalone ? "none" : "width 180ms cubic-bezier(0.22, 1, 0.36, 1), height 180ms cubic-bezier(0.22, 1, 0.36, 1), bottom 180ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >НОВЫЙ ПРОДУКТ</Link>
       </div>
