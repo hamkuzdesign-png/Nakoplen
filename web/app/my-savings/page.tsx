@@ -253,7 +253,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const ctaBottom = 40 - 8 * ctaProgress;
 
   return (
-    <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 0, overflowX: "clip" }}>
+    <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 0, overflowX: "clip", overscrollBehaviorY: "none" }}>
       <div className="top-gradient" />
 
       {/* Одна и та же сумма морфится из крупного заголовка в центр навбара. */}
@@ -357,7 +357,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           <p style={{ fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 20, color: "rgba(255,255,255,.56)", lineHeight: "24px" }}>Мои накопления</p>
           {/* Reserve the full compact amount line so the amount stays between
               the title and income badge throughout the collapse. */}
-          <div aria-hidden style={{ width: "100%", height: 48 }} />
+          <div aria-hidden style={{ width: "100%", height: 36 }} />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span style={{ background: "rgba(38,205,88,.12)", borderRadius: 8, padding: "2px 6px", fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#26cd58" }}>+8 546 ₽</span>
             <span style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "rgba(250,250,250,.72)" }}>за всё время</span><Img src={A.sort} size={16} opacity={0.7} />
