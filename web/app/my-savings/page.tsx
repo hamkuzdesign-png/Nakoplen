@@ -253,6 +253,10 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const ctaWidth = 173 + 162 * ctaProgress;
   const ctaHeight = 44 + 8 * ctaProgress;
   const ctaBottom = 40 - 8 * ctaProgress;
+  const navButtonBackground = `rgba(255,255,255,${0.08 + navProgress * 0.48})`;
+  const navButtonBorder = navProgress > 0.01 ? "1px solid #fff" : "0 solid transparent";
+  const navButtonIconOpacity = 0.7 + navProgress * 0.3;
+  const navButtonIconFilter = navProgress > 0.01 ? "brightness(0) saturate(100%) invert(10%) sepia(8%) saturate(727%) hue-rotate(169deg) brightness(92%) contrast(91%)" : "none";
 
   return (
     <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 0, overflowX: "clip", overscrollBehaviorY: "none" }}>
@@ -289,15 +293,15 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           zIndex: 20,
           top: 0,
           left: 0,
-          transform: `translateY(${-12 * (1 - navProgress)}px)`,
+          transform: "translateY(0)",
           width: "100vw",
           maxWidth: "none",
           height: "calc(136px + env(safe-area-inset-top))",
           paddingTop: "env(safe-area-inset-top)",
           display: "flex",
           alignItems: "flex-start",
-          opacity: navProgress,
-          pointerEvents: navProgress > 0.98 ? "auto" : "none",
+          opacity: 1,
+          pointerEvents: "auto",
           overflow: "hidden",
           willChange: "transform, opacity",
         }}
@@ -310,6 +314,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
             inset: 0,
             pointerEvents: "none",
             background: "linear-gradient(to bottom, rgba(242,243,247,.98) 0%, rgba(242,243,247,.92) 58%, rgba(242,243,247,0) 100%)",
+            opacity: navProgress,
           }}
         />
         {/* Blur плавно убывает от 8px сверху до 0px снизу — без стыка-полоски. */}
@@ -323,21 +328,22 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
             WebkitBackdropFilter: "blur(8px)",
             maskImage: "linear-gradient(to top, transparent 0%, #000 100%)",
             WebkitMaskImage: "linear-gradient(to top, transparent 0%, #000 100%)",
+            opacity: navProgress,
           }}
         />
         <div style={{ position: "relative", zIndex: 2, width: "100%", height: 44, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
           <button
             onClick={() => router.push(homeHref)}
             aria-label="Назад"
-            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: "1px solid #fff", background: "rgba(255,255,255,.56)", boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
+            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: navButtonBorder, background: navButtonBackground, boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
           >
-            <div style={{ filter: "brightness(0) saturate(100%) invert(10%) sepia(8%) saturate(727%) hue-rotate(169deg) brightness(92%) contrast(91%)" }}><Img src={A.back} size={24} /></div>
+            <div style={{ filter: navButtonIconFilter, opacity: navButtonIconOpacity }}><Img src={A.back} size={24} /></div>
           </button>
           <button
             aria-label="Скрыть баланс"
-            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: "1px solid #fff", background: "rgba(255,255,255,.56)", boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
+            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: navButtonBorder, background: navButtonBackground, boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
           >
-            <div style={{ filter: "brightness(0) saturate(100%) invert(10%) sepia(8%) saturate(727%) hue-rotate(169deg) brightness(92%) contrast(91%)" }}><Img src={A.hide} size={24} /></div>
+            <div style={{ filter: navButtonIconFilter, opacity: navButtonIconOpacity }}><Img src={A.hide} size={24} /></div>
           </button>
         </div>
       </div>
@@ -351,7 +357,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
           pointerEvents: "auto",
         }}
       >
-        <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 16px", opacity: headerContentOpacity, transform: `translateY(${-16 * headerCollapseProgress}px) scale(${headerControlScale})`, transformOrigin: "top center", pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+        <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 16px", opacity: 0, pointerEvents: "none" }}>
           <button onClick={() => router.push(homeHref)} style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.back} /></button>
           <button style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.hide} /></button>
         </div>
