@@ -393,7 +393,7 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         <ReviewProductRow icon={<ProductAssetIcon src={A.ghost} />} name="Палладий" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
       </ReviewSection>
 
-      {/* Page gap supplies 12px above; reserve button height plus 32px below. */}
+      {/* The parent gap provides the 12px below the final card. */}
       <div style={{ height: 84, flexShrink: 0, position: "relative" }}>
         <Link
           href={catalogHref}
