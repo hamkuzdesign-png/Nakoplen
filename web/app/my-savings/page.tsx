@@ -194,7 +194,6 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
   const [headerCollapseProgress, setHeaderCollapseProgress] = useState(0);
   const [navProgress, setNavProgress] = useState(0);
   const [ctaProgress, setCtaProgress] = useState(0);
-  const [ctaDocked, setCtaDocked] = useState(false);
   const scrollFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -217,14 +216,10 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
         const nextNavProgress = reduceMotion ? (rawNavProgress >= 1 ? 1 : 0) : rawNavProgress * rawNavProgress * (3 - 2 * rawNavProgress);
         const distanceToEnd = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
         const rawCtaProgress = Math.min(1, Math.max(0, 1 - distanceToEnd / 80));
-        // Near the end, move the CTA into the reserved bottom slot. The page
-        // gap then guarantees a 12px distance from the last white card.
-        const nextCtaDocked = distanceToEnd <= 28;
 
         setHeaderCollapseProgress((current) => Math.abs(current - nextHeaderProgress) > 0.01 ? nextHeaderProgress : current);
         setNavProgress((current) => Math.abs(current - nextNavProgress) > 0.01 ? nextNavProgress : current);
         setCtaProgress((current) => Math.abs(current - rawCtaProgress) > 0.01 ? rawCtaProgress : current);
-        setCtaDocked((current) => current === nextCtaDocked ? current : nextCtaDocked);
       });
     };
 
@@ -399,15 +394,14 @@ function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: Return
       </ReviewSection>
 
       {/* The parent gap provides the 12px below the final card. */}
-      <div style={{ height: 52, flexShrink: 0, position: "relative" }}>
+      <div style={{ height: 84, flexShrink: 0, position: "relative" }}>
         <Link
           href={catalogHref}
           aria-label="Новый продукт"
           style={{
-          position: ctaDocked ? "absolute" : "fixed",
-          top: ctaDocked ? 0 : undefined,
+          position: "fixed",
           left: "50%",
-          bottom: ctaDocked ? undefined : `calc(${ctaBottom}px + env(safe-area-inset-bottom))`,
+          bottom: `calc(${ctaBottom}px + env(safe-area-inset-bottom))`,
           transform: "translateX(-50%)",
           zIndex: 10,
           width: `min(calc(100vw - 40px), ${ctaWidth}px)`,
