@@ -1,5 +1,5 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
@@ -116,6 +116,272 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
+function ReviewProductRow({ icon, name, amount, subtitle, income }: {
+  icon: React.ReactNode; name: string; amount: string; subtitle: string; income?: string;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px", minHeight: 72 }}>
+      {icon}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+        <p style={{ fontFamily: "'MTS Compact'", fontSize: 14, color: "#626c77", lineHeight: "18px" }}>{name}</p>
+        <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 17, color: "#1d2023", lineHeight: "20px" }}>{amount}</p>
+        <p style={{ fontFamily: "'MTS Compact'", fontSize: 14, color: "#626c77", lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subtitle}</p>
+      </div>
+      {income && <p style={{ fontFamily: "'MTS Compact'", fontSize: 14, color: "#00a832", lineHeight: "20px", whiteSpace: "nowrap" }}>{income}</p>}
+    </div>
+  );
+}
+
+function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ background: "#fff", borderRadius: 32, overflow: "hidden", padding: "12px 0 16px", position: "relative", zIndex: 2 }}>
+      <div style={{ padding: "12px 20px 8px", fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#626c77", lineHeight: "20px", textTransform: "uppercase" }}>{title}</div>
+      {children}
+    </section>
+  );
+}
+
+function ReviewOffer({ title, subtitle, href }: { title: string; subtitle: string; href: string }) {
+  return (
+    <Link href={href} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 20px", textDecoration: "none" }}>
+      <div style={{ background: "#f2f3f7", borderRadius: 16, width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Img src={A.add} size={24} /></div>
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#1d2023", lineHeight: "18px" }}>{title}</p>
+        <p style={{ fontFamily: "'MTS Compact'", fontSize: 14, color: "#626c77", lineHeight: "18px" }}>{subtitle}</p>
+      </div>
+    </Link>
+  );
+}
+
+function ReviewSavingsScreen({ router, homeHref, catalogHref }: { router: ReturnType<typeof useRouter>; homeHref: string; catalogHref: string }) {
+  // Одна непрерывная траектория как в Telegram: главный элемент начинает
+  // движение до шторки, постепенно уменьшается и становится заголовком навбара.
+  const HEADER_COLLAPSE_START = 80;
+  const HEADER_COLLAPSE_DISTANCE = 220;
+  const [headerCollapseProgress, setHeaderCollapseProgress] = useState(0);
+  const [navProgress, setNavProgress] = useState(0);
+  const [ctaProgress, setCtaProgress] = useState(0);
+  const scrollFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const updateEndState = () => {
+      if (scrollFrameRef.current !== null) return;
+
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        scrollFrameRef.current = null;
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        // Шапка остаётся неподвижной, пока пользователь видит весь верхний
+        // блок. Затем навбар проявляется чуть раньше суммы: у неё всегда есть
+        // подложка, и она не пересекается с карточками контента.
+        const rawHeaderProgress = Math.min(1, Math.max(0, (window.scrollY - HEADER_COLLAPSE_START) / HEADER_COLLAPSE_DISTANCE));
+        // Подложка появляется чуть позже движения суммы — только когда под ней
+        // начинает проходить контент.
+        const rawNavProgress = Math.min(1, Math.max(0, (window.scrollY - 150) / 150));
+        const rawCtaProgress = Math.min(1, Math.max(0, (window.scrollY - 80) / 360));
+        // Smoothstep даёт мягкое начало и окончание перехода, сохраняя
+        // непосредственную связь навбара с движением пальца.
+        const nextHeaderProgress = reduceMotion ? (rawHeaderProgress > 0 ? 1 : 0) : rawHeaderProgress * rawHeaderProgress * (3 - 2 * rawHeaderProgress);
+        const nextNavProgress = reduceMotion ? (rawNavProgress >= 1 ? 1 : 0) : rawNavProgress * rawNavProgress * (3 - 2 * rawNavProgress);
+
+        setHeaderCollapseProgress((current) => Math.abs(current - nextHeaderProgress) > 0.01 ? nextHeaderProgress : current);
+        setNavProgress((current) => Math.abs(current - nextNavProgress) > 0.01 ? nextNavProgress : current);
+        setCtaProgress((current) => Math.abs(current - rawCtaProgress) > 0.01 ? rawCtaProgress : current);
+      });
+    };
+
+    updateEndState();
+    window.addEventListener("scroll", updateEndState, { passive: true });
+    window.addEventListener("resize", updateEndState);
+    return () => {
+      window.removeEventListener("scroll", updateEndState);
+      window.removeEventListener("resize", updateEndState);
+      if (scrollFrameRef.current !== null) window.cancelAnimationFrame(scrollFrameRef.current);
+    };
+  }, []);
+
+  const balanceScale = 1 - headerCollapseProgress * 0.5625;
+  const balanceColor = `rgb(${Math.round(250 - navProgress * 221)}, ${Math.round(250 - navProgress * 218)}, ${Math.round(250 - navProgress * 215)})`;
+  // Второстепенные элементы исчезают постепенно в первой трети траектории;
+  // при обратном скролле они возвращаются только когда у суммы снова есть место.
+  const headerContentOpacity = 1 - Math.max(0, Math.min(1, (headerCollapseProgress - 0.06) / 0.28));
+  const ctaWidth = 173 + 162 * ctaProgress;
+  const ctaHeight = 44 + 8 * ctaProgress;
+
+  return (
+    <div className="screen" style={{ background: "#f2f3f7", gap: 12, paddingBottom: 104, overflowX: "clip" }}>
+      <div className="top-gradient" />
+
+      {/* Одна и та же сумма морфится из крупного заголовка в центр навбара. */}
+      <p
+        style={{
+          position: "fixed",
+          zIndex: 22,
+          top: "calc(130px + env(safe-area-inset-top))",
+          left: "50%",
+          width: "min(calc(100% - 40px), 335px)",
+          transform: `translate(-50%, ${-106 * headerCollapseProgress}px) scale(${balanceScale})`,
+          transformOrigin: "top center",
+          fontFamily: "'MTS Wide'",
+          fontWeight: 500,
+          fontSize: 32,
+          lineHeight: "36px",
+          letterSpacing: `${0.7 * headerCollapseProgress}px`,
+          color: balanceColor,
+          textAlign: "center",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+          willChange: "transform, color",
+        }}
+      >652 000,32 ₽</p>
+
+      {/* Светлый навбар появляется после схлопывания большого хедера. */}
+      <div
+        aria-hidden={navProgress === 0}
+        style={{
+          position: "fixed",
+          zIndex: 20,
+          top: 0,
+          left: 0,
+          transform: `translateY(${-12 * (1 - navProgress)}px)`,
+          width: "100vw",
+          maxWidth: "none",
+          height: "calc(136px + env(safe-area-inset-top))",
+          paddingTop: "env(safe-area-inset-top)",
+          display: "flex",
+          alignItems: "flex-start",
+          opacity: navProgress,
+          pointerEvents: navProgress > 0.98 ? "auto" : "none",
+          overflow: "hidden",
+          willChange: "transform, opacity",
+        }}
+      >
+        {/* Непрозрачность подложки не даёт контенту пересекаться с суммой. */}
+        <div
+          style={{
+            position: "absolute",
+            zIndex: 0,
+            inset: 0,
+            pointerEvents: "none",
+            background: "linear-gradient(to bottom, rgba(242,243,247,.98) 0%, rgba(242,243,247,.92) 58%, rgba(242,243,247,0) 100%)",
+          }}
+        />
+        {/* Blur плавно убывает от 8px сверху до 0px снизу — без стыка-полоски. */}
+        <div
+          style={{
+            position: "absolute",
+            zIndex: 1,
+            inset: 0,
+            pointerEvents: "none",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            maskImage: "linear-gradient(to top, transparent 0%, #000 100%)",
+            WebkitMaskImage: "linear-gradient(to top, transparent 0%, #000 100%)",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 2, width: "100%", height: 44, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
+          <button
+            onClick={() => router.push(homeHref)}
+            aria-label="Назад"
+            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: "1px solid #fff", background: "rgba(255,255,255,.56)", boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
+          >
+            <div style={{ filter: "brightness(0) saturate(100%) invert(10%) sepia(8%) saturate(727%) hue-rotate(169deg) brightness(92%) contrast(91%)" }}><Img src={A.back} size={24} /></div>
+          </button>
+          <button
+            aria-label="Скрыть баланс"
+            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: 12, border: "1px solid #fff", background: "rgba(255,255,255,.56)", boxShadow: "0 0 20px rgba(97,114,137,.12)", backdropFilter: "blur(20px)", cursor: "pointer" }}
+          >
+            <div style={{ filter: "brightness(0) saturate(100%) invert(10%) sepia(8%) saturate(727%) hue-rotate(169deg) brightness(92%) contrast(91%)" }}><Img src={A.hide} size={24} /></div>
+          </button>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 3,
+          paddingBottom: 12,
+          pointerEvents: "auto",
+        }}
+      >
+        <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 16px", opacity: headerContentOpacity, transform: `translateY(${-8 * (1 - headerContentOpacity)}px)`, pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+          <button onClick={() => router.push(homeHref)} style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.back} /></button>
+          <button style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(20px)", borderRadius: 12, padding: 4, border: 0 }}><Img src={A.hide} /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "22px 20px 0", transform: `translateY(${-20 * (1 - headerContentOpacity)}px)`, opacity: headerContentOpacity, willChange: "transform, opacity" }}>
+          <p style={{ fontFamily: "'MTS Wide'", fontWeight: 500, fontSize: 20, color: "rgba(255,255,255,.56)", lineHeight: "24px" }}>Мои накопления</p>
+          <div aria-hidden style={{ width: "100%", height: 36 }} />
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ background: "rgba(38,205,88,.12)", borderRadius: 8, padding: "2px 6px", fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "#26cd58" }}>+8 546 ₽</span>
+            <span style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 14, color: "rgba(250,250,250,.72)" }}>за всё время</span><Img src={A.sort} size={16} opacity={0.7} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 4, padding: "40px 20px 0", opacity: headerContentOpacity, transform: `translateY(${-28 * (1 - headerContentOpacity)}px)`, pointerEvents: headerContentOpacity > 0.5 ? "auto" : "none", willChange: "transform, opacity" }}>
+          <BigBtn icon={A.plus} label="Пополнить" onClick={() => router.push("/topup")} />
+          <BigBtn icon={A.arrowUp} label="Перевести" onClick={() => router.push("/transfer")} />
+          <BigBtn icon={A.analytics} label="Аналитика" onClick={() => router.push("/analytics")} />
+        </div>
+      </div>
+
+      <ReviewSection title="Накопительные счета">
+        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="467 100 ₽" subtitle="15,5% на ежедневный остаток" income="+2 848 ₽" />
+        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
+        <ReviewProductRow icon={<DiscountIcon />} name="МТС Счёт" amount="30 000,32 ₽" subtitle="13% на минимальный остаток" income="+2 848 ₽" />
+        <ReviewOffer title="Кешбокс" subtitle="До 14% с ежедневной выплатой" href="/product/a2" />
+      </ReviewSection>
+
+      <ReviewSection title="Вклады">
+        <ReviewProductRow icon={<MoneyIcon />} name="Вклад МТС Плюс" amount="0 ₽" subtitle="Пополните до 25 августа 2026" />
+        <ReviewProductRow icon={<MoneyIcon />} name="Вклад МТС Максимум" amount="154 900 ₽" subtitle="18,3%, потратьте до 15.02 ещё 38 000 ₽" income="+2 848 ₽" />
+        <ReviewOffer title="Вклад «Плюс»" subtitle="Доход с удобными условиями" href="/product/d1" />
+      </ReviewSection>
+
+      <ReviewSection title="Цифровые активы">
+        <ReviewProductRow icon={<MoneyIcon />} name="ЦФА Глоринкор" amount="30 000,32 ₽" subtitle="До 8 ноября 2024" />
+        <ReviewProductRow icon={<MoneyIcon />} name="Лицевой счёт для ЦФА" amount="0 ₽" subtitle="Бессрочный" />
+        <ReviewProductRow icon={<MoneyIcon />} name="ЦФА МТС ФИНТЕХ" amount="30 000 ₽" subtitle="21% на 6 месяцев" />
+      </ReviewSection>
+
+      <ReviewSection title="Металлы">
+        <ReviewProductRow icon={<MoneyIcon />} name="Серебро" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<MoneyIcon />} name="Платина" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+        <ReviewProductRow icon={<MoneyIcon />} name="Палладий" amount="30 г." subtitle="1732,32 ₽ за 1 грамм" />
+      </ReviewSection>
+
+      <Link
+        href={catalogHref}
+        aria-label="Новый продукт"
+        style={{
+          position: "fixed",
+          zIndex: 10,
+          left: "50%",
+          bottom: "calc(40px + env(safe-area-inset-bottom))",
+          transform: "translateX(-50%)",
+          width: `min(calc(100vw - 40px), ${ctaWidth}px)`,
+          height: ctaHeight,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          borderRadius: 16,
+          background: "#1d2023",
+          color: "#fafafa",
+          textDecoration: "none",
+          fontFamily: "'MTS Wide'",
+          fontWeight: 700,
+          fontSize: 12,
+          lineHeight: "16px",
+          letterSpacing: ".5px",
+          whiteSpace: "nowrap",
+          boxShadow: "0 8px 24px rgba(29,32,35,.24)",
+          willChange: "width, height",
+          transition: "width 80ms linear, height 80ms linear",
+        }}
+      >НОВЫЙ ПРОДУКТ</Link>
+    </div>
+  );
+}
+
 export default function MySavingsPage() {
   return (
     <Suspense>
@@ -132,6 +398,10 @@ function MySavingsInner() {
   const isNewCatalog = useSearchParams().get("catalog") === "new";
   const catalogHref = `${isNewCatalog ? "/new-catalog" : "/catalog"}?scenario=owned`;
   const homeHref = isNewCatalog ? "/home?catalog=new" : "/home";
+
+  if (isNewCatalog) {
+    return <ReviewSavingsScreen router={router} homeHref={homeHref} catalogHref={catalogHref} />;
+  }
 
   return (
     <div className="screen page-enter" style={{ gap: 12, paddingBottom: 32 }}>
