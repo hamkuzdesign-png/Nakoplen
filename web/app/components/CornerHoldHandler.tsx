@@ -27,8 +27,11 @@ export default function CornerHoldHandler() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const locked = ["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "");
 
+  // В прототипах скрытый выход в меню отключён. Не рендерим и его область
+  // нажатия, иначе она перекрывает штатную кнопку «Назад» в левом верхнем углу.
+  if (locked) return null;
+
   function start() {
-    if (locked) return;
     timerRef.current = setTimeout(() => router.push("/"), HOLD_MS);
   }
   /** Clears the pending hold timer. Returns true if it was still pending
@@ -44,7 +47,6 @@ export default function CornerHoldHandler() {
   }
 
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
-    if (locked) return;
     if (!cancel()) return; // hold already completed and navigated — nothing to forward
     const el = e.currentTarget;
     const { clientX, clientY } = e;
