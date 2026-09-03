@@ -283,6 +283,16 @@ function PageInner() {
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
   const prototype = searchParams.get("prototype");
+  const prototypeHomeHref = scenario === "showcase_test" && prototype
+    ? `/showcase-test?prototype=${prototype}`
+    : null;
+  const goBack = () => {
+    if (prototypeHomeHref) {
+      router.push(prototypeHomeHref);
+      return;
+    }
+    router.back();
+  };
   const isUprid = scenario === "uprid" || scenario === "anon";
   const isOwned = scenario === "owned";
   const scenarioQuery = scenario ? `?scenario=${scenario}${prototype ? `&prototype=${prototype}` : ""}` : "";
@@ -410,7 +420,7 @@ function PageInner() {
       <div className="navbar">
         <div className="navbar-content">
           <div className="navbar-inner">
-            <button className="icon-button" aria-label="Назад" onClick={() => router.back()}>
+            <button className="icon-button" aria-label="Назад" onClick={goBack}>
               <img src={asset("/images/icon-back.svg")} alt="" />
             </button>
             <div className="icon-button" style={{ opacity: 0, pointerEvents: "none" }}>

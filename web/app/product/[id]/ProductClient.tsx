@@ -174,6 +174,16 @@ export default function ProductClient({ id }: { id: string }) {
   /* УПРИД / Аноним: «Бонусы за накопления» и «МТС Накопления» остаются без изменений */
   const scenario = searchParams.get("scenario");
   const prototype = searchParams.get("prototype");
+  const prototypeCatalogHref = scenario === "showcase_test" && prototype
+    ? `/new-catalog?scenario=showcase_test&prototype=${prototype}`
+    : null;
+  const goBack = () => {
+    if (prototypeCatalogHref) {
+      router.push(prototypeCatalogHref);
+      return;
+    }
+    router.back();
+  };
   const needsCard = (scenario === "uprid" || scenario === "anon") && id !== "a4" && id !== "m1";
   const needsIdentity = scenario === "anon" && (id === "a4" || id === "m1");
   /* Идентифицированный (без scenario): полный флоу открытия Кешбокса */
@@ -321,7 +331,7 @@ export default function ProductClient({ id }: { id: string }) {
 
         {/* Back button overlay */}
         <div className="pd-navbar">
-          <button className="pd-back-btn" onClick={() => router.back()} aria-label="Назад">
+          <button className="pd-back-btn" onClick={goBack} aria-label="Назад">
             <img src={asset("/images/icon-back.svg")} alt="" style={{ width: 24, height: 24, opacity: 0.9 }} />
           </button>
         </div>
