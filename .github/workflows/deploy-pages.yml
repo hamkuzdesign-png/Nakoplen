@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Redeploy the four showcase prototypes from the web app.
   build:
     runs-on: ubuntu-latest
     steps:
