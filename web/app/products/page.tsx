@@ -5,14 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
 
 const S = {
-  bgPrimary:   "#1d2023",
-  bgLower:     "#000000",
-  bgSecondary: "rgba(98,108,119,0.25)",
-  textPrimary:   "#fafafa",
-  textSecondary: "#969fa8",
+  bgPrimary:   "#ffffff",
+  bgLower:     "#f2f3f7",
+  bgSecondary: "#f2f3f7",
+  textPrimary:   "#1d2023",
+  textSecondary: "#626c77",
   white:    "#ffffff",
   red:      "#ff0032",
-  tabInactive: "rgba(255,255,255,0.46)",
+  tabInactive: "#6e7782",
 };
 
 const img = {
@@ -29,11 +29,11 @@ const img = {
   /* Эти иконки экспортированы конкретно с экрана "Продукты" в Figma — активная
      непрозрачность (100%) зашита в Продукты, а не в Главную, в отличие от
      набора иконок на главных экранах, где активна Главная. */
-  tabHome:    asset("/images/products/tabbar/tab-home.svg"),
-  tabPay:     asset("/images/products/tabbar/tab-pay.svg"),
-  tabHist:    asset("/images/products/tabbar/tab-hist.svg"),
-  tabProd:    asset("/images/products/tabbar/tab-prod.svg"),
-  tabMore:    asset("/images/products/tabbar/tab-more.svg"),
+  tabHome:    asset("/images/home/layout0.svg"),
+  tabPay:     asset("/images/home/layout1.svg"),
+  tabHist:    asset("/images/home/layout2.svg"),
+  tabProd:    asset("/images/home/layout3.svg"),
+  tabMore:    asset("/images/home/layout4.svg"),
 };
 
 /* Каждый сценарий главной ведёт в каталог со своим query-параметром —
@@ -88,11 +88,17 @@ export default function ProductsPage() {
 function ProductsPageInner() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "home";
-  const homeHref = `/${from}`;
-  const catalogHref = `/catalog${CATALOG_QUERY[from] ?? ""}`;
+  const prototype = searchParams.get("prototype");
+  const isShowcasePrototype = ["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "");
+  const homeHref = isShowcasePrototype
+    ? `/showcase-test?prototype=${prototype}`
+    : `/${from}`;
+  const catalogHref = isShowcasePrototype
+    ? `/new-catalog?scenario=showcase_test&prototype=${prototype}`
+    : `/catalog${CATALOG_QUERY[from] ?? ""}`;
 
   return (
-    <div className="page-enter phone-width" style={{ height: "100dvh", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", background: "#000", overflow: "hidden", position: "relative" }}>
+    <div className="page-enter phone-width" style={{ height: "100dvh", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", display: "flex", flexDirection: "column", background: S.bgLower, overflow: "hidden", position: "relative" }}>
 
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
 
@@ -149,7 +155,7 @@ function ProductsPageInner() {
       </div>
 
       {/* TAB BAR */}
-      <div style={{ background: S.bgPrimary, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+      <div style={{ background: S.bgPrimary, borderTop: "1px solid rgba(188,195,208,0.5)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", height: 52, padding: "0 4px" }}>
           {[
             { src: img.tabHome, label: "Главная",  active: false, href: homeHref as string | null },
@@ -162,7 +168,7 @@ function ProductsPageInner() {
             const content = (
               <>
                 <Icon src={tab.src} size={24} />
-                <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: tab.active ? S.white : S.tabInactive, lineHeight: "16px", textAlign: "center" }}>{tab.label}</p>
+                <p style={{ fontFamily: "'MTS Compact'", fontWeight: 500, fontSize: 12, color: tab.active ? S.textPrimary : S.tabInactive, lineHeight: "16px", textAlign: "center" }}>{tab.label}</p>
               </>
             );
             return tab.href
