@@ -42,9 +42,26 @@ const STATUSES: Status[] = [
 const TEST_STATUSES: Status[] = [
   {
     title: "Первый сценарий",
-    desc: "Сценарий пока не настроен",
-    href: null,
+    desc: "Главная → Мои накопления → Каталог",
+    href: "/test-home",
   },
+  {
+    title: "Витрина тест",
+    desc: "Главная → Мои накопления → Каталог с фильтрами → Промо продуктов",
+    href: "/showcase-test",
+    badge: "для ревью",
+  },
+  ...([
+    ["Витрина тест — Кешбокс", "Кешбокс → экран успеха", "cashbox"],
+    ["Витрина тест — Вклад Плюс", "Вклад Плюс → экран успеха", "deposit"],
+    ["Витрина тест — Металлы", "Металлы → экран успеха", "metals"],
+    ["Витрина тест — МТС Накопления", "МТС Накопления → экран успеха", "mts"],
+  ] as const).map(([title, desc, prototype]) => ({
+    title,
+    desc,
+    href: `/showcase-test?prototype=${prototype}`,
+    badge: "для ревью",
+  })),
 ];
 
 export default function MenuPage() {
@@ -56,7 +73,7 @@ export default function MenuPage() {
       className="page-enter"
       style={{
         minHeight: "100svh",
-        background: "#1d2023",
+        background: "#f2f3f7",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -72,7 +89,7 @@ export default function MenuPage() {
             fontFamily: "'MTS Wide', sans-serif",
             fontWeight: 500,
             fontSize: 24,
-            color: "#fafafa",
+            color: "#1d2023",
             marginBottom: 4,
           }}
         >
@@ -90,7 +107,7 @@ export default function MenuPage() {
             marginTop: 20,
             marginBottom: 24,
             borderRadius: 20,
-            background: "rgba(98,108,119,0.25)",
+            background: "#ffffff",
           }}
         >
           {([
@@ -109,8 +126,8 @@ export default function MenuPage() {
                   height: 40,
                   border: 0,
                   borderRadius: 16,
-                  background: active ? "#fafafa" : "transparent",
-                  color: active ? "#1d2023" : "#969fa8",
+                  background: active ? "#1d2023" : "transparent",
+                  color: active ? "#ffffff" : "#626c77",
                   fontFamily: "'MTS Compact', sans-serif",
                   fontWeight: 500,
                   fontSize: 15,
@@ -135,7 +152,7 @@ export default function MenuPage() {
                       fontFamily: "'MTS Compact', sans-serif",
                       fontWeight: 500,
                       fontSize: 17,
-                      color: s.href ? "#fafafa" : "#626c77",
+                      color: s.href ? "#1d2023" : "#626c77",
                       lineHeight: "24px",
                     }}
                   >
@@ -147,8 +164,8 @@ export default function MenuPage() {
                         fontFamily: "'MTS Compact', sans-serif",
                         fontWeight: 500,
                         fontSize: 12,
-                        color: "#969fa8",
-                        background: "rgba(98,108,119,0.4)",
+                        color: "#626c77",
+                        background: "#f2f3f7",
                         borderRadius: 6,
                         padding: "2px 6px",
                         lineHeight: "16px",
@@ -163,7 +180,7 @@ export default function MenuPage() {
                         fontFamily: "'MTS Compact', sans-serif",
                         fontWeight: 700,
                         fontSize: 12,
-                        color: "#1d2023",
+                        color: "#ffffff",
                         background: "#26cd58",
                         borderRadius: 6,
                         padding: "2px 8px",
@@ -195,7 +212,7 @@ export default function MenuPage() {
             const cardStyle: React.CSSProperties = {
               display: "block",
               textDecoration: "none",
-              background: "rgba(98,108,119,0.25)",
+              background: "#ffffff",
               borderRadius: 20,
               padding: "16px 20px",
               opacity: s.href ? 1 : 0.5,
@@ -203,7 +220,10 @@ export default function MenuPage() {
             };
 
             return s.href ? (
-              <Link key={s.title} href={s.href} style={cardStyle}>
+              <Link key={s.title} href={s.href} onClick={(event) => {
+                event.preventDefault();
+                window.location.assign(s.href!);
+              }} style={cardStyle}>
                 {inner}
               </Link>
             ) : (

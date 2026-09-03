@@ -53,58 +53,54 @@ const BONUS_DETAIL = {
 
 const PRODUCTS: Record<string, ProductDetail> = {
   a1: {
-    heroBg: "linear-gradient(180deg, #1B3A7A 0%, #0D1E42 65%, #1d2023 100%)",
-    heroImg: asset("/images/prod-ejednevny.png"),
-    heroFull: asset("/images/hero-a1.png"),
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/EDPP.png"),
     title: "МТС Счёт — доход каждый день",
     subtitle: "Начисляем проценты на ежедневный остаток. Снимайте и пополняйте без ограничений",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 15,2% годовых",     desc: "Начисляем проценты на ежедневный остаток на счёте" },
-      { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Начисляем проценты каждый день, выплачиваем в конце месяца" },
-      { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время без потери процентов" },
-      { icon: asset("/images/chip-refill.png"),   title: "Пополнение в любое время",    desc: "Пополняйте счёт когда угодно, проценты начнут начисляться сразу" },
-      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Счёт застрахован АСВ на сумму до 1,4 млн рублей" },
+      { icon: asset("/images/ED-1-BULL.png"), title: "Ставка до 15,5% годовых", desc: "Процент зависит от тарифа — смотрите подробные условия" },
+      { icon: asset("/images/ED-2-BULL.png"), title: "Счёт растёт каждый день", desc: "Считаем процент на ежедневный остаток, зачисляем каждый месяц" },
+      { icon: asset("/images/ED-3-BULL.png"), title: "Снимайте и пополняйте", desc: "Без потери процентов и в любой момент" },
+      { icon: asset("/images/ED-4-BULL.png"), title: "Копите на цель", desc: "Выберите цель — ремонт, отпуск или машина. И копить будет проще" },
+      { icon: asset("/images/ED-5-BULL.png"), title: "Повышенный лимит в Премиум и Private", desc: "Получайте максимальную доходность на сумму до 10 млн ₽ в Премиум, до 50 млн ₽ — в Private" },
     ],
   },
   a2: {
-    heroBg: "linear-gradient(180deg, #574DC1 0%, #3730A3 50%, #1d2023 100%)",
-    heroImg: asset("/images/prod-keshboks.png"),
-    heroFull: asset("/images/hero-a2.png"),
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/KK.png"),
     title: "Кешбокс — карта заряжает счёт",
     subtitle: "Ежедневно зачисляем проценты. Для открытия счёта нужна карта МТС Деньги",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14% годовых",        desc: "Начните с базовой ставки 9% и увеличивайте её каждый день" },
-      { icon: asset("/images/chip-card.png"),     title: "Как начисляются проценты",     desc: "Покупайте по карте МТС Деньги каждый день на сумму от 350 ₽" },
-      { icon: asset("/images/chip-high-rate.png"),title: "Если не потратить 350 ₽",     desc: "Ставка станет 9%, но её снова можно увеличить" },
-      { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Выплачиваем доход каждый день на карту МТС Деньги" },
-      { icon: asset("/images/chip-pillow.png"),   title: "Максимальный доход",           desc: "Ставка 14% действует на любую сумму, которая лежит на счёте" },
+      { icon: asset("/images/1-MD.png"), title: "Ставка до 14% годовых", desc: "Начните с базовой ставки 9% и увеличивайте её каждый день" },
+      { icon: asset("/images/2-MD.png"), title: "Как начисляются проценты", desc: "Выплачиваем доход каждый день на карту МТС Деньги" },
+      { icon: asset("/images/3-MD.png"), title: "Максимальный доход", desc: "Ставка 14% действует на любую сумму, которая лежит на счёте" },
+      { icon: asset("/images/4-MD.png"), title: "Как повысить ставку", desc: "Покупайте по карте МТС Деньги каждый день на сумму от 350 ₽" },
+      { icon: asset("/images/5-MD.png"), title: "Если не потратить 350 ₽", desc: "Ставка станет 9%, но её снова можно увеличить" },
     ],
   },
   a3: {
-    heroBg: "linear-gradient(180deg, #0B5B47 0%, #063D30 65%, #1d2023 100%)",
-    heroImg: asset("/images/prod-minimalny.png"),
-    heroFull: asset("/images/hero-a3.png"),
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/Minimal.png"),
     title: "МТС Счёт — на минимальный остаток",
     subtitle: "Начисляем проценты на минимальный остаток за расчётный период",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 13% годовых",      desc: "Начисляем проценты на минимальный остаток за месяц" },
-      { icon: asset("/images/chip-coins.png"),    title: "Выплата процентов",            desc: "Проценты выплачиваем ежемесячно на карту МТС Деньги" },
-      { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время" },
-      { icon: asset("/images/chip-refill.png"),   title: "Пополнение в любое время",    desc: "Пополняйте счёт без ограничений по сумме" },
-      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Счёт застрахован АСВ на сумму до 1,4 млн рублей" },
+      { icon: asset("/images/1-MD.png"), title: "Ставка до 13% годовых", desc: "Зарплатным и премиальным клиентам, а всем остальным — 12,5%. Ставка действует без условий" },
+      { icon: asset("/images/2-MD.png"), title: "Как работает расчётный период", desc: "Например, вы пополнили счёт 8 мая. Первый расчётный период — до 30 мая, следующий — до 29 июня" },
+      { icon: asset("/images/3-MD.png"), title: "Если не планируете тратить", desc: "Выгодно выбирать счёт с доходом на минимальный остаток за месяц" },
+      { icon: asset("/images/4-MD.png"), title: "Если понадобятся деньги", desc: "Можно вывести наличные со счёта. Доход пересчитаем на новый остаток" },
+      { icon: asset("/images/5-MD.png"), title: "Выплаты каждый месяц", desc: "Начисляем и выплачиваем проценты в последний календарный день месяца" },
     ],
   },
   d1: {
-    heroBg: "linear-gradient(180deg, #0B4D2F 0%, #063320 65%, #1d2023 100%)",
-    heroImg: asset("/images/prod-vklad-plus.png"),
-    title: "Вклад Плюс — выбирайте валюту",
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/PL.png"),
+    title: "Вклад Плюс",
     subtitle: "Фиксированная доходность в рублях, юанях или дирхамах",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Ставка до 14% годовых",      desc: "Фиксированная ставка на весь срок вклада" },
-      { icon: asset("/images/chip-stable.png"),   title: "Выбор валюты",                  desc: "Открывайте в рублях, китайских юанях или дирхамах ОАЭ" },
-      { icon: asset("/images/chip-refill.png"),   title: "Пополнение вклада",            desc: "Пополняйте вклад в течение первых 30 дней" },
-      { icon: asset("/images/chip-lock.png"),     title: "Частичное снятие",             desc: "Возможность частичного снятия без потери процентов" },
-      { icon: asset("/images/chip-shield.png"),   title: "Застрахован государством",     desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
+      { icon: asset("/images/PL1.png"), title: "Выбирайте комфортный срок", desc: "Откройте вклад на 3–12 месяцев" },
+      { icon: asset("/images/PL2.png"), title: "Зафиксируйте сумму вклада", desc: "Минимум 10 000 ₽, максимальная сумма не ограничена" },
+      { icon: asset("/images/PL3.png"), title: "Пополните в течение 3 дней", desc: "Переводите себе до 30 млн ₽ в месяц без комиссии через СБП" },
+      { icon: asset("/images/PL4.png"), title: "Получите доходность до 14%", desc: "Подключите капитализацию процентов, чтобы заработать больше" },
     ],
   },
   d2: {
@@ -132,15 +128,15 @@ const PRODUCTS: Record<string, ProductDetail> = {
     ],
   },
   m1: {
-    heroBg: "linear-gradient(180deg, #0A1E3D 0%, #060F20 65%, #1d2023 100%)",
-    heroImg: asset("/images/prod-mts-nakopleniya.png"),
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/155.png"),
     title: "МТС Накопления",
     subtitle: "Рыночный инструмент с динамической доходностью и ежедневным начислением",
     features: [
-      { icon: asset("/images/chip-percent.png"),  title: "Доходность до 15% годовых", desc: "Динамическая доходность зависит от рынка" },
-      { icon: asset("/images/chip-coins.png"),    title: "Ежедневное начисление",        desc: "Проценты начисляются каждый день" },
-      { icon: asset("/images/chip-lock.png"),     title: "Снятие без ограничений",       desc: "Выводите деньги в любое время" },
-      { icon: asset("/images/chip-refill.png"),   title: "Пополнение счёта",             desc: "Пополняйте счёт без ограничений" },
+      { icon: asset("/images/TT1.png"), title: "Доход каждый день", desc: "Если положить от 100 ₽" },
+      { icon: asset("/images/TT2.png"), title: "Можно снять", desc: "Деньги доступны в любое время, но вывод занимает 2–3 рабочих дня" },
+      { icon: asset("/images/TT3.png"), title: "В основе цифровые облигации МТС", desc: "Они не меняют свои цену и не торгуются" },
+      { icon: asset("/images/TT4.png"), title: "Получите доходность до 14%", desc: "Подключите капитализацию процентов, чтобы заработать больше" },
     ],
   },
   m2: {
@@ -156,16 +152,14 @@ const PRODUCTS: Record<string, ProductDetail> = {
     ],
   },
   m3: {
-    heroBg: "linear-gradient(180deg, #4A3500 0%, #302300 65%, #1d2023 100%)",
-    heroImg: asset("/images/prod-metally.png"),
-    heroFull: asset("/images/hero-m3.png"),
-    title: "Металлы",
+    heroBg: "url('/images/bgpp.png') center / cover no-repeat",
+    heroImg: asset("/images/met.png"),
+    title: "Откройте металлический счёт",
     subtitle: "Сделки с золотом, серебром, платиной и палладием 24/7",
     features: [
-      { icon: asset("/images/chip-percent.png"), title: "Рыночная доходность",     desc: "Доходность зависит от динамики цен на металлы" },
-      { icon: asset("/images/chip-stable.png"),  title: "Выбор металла",                 desc: "Торгуйте золотом, серебром, платиной и палладием" },
-      { icon: asset("/images/chip-lock.png"),    title: "Торговля 24/7",                 desc: "Совершайте сделки круглосуточно" },
-      { icon: asset("/images/chip-coins.png"),   title: "Без хранения металла",          desc: "Обезличенный металлический счёт без физической выдачи" },
+      { icon: asset("/images/MET1.png"), title: "Начните с небольших вложений", desc: "Минимальная сумма покупки – 0,1 грамм" },
+      { icon: asset("/images/MET2.png"), title: "Без комиссии", desc: "Бесплатное открытие и обслуживание счёта" },
+      { icon: asset("/images/MET3.png"), title: "Ликвидно", desc: "Стоимость металлов стабильно растёт каждый год" },
     ],
   },
 };
@@ -179,10 +173,12 @@ export default function ProductClient({ id }: { id: string }) {
   const searchParams = useSearchParams();
   /* УПРИД / Аноним: «Бонусы за накопления» и «МТС Накопления» остаются без изменений */
   const scenario = searchParams.get("scenario");
+  const prototype = searchParams.get("prototype");
   const needsCard = (scenario === "uprid" || scenario === "anon") && id !== "a4" && id !== "m1";
   const needsIdentity = scenario === "anon" && (id === "a4" || id === "m1");
   /* Идентифицированный (без scenario): полный флоу открытия Кешбокса */
   const opensCashbox = !scenario && (id === "a2" || id === "b2");
+  const showcaseSuccess = scenario === "showcase_test" && ((prototype === "cashbox" && id === "a2") || (prototype === "deposit" && id === "d1") || (prototype === "metals" && id === "m3") || (prototype === "mts" && id === "m1"));
   const UNLOCK_FEATURE: Feature = {
     icon: asset("/images/chip-lock.png"),
     title: "Откройте доступ к продукту",
@@ -276,6 +272,7 @@ export default function ProductClient({ id }: { id: string }) {
   }
 
   const rawProduct = PRODUCTS[id];
+  const isSavingsPromo = id === "a1" || id === "a2" || id === "a3" || id === "b1" || id === "b2" || (id === "d1" && scenario === "showcase_test") || (id === "m3" && scenario === "showcase_test") || (id === "m1" && scenario === "showcase_test");
   /* Сценарий "созданные продукты": у пользователя уже открыт этот счёт по
      ставке 11,7%, а не по маркетинговым 15,2% — подменяем только текст ставки. */
   const product =
@@ -283,7 +280,7 @@ export default function ProductClient({ id }: { id: string }) {
       ? {
           ...rawProduct,
           features: rawProduct.features.map(f =>
-            f.title === "Ставка до 15,2% годовых" ? { ...f, title: "Ставка до 11,7% годовых" } : f
+            f.title === "Ставка до 15,5% годовых" ? { ...f, title: "Ставка до 11,7% годовых" } : f
           ),
         }
       : rawProduct;
@@ -297,7 +294,7 @@ export default function ProductClient({ id }: { id: string }) {
   }
 
   return (
-    <div className="pd-screen">
+    <div className={`pd-screen${isSavingsPromo ? " pd-screen-savings-promo" : ""}${id === "a1" || id === "b1" ? " pd-screen-savings-ed" : ""}${scenario === "showcase_test" && id === "a3" ? " pd-screen-savings-minimal-showcase" : ""}${scenario === "showcase_test" && id === "a2" ? " pd-screen-savings-cashbox-showcase" : ""}${scenario === "showcase_test" && id === "d1" ? " pd-screen-savings-deposit-showcase" : ""}${scenario === "showcase_test" && id === "m3" ? " pd-screen-savings-metals-showcase" : ""}${scenario === "showcase_test" && id === "m1" ? " pd-screen-savings-mts-showcase" : ""}`}>
       {/* Animated wrapper — kept separate from .pd-bottom so its transform
           doesn't create a containing block that breaks position:fixed */}
       <div className="page-enter" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -309,6 +306,16 @@ export default function ProductClient({ id }: { id: string }) {
         ) : (
           <div className="pd-hero" style={{ background: product.heroBg }}>
             <img src={product.heroImg} alt="" className="pd-hero-img" />
+            {scenario === "showcase_test" && id === "m1" ? (
+              <div className="pd-term-chips" aria-label="Срок накопления">
+                {["Без срока", "1 мес", "3 мес", "4 мес", "от 1 дня"].map((label, i) => (
+                  <span key={label} className={`pd-term-chip${i === 0 ? " is-active" : ""}`}>{label}</span>
+                ))}
+              </div>
+            ) : null}
+            {id === "a1" || id === "b1" || (scenario === "showcase_test" && id === "a3") || (scenario === "showcase_test" && id === "a2") || (scenario === "showcase_test" && id === "d1") || (scenario === "showcase_test" && id === "m3") ? (
+              <p className="pd-promo-title">{id === "a2" ? "Кешбокс — карта заряжает счёт до 14%" : id === "d1" || id === "m3" ? product.title : <>Накопительный счёт<br />на {id === "a3" ? "минимальный" : "ежедневный"} остаток</>}</p>
+            ) : null}
           </div>
         )}
 
@@ -322,10 +329,12 @@ export default function ProductClient({ id }: { id: string }) {
         {/* Content panel */}
         <div className="pd-content">
           {/* Title block */}
-          <div className="pd-title-block">
-            <p className="pd-title">{product.title}</p>
-            <p className="pd-subtitle">{product.subtitle}</p>
-          </div>
+          {!isSavingsPromo && (
+            <div className="pd-title-block">
+              <p className="pd-title">{product.title}</p>
+              <p className="pd-subtitle">{product.subtitle}</p>
+            </div>
+          )}
 
           {/* Features */}
           <div className="pd-features">
@@ -342,20 +351,28 @@ export default function ProductClient({ id }: { id: string }) {
             ))}
           </div>
 
-          {/* Terms link */}
-          <div className="pd-terms">
-            <span className="pd-terms-link">Условия счёта</span>
-          </div>
+          {/* Terms link stays in the content for regular product screens. */}
+          {!isSavingsPromo && (
+            <div className="pd-terms">
+              <span className="pd-terms-link">Условия счёта</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Fixed bottom CTA */}
       <div className="pd-bottom">
         <button className="pd-cta-btn" onClick={() => {
-          if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
+          if (showcaseSuccess) router.push(`/showcase-success?product=${id}`);
+          else if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
           else if (needsCard) router.push(`/card${scenario ? `?scenario=${scenario}` : ""}`);
           else if (opensCashbox) router.push("/open-cashbox");
-        }}>{needsIdentity ? "Подтвердить личность" : needsCard ? "Оформить карту" : "Продолжить"}</button>
+        }}>{needsIdentity ? "Подтвердить личность" : needsCard ? "Оформить карту" : id === "m1" ? "Открыть счёт" : "Продолжить"}</button>
+        {isSavingsPromo && (id === "m1" ? (
+          <div className="pd-promo-bottom-label">Без срока · 15% годовых</div>
+        ) : (
+          <div className="pd-terms"><span className="pd-terms-link">Условия счёта</span></div>
+        ))}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 /**
@@ -12,16 +12,18 @@ import { useEffect } from "react";
  */
 export default function VolumeKeyHandler() {
   const router = useRouter();
+  const prototype = useSearchParams().get("prototype");
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "AudioVolumeUp" || e.code === "AudioVolumeUp") {
+        if (["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "")) return;
         router.push("/");
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [router]);
+  }, [router, prototype]);
 
   return null;
 }
