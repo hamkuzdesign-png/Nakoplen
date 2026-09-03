@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, type PointerEvent } from "react";
 
 const HOLD_MS = 1800;
@@ -23,12 +23,9 @@ const CORNER_SIZE = 64;
  */
 export default function CornerHoldHandler() {
   const router = useRouter();
-  const prototype = useSearchParams().get("prototype");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const locked = ["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "");
 
   function start() {
-    if (locked) return;
     timerRef.current = setTimeout(() => router.push("/"), HOLD_MS);
   }
   /** Clears the pending hold timer. Returns true if it was still pending
@@ -44,7 +41,6 @@ export default function CornerHoldHandler() {
   }
 
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
-    if (locked) return;
     if (!cancel()) return; // hold already completed and navigated — nothing to forward
     const el = e.currentTarget;
     const { clientX, clientY } = e;

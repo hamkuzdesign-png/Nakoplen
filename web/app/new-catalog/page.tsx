@@ -17,33 +17,33 @@ type CardData = {
 
 /* ── DATA ── */
 const BEST: CardData[] = [
-  { id: "m2", title: "Цифровые активы", desc: "Аналоги ценных бумаг и других активов", badge: "До 22%", img: asset("/images/CFA.png") },
-  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/ED.png") },
+  { id: "b1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,2%", img: asset("/images/prod-ejednevny.png") },
+  { id: "b2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 14%", img: asset("/images/prod-keshboks.png") },
 ];
 
 const ACCOUNTS: CardData[] = [
-  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,5%", img: asset("/images/ED.png") },
-  { id: "a2", title: "Кешбокс", desc: "Выплачиваем проценты на карту каждый день", badge: "До 14%", img: asset("/images/Keshbox.png") },
-  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 13%", img: asset("/images/MD.png") },
-  { id: "a4", title: "Бонусы за накопления", desc: "Держите деньги на счёте и получайте бонусы", badge: "", img: asset("/images/BONUS.png") },
+  { id: "a1", title: "МТС Счёт", desc: "На ежедневный остаток", badge: "До 15,2%", img: asset("/images/prod-ejednevny.png") },
+  { id: "a2", title: "Счёт «Кешбокс»", desc: "Выплачиваем доход на карту ежедневно", badge: "До 14%", img: asset("/images/prod-keshboks.png") },
+  { id: "a3", title: "МТС Счёт", desc: "На минимальный остаток", badge: "До 13%", img: asset("/images/prod-minimalny.png") },
+  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
 ];
 
 const DEPOSITS: CardData[] = [
-  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах. 3–12 месяцев", badge: "До 14%", img: asset("/images/PLUS.png") },
-  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. 6 или 12 месяцев", badge: "До 14%", img: asset("/images/DENG.png") },
-  { id: "d3", title: "Вклад МТС Максимум", desc: "В рублях. На 4, 6 или 12 месяцев", badge: "До 14,2%", img: asset("/images/DENG.png") },
+  { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14%", img: asset("/images/prod-vklad-plus.png") },
+  { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 13,5%", img: asset("/images/prod-mts-dengi.png") },
+  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,2%", img: asset("/images/prod-mts-maksimum.png") },
 ];
 
 /* УПРИД: уже доступные продукты, не требующие полной идентификации */
 const AVAILABLE_NOW: CardData[] = [
-  { id: "a4", title: "Бонусы за накопления", desc: "Держите деньги на счёте и получайте бонусы", badge: "", img: asset("/images/BONUS.png") },
+  { id: "a4", title: "Бонусы за накопления", desc: "Получайте бонусы за деньги на счёте", badge: "", img: asset("/images/prod-bonusy.png") },
   { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15%", img: asset("/images/prod-mts-nakopleniya.png") },
 ];
 
 const ALTERNATIVE: CardData[] = [
   { id: "m1", title: "МТС Накопления", desc: "Проценты начисляются ежедневно", badge: "До 15%", img: asset("/images/prod-mts-nakopleniya.png") },
-  { id: "m2", title: "Цифровые активы", desc: "Аналоги ценных бумаг и других активов", badge: "До 22%", img: asset("/images/CFA.png") },
-  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "", img: asset("/images/METALL.png") },
+  { id: "m2", title: "Цифровые активы", desc: "Инвестируйте в активы новым способом", badge: "До 20%", img: asset("/images/prod-tsifrovye.png") },
+  { id: "m3", title: "Металлы", desc: "Сделки с золотом, серебром, платиной и палладием 24/7", badge: "", img: asset("/images/prod-metally.png") },
 ];
 
 const FAQ_ITEMS = [
@@ -124,13 +124,15 @@ function filterCards(cards: CardData[], period: Period, chips: ChipKey[]): CardD
 /* 3D-рендеры конкретных чисел — под каждую ставку, которая встречается в карточках ниже. */
 const RATE_HERO_IMAGES: Record<string, string> = {
   "13":   asset("/images/rates/rate-13.png"),
+  "13,5": asset("/images/rates/rate-13,5.png"),
   "14":   asset("/images/rates/rate-14.png"),
   "14,2": asset("/images/rates/rate-14,2.png"),
-  "15,5": asset("/images/rates/rate-15,5.png"),
   "15":   asset("/images/rates/rate-15.png"),
-  "22":   asset("/images/rates/rate-22.png"),
+  "15,2": asset("/images/rates/rate-15,2.png"),
+  "11,7": asset("/images/rates/rate-11,7.png"),
+  "20":   asset("/images/rates/rate-20.png"),
 };
-const DEFAULT_HERO_RATE = "22";
+const DEFAULT_HERO_RATE = "20";
 
 function parseRate(badge: string): number | null {
   const match = badge.match(/[\d]+(?:,\d+)?/);
@@ -282,10 +284,9 @@ function PageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
-  const prototype = searchParams.get("prototype");
   const isUprid = scenario === "uprid" || scenario === "anon";
   const isOwned = scenario === "owned";
-  const scenarioQuery = scenario ? `?scenario=${scenario}${prototype ? `&prototype=${prototype}` : ""}` : "";
+  const scenarioQuery = scenario ? `?scenario=${scenario}` : "";
   const [period, setPeriod] = useState<Period>("all");
   const [activeChips, setActiveChips] = useState<ChipKey[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -376,8 +377,12 @@ function PageInner() {
   /* УПРИД: «Доступно прямо сейчас» — только для сценария УПРИД, в дефолтном состоянии */
   const visibleAvailableNow = isUprid && isDefaultState ? AVAILABLE_NOW : [];
 
-  /* Ставки карточек соответствуют актуальному макету каталога. */
-  const applyOwnedRate = (cards: CardData[]) => cards;
+  /* Карточки "МТС Счёт" (ежедневный остаток, b1/a1) в сценарии "созданные продукты"
+     показывают уже открытую пользователю ставку 11,7% вместо маркетинговых 15,2%. */
+  const applyOwnedRate = (cards: CardData[]) =>
+    isOwned
+      ? cards.map(c => (c.id === "b1" || c.id === "a1") ? { ...c, badge: "До 11,7%" } : c)
+      : cards;
   const displayAccounts = applyOwnedRate(visibleAccounts);
 
   /* «Лучшие предложения» видны и при фильтрации: в дефолте это кураторская
@@ -400,7 +405,7 @@ function PageInner() {
     ...visibleDeposits,
     ...visibleAlt,
   ]);
-  const heroRateImg = RATE_HERO_IMAGES[heroRateKey] ?? RATE_HERO_IMAGES[DEFAULT_HERO_RATE];
+  const heroRateImg = RATE_HERO_IMAGES[heroRateKey];
 
   return (
     <div className="screen page-enter nc-catalog" id="top">
@@ -435,7 +440,7 @@ function PageInner() {
               <img src={asset("/images/hero-bg.png")} alt="" className="cat-hero-bg" aria-hidden />
               <div className="cat-hero-header">
                 <p className="cat-title">Накопления</p>
-                <p className="cat-subtitle">Выберите условия — подберём варианты</p>
+                <p className="cat-subtitle">Укажите критерии — покажем варианты</p>
               </div>
               <div className="cat-hero-content">
                 <div className="cat-pct-row">
@@ -508,7 +513,7 @@ function PageInner() {
           <Section label="Доступно прямо сейчас" icon={asset("/images/icon-device-reservation.svg")} cards={visibleAvailableNow} first={displayBest.length === 0 && visibleAvailableNow.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Накопительные счета" cards={displayAccounts} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
           <Section label="Вклады" cards={visibleDeposits} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length > 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
-          <Section label="Цифровые активы" cards={visibleAlt} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
+          <Section label="Альтернативные продукты" cards={visibleAlt} first={displayBest.length === 0 && visibleAvailableNow.length === 0 && visibleAccounts.length === 0 && visibleDeposits.length === 0} onCardClick={id => router.push(`/product/${id}${scenarioQuery}`)} />
         </div>
         {showSkeleton && <SkeletonGrid sections={[displayBest, visibleAvailableNow, visibleAccounts, visibleDeposits, visibleAlt]} />}
       </div>
@@ -516,7 +521,7 @@ function PageInner() {
       {/* FAQ */}
       <div className="faq-panel">
         <div className="faq-title-row">
-          <span className="faq-title">Подробнее о накоплениях</span>
+          <span className="faq-title">Будет полезно</span>
         </div>
         <div className="faq-list">
           {FAQ_ITEMS.map(item => (
@@ -557,7 +562,7 @@ function PageInner() {
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", padding: "0 24px" }}>
-            <p className="end-title">Это всё</p>
+            <p className="end-title">Конец каталога</p>
             <p className="end-subtitle">Показали все накопительные продукты</p>
           </div>
         </div>

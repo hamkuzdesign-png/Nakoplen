@@ -12,9 +12,6 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   basePath,
   assetPrefix: basePath ? `${basePath}/` : undefined,
-  // Keep the local dev server rooted in this Next app. The repository also
-  // contains a separate Expo app at the workspace root.
-  turbopack: { root: process.cwd() },
 };
 
 export default nextConfig;
