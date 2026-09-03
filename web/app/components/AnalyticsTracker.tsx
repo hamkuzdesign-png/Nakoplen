@@ -15,6 +15,7 @@ const SCENARIO_ENTRY_ROUTES: Record<string, Scenario> = {
   "/home-uprid": "uprid",
   "/home-identified": "identified",
   "/home": "has_products",
+  "/showcase-test": "showcase_test",
 };
 
 function resolveScenario(pathname: string, prevScenario: Scenario): Scenario {
