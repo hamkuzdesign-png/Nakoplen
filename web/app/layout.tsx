@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
 import "./globals.css";
 import VolumeKeyHandler from "./components/VolumeKeyHandler";
 import CornerHoldHandler from "./components/CornerHoldHandler";
@@ -28,11 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru">
       <body>
-        <Suspense>
-          <VolumeKeyHandler />
-          <CornerHoldHandler />
-          <AnalyticsTracker />
-        </Suspense>
+        <VolumeKeyHandler />
+        <CornerHoldHandler />
+        <AnalyticsTracker />
         {children}
       </body>
     </html>
