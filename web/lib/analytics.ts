@@ -9,7 +9,7 @@
  * localStorage-only, exactly like before.
  */
 
-export type Scenario = "anon" | "uprid" | "identified" | "has_products" | "showcase_test" | null;
+export type Scenario = "anon" | "uprid" | "identified" | "has_products" | null;
 
 type BaseEvent = {
   /** Participant/session ID — see getParticipantId(). Lets 12-user test data be told apart. */
