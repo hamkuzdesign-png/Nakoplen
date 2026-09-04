@@ -21,14 +21,28 @@ export default function YandexMetricaTracker() {
       window.ym = queue;
       const script = document.createElement("script");
       script.async = true;
-      script.src = "https://mc.yandex.ru/metrika/tag.js";
+      script.src = `https://mc.yandex.ru/metrika/tag.js?id=${id}`;
       document.head.appendChild(script);
-      window.ym(id, "init", { defer: true, clickmap: true, webvisor: true, trackLinks: true, accurateTrackBounce: true });
+      window.ym(id, "init", {
+        ssr: true,
+        webvisor: true,
+        clickmap: true,
+        ecommerce: "dataLayer",
+        referrer: document.referrer,
+        url: window.location.href,
+        accurateTrackBounce: true,
+        trackLinks: true,
+      });
     }
 
     if (pathname === "/showcase-test" && prototype) resetShowcaseJourney(prototype);
     window.ym(id, "hit", `${pathname}${window.location.search}`, { params: { prototype: prototype ?? "none" } });
   }, [pathname, prototype]);
 
-  return null;
+  const id = getMetrikaCounterId();
+  return id ? (
+    <noscript>
+      <div><img src={`https://mc.yandex.ru/watch/${id}`} style={{ position: "absolute", left: "-9999px" }} alt="" /></div>
+    </noscript>
+  ) : null;
 }
