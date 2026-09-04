@@ -66,6 +66,10 @@ export function reportShowcaseCompletionTime(prototype: ShowcasePrototype) {
   const startedAt = Number(window.sessionStorage.getItem(key));
   if (!Number.isFinite(startedAt) || startedAt <= 0) return;
   const seconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+  window.ym?.(getMetrikaCounterId() ?? 0, "params", {
+    showcase_prototype: prototype,
+    showcase_elapsed_seconds: seconds,
+  });
   reachGoal(`completion_time_${prototype}`, prototype, { elapsed_seconds: String(seconds) });
   window.sessionStorage.removeItem(key);
 }
