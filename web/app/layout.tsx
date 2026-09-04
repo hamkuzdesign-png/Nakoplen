@@ -4,6 +4,7 @@ import "./globals.css";
 import VolumeKeyHandler from "./components/VolumeKeyHandler";
 import CornerHoldHandler from "./components/CornerHoldHandler";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import YandexMetricaTracker from "./components/YandexMetricaTracker";
 
 export const metadata: Metadata = {
   title: "Накопления — МТС Банк",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <VolumeKeyHandler />
           <CornerHoldHandler />
           <AnalyticsTracker />
+          <YandexMetricaTracker />
         </Suspense>
         {children}
       </body>

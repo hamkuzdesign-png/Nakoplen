@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
+import { getShowcasePrototype, recordShowcaseProductVisit, reportShortestPath } from "@/lib/metrika";
 
 type Feature = {
   icon: string;
@@ -174,6 +176,7 @@ export default function ProductClient({ id }: { id: string }) {
   /* УПРИД / Аноним: «Бонусы за накопления» и «МТС Накопления» остаются без изменений */
   const scenario = searchParams.get("scenario");
   const prototype = searchParams.get("prototype");
+  const showcasePrototype = scenario === "showcase_test" ? getShowcasePrototype(prototype) : null;
   const prototypeCatalogHref = scenario === "showcase_test" && prototype
     ? `/new-catalog?scenario=showcase_test&prototype=${prototype}`
     : null;
@@ -189,6 +192,9 @@ export default function ProductClient({ id }: { id: string }) {
   /* Идентифицированный (без scenario): полный флоу открытия Кешбокса */
   const opensCashbox = !scenario && (id === "a2" || id === "b2");
   const showcaseSuccess = scenario === "showcase_test" && ((prototype === "cashbox" && id === "a2") || (prototype === "deposit" && id === "d1") || (prototype === "metals" && id === "m3") || (prototype === "mts" && id === "m1"));
+  useEffect(() => {
+    if (showcasePrototype) recordShowcaseProductVisit(showcasePrototype, id);
+  }, [id, showcasePrototype]);
   const UNLOCK_FEATURE: Feature = {
     icon: asset("/images/chip-lock.png"),
     title: "Откройте доступ к продукту",
@@ -373,7 +379,10 @@ export default function ProductClient({ id }: { id: string }) {
       {/* Fixed bottom CTA */}
       <div className="pd-bottom">
         <button className="pd-cta-btn" onClick={() => {
-          if (showcaseSuccess) router.push(`/showcase-success?product=${id}`);
+          if (showcaseSuccess) {
+            if (showcasePrototype) reportShortestPath(showcasePrototype);
+            router.push(`/showcase-success?product=${id}`);
+          }
           else if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
           else if (needsCard) router.push(`/card${scenario ? `?scenario=${scenario}` : ""}`);
           else if (opensCashbox) router.push("/open-cashbox");

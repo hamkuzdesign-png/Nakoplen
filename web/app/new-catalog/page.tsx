@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, Suspense, type PointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
+import { getShowcasePrototype, reportFilterUsed } from "@/lib/metrika";
 
 /* ── TYPES ── */
 type Period = "all" | "no-term" | "3m" | "6m" | "12m";
@@ -283,6 +284,7 @@ function PageInner() {
   const searchParams = useSearchParams();
   const scenario = searchParams.get("scenario");
   const prototype = searchParams.get("prototype");
+  const showcasePrototype = scenario === "showcase_test" ? getShowcasePrototype(prototype) : null;
   const prototypeHomeHref = scenario === "showcase_test" && prototype
     ? `/showcase-test?prototype=${prototype}`
     : null;
@@ -336,6 +338,7 @@ function PageInner() {
   /* Смена срока: сохраняем те чипы, что остаются доступны в новом сроке
      («Сохранились фильтры которые доступны в этом сроке», Figma). */
   const selectPeriod = (key: Period) => {
+    if (showcasePrototype) reportFilterUsed(showcasePrototype, { filter: "period", value: key });
     triggerSkeleton();
     setPeriod(key);
     setActiveChips(prev => prev.filter(c => countMatching(key, [c]) > 0));
@@ -344,6 +347,7 @@ function PageInner() {
   /* Задизэйбленный чип не нажимается вовсе (onClick на него не вешается),
      поэтому здесь достаточно переключить набор без перепроверки. */
   const toggleChip = (key: ChipKey) => {
+    if (showcasePrototype) reportFilterUsed(showcasePrototype, { filter: "chip", value: key });
     triggerSkeleton();
     setActiveChips(prev => withToggled(prev, key));
   };
