@@ -220,10 +220,7 @@ export default function MenuPage() {
             };
 
             return s.href ? (
-              <Link key={s.title} href={s.href} onClick={(event) => {
-                event.preventDefault();
-                window.location.assign(s.href!);
-              }} style={cardStyle}>
+              <Link key={s.title} href={s.href} style={cardStyle}>
                 {inner}
               </Link>
             ) : (
