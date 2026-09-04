@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { getMetrikaCounterId, getShowcasePrototype, resetShowcaseJourney, type YandexMetricaFunction } from "@/lib/metrika";
+import { getMetrikaCounterId, getShowcasePrototype, type YandexMetricaFunction } from "@/lib/metrika";
 
 /** Enables click maps/Webvisor and sends virtual pageviews for SPA navigation. */
 export default function YandexMetricaTracker() {
@@ -35,7 +35,6 @@ export default function YandexMetricaTracker() {
       });
     }
 
-    if (pathname === "/showcase-test" && prototype) resetShowcaseJourney(prototype);
     window.ym(id, "hit", `${pathname}${window.location.search}`, { params: { prototype: prototype ?? "none" } });
   }, [pathname, prototype]);
 

@@ -58,7 +58,13 @@ export function reportShortestPath(prototype: ShowcasePrototype) {
 
 export function startShowcaseTimer(prototype: ShowcasePrototype) {
   const key = `ym_showcase_started_${prototype}`;
-  if (!window.sessionStorage.getItem(key)) window.sessionStorage.setItem(key, String(Date.now()));
+  if (window.sessionStorage.getItem(key)) return;
+
+  // A missing timer means this is a genuinely new attempt. Returning to the
+  // home screen during an active attempt must not erase the accumulated path.
+  window.sessionStorage.removeItem(`ym_filter_used_${prototype}`);
+  window.sessionStorage.removeItem(`ym_products_seen_${prototype}`);
+  window.sessionStorage.setItem(key, String(Date.now()));
 }
 
 export function reportShowcaseCompletionTime(prototype: ShowcasePrototype) {
@@ -69,13 +75,8 @@ export function reportShowcaseCompletionTime(prototype: ShowcasePrototype) {
   window.ym?.(getMetrikaCounterId() ?? 0, "params", {
     showcase_prototype: prototype,
     showcase_elapsed_seconds: seconds,
+    [`showcase_time_${prototype}_seconds`]: seconds,
   });
   reachGoal(`completion_time_${prototype}`, prototype, { elapsed_seconds: String(seconds) });
   window.sessionStorage.removeItem(key);
-}
-
-export function resetShowcaseJourney(prototype: ShowcasePrototype) {
-  window.sessionStorage.removeItem(`ym_filter_used_${prototype}`);
-  window.sessionStorage.removeItem(`ym_products_seen_${prototype}`);
-  window.sessionStorage.removeItem(`ym_showcase_started_${prototype}`);
 }

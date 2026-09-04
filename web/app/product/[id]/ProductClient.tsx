@@ -382,7 +382,7 @@ export default function ProductClient({ id }: { id: string }) {
           if (showcaseSuccess) {
             if (showcasePrototype) reportShortestPath(showcasePrototype);
             if (showcasePrototype) reportShowcaseCompletionTime(showcasePrototype);
-            router.push(`/showcase-success?product=${id}`);
+            router.push(`/showcase-success?product=${id}&prototype=${showcasePrototype}`);
           }
           else if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
           else if (needsCard) router.push(`/card${scenario ? `?scenario=${scenario}` : ""}`);
