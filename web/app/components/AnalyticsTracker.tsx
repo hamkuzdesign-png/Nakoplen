@@ -68,6 +68,7 @@ export default function AnalyticsTracker() {
   // locked for hours doesn't get logged as hours of screen time.
   const hiddenMsRef = useRef(0);
   const hiddenSinceRef = useRef<number | null>(null);
+  const flushedPathRef = useRef<string | null>(null);
 
   function currentHiddenMs() {
     return hiddenMsRef.current + (hiddenSinceRef.current !== null ? Date.now() - hiddenSinceRef.current : 0);
@@ -92,6 +93,11 @@ export default function AnalyticsTracker() {
   }, [pathname, searchParams]);
 
   function flushScreenTime(path: string, enteredAt: number) {
+    // pagehide and beforeunload can both fire for one navigation. Do not
+    // append the same final screen twice, otherwise active time and heatmaps
+    // are inflated for every prototype.
+    if (flushedPathRef.current === path) return;
+    flushedPathRef.current = path;
     const base = { pid: pidRef.current, scenario: scenarioRef.current, timestamp: Date.now() };
     const durationMs = Math.max(0, Date.now() - enteredAt - currentHiddenMs());
     logEvent({ type: "screen_time", path, durationMs, ...base });
@@ -109,6 +115,7 @@ export default function AnalyticsTracker() {
       setScenario(scenarioRef.current);
       enteredAtRef.current = Date.now();
       prevPathRef.current = analyticsPath;
+      flushedPathRef.current = null;
       maxScrollRef.current = 0;
       lastClickRef.current = null;
       hiddenMsRef.current = 0;

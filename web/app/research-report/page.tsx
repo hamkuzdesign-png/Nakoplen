@@ -76,6 +76,11 @@ function sessionEnd(events: AnalyticsEvent[], start: JourneyEvent) {
 
 function sessionsFrom(events: AnalyticsEvent[]): Session[] {
   const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start")
+    // A browser can retry a telemetry request. Treat exact duplicate starts
+    // as one attempt so every prototype has stable user/session totals.
+    .filter((start, index, all) => all.findIndex((candidate) =>
+      candidate.pid === start.pid && candidate.prototype === start.prototype && candidate.timestamp === start.timestamp
+    ) === index)
     .sort((a, b) => a.timestamp - b.timestamp);
   return starts.map((start) => {
     const end = sessionEnd(events, start);
