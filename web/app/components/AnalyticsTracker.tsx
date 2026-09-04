@@ -52,10 +52,15 @@ function isInteractive(target: EventTarget | null): boolean {
 export default function AnalyticsTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // One route can render different product variants depending on the task.
+  // Preserve the relevant query parameters so analytics does not merge a
+  // regular dark product screen with its showcase-promo counterpart.
+  const query = searchParams.toString();
+  const analyticsPath = `${pathname}${query ? `?${query}` : ""}`;
   const pidRef = useRef<string>("");
   const scenarioRef = useRef<Scenario>(null);
   const enteredAtRef = useRef(Date.now());
-  const prevPathRef = useRef(pathname);
+  const prevPathRef = useRef(analyticsPath);
   const maxScrollRef = useRef(0);
   const lastClickRef = useRef<{ x: number; y: number; t: number } | null>(null);
   // Time the tab spent hidden (backgrounded/screen locked) while on the
@@ -98,19 +103,19 @@ export default function AnalyticsTracker() {
   // Screen time — flush the PREVIOUS path's duration whenever the route changes,
   // and re-resolve the active scenario for the new path.
   useEffect(() => {
-    if (prevPathRef.current !== pathname) {
+    if (prevPathRef.current !== analyticsPath) {
       flushScreenTime(prevPathRef.current, enteredAtRef.current);
       scenarioRef.current = resolveScenario(pathname, scenarioRef.current);
       setScenario(scenarioRef.current);
       enteredAtRef.current = Date.now();
-      prevPathRef.current = pathname;
+      prevPathRef.current = analyticsPath;
       maxScrollRef.current = 0;
       lastClickRef.current = null;
       hiddenMsRef.current = 0;
       hiddenSinceRef.current = document.hidden ? Date.now() : null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [analyticsPath, pathname]);
 
   // Flush on tab close too, or the last screen of a session never gets logged.
   useEffect(() => {

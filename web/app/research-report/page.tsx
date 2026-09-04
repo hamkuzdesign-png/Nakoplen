@@ -34,6 +34,10 @@ const screenScreenshots: Record<string, { src: string; height: number }> = {
   "/product/b1": { src: "/images/screenshots/product-b1.png", height: 1101 }, "/product/b2": { src: "/images/screenshots/product-b2.png", height: 1077 },
   "/product/d1": { src: "/images/screenshots/product-d1.png", height: 1077 }, "/product/d2": { src: "/images/screenshots/product-d2.png", height: 959 }, "/product/d3": { src: "/images/screenshots/product-d3.png", height: 937 },
   "/product/m1": { src: "/images/screenshots/product-m1.png", height: 915 }, "/product/m3": { src: "/images/screenshots/product-m3.png", height: 937 },
+  "/product/a2?scenario=showcase_test&prototype=cashbox": { src: "/images/screenshots/showcase-cashbox.png", height: 1080 },
+  "/product/d1?scenario=showcase_test&prototype=deposit": { src: "/images/screenshots/showcase-deposit.png", height: 992 },
+  "/product/m3?scenario=showcase_test&prototype=metals": { src: "/images/screenshots/showcase-metals.png", height: 912 },
+  "/product/m1?scenario=showcase_test&prototype=mts": { src: "/images/screenshots/showcase-mts.png", height: 994 },
 };
 
 type Session = {
@@ -60,7 +64,8 @@ function participantName(pid: string, pids: string[]) {
   return `Респондент ${pids.indexOf(pid) + 1}`;
 }
 function labelPath(path: string) {
-  if (screenNames[path]) return screenNames[path];
+  const pathname = path.split("?")[0];
+  if (screenNames[pathname]) return screenNames[pathname];
   return "Неизвестный экран";
 }
 
@@ -150,7 +155,7 @@ function PathMap({ journeys }: { journeys: JourneyPath[] }) {
       return <path key={`${link.from.step}-${link.from.path}-${link.to.step}-${link.to.path}`} d={`M ${startX} ${startY} C ${startX + 44} ${startY}, ${endX - 44} ${endY}, ${endX} ${endY}`} fill="none" stroke="#7da8ef" strokeOpacity=".48" strokeWidth={Math.max(1.2, Math.min(13, link.count * 3.2))} />;
     })}</svg>
     {Array.from({ length: steps }, (_, step) => <div key={step} style={{ ...styles.pathStep, left: x({ step, path: "", count: 0, row: 0 }) }}>Шаг {step + 1}</div>)}
-    {nodes.map((node) => { const shot = screenScreenshots[node.path]; return <div key={`${node.step}-${node.path}`} style={{ ...styles.pathNode, left: x(node), top: y(node) }}><div style={styles.pathNodeImage}>{shot ? <img src={asset(shot.src)} alt="" style={styles.pathNodeImg} /> : <span>Экран</span>}</div><div style={styles.pathNodeInfo}><strong>{labelPath(node.path)}</strong><span>{node.count} {node.count === 1 ? "пользователь" : "пользователя"}</span></div>{node.path === "/showcase-success" && <span style={styles.pathSuccess}>✓</span>}</div>; })}
+    {nodes.map((node) => { const shot = screenScreenshots[node.path] ?? screenScreenshots[node.path.split("?")[0]]; return <div key={`${node.step}-${node.path}`} style={{ ...styles.pathNode, left: x(node), top: y(node) }}><div style={styles.pathNodeImage}>{shot ? <img src={asset(shot.src)} alt="" style={styles.pathNodeImg} /> : <span>Экран</span>}</div><div style={styles.pathNodeInfo}><strong>{labelPath(node.path)}</strong><span>{node.count} {node.count === 1 ? "пользователь" : "пользователя"}</span></div>{node.path.startsWith("/showcase-success") && <span style={styles.pathSuccess}>✓</span>}</div>; })}
   </div></div>;
 }
 
@@ -160,7 +165,7 @@ function Metric({ label, value, note }: { label: string; value: string | number;
 
 function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string; path: string | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const screenshot = path ? screenScreenshots[path] : undefined;
+  const screenshot = path ? screenScreenshots[path] ?? screenScreenshots[path.split("?")[0]] : undefined;
   const width = 375;
   const height = screenshot?.height ?? 812;
   useEffect(() => {
