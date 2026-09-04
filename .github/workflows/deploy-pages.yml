@@ -41,7 +41,7 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_YM_COUNTER_ID: ${{ secrets.YM_COUNTER_ID }}
+          NEXT_PUBLIC_YM_COUNTER_ID: "112282037"
         run: npm run build
 
       # Next.js's basePath rewrites JS/HTML-embedded asset paths automatically,
