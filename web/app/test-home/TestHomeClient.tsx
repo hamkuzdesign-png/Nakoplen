@@ -336,7 +336,9 @@ export default function TestHomePage() {
             { src: img.tabHome, label: "Главная",  active: true,  href: null as string | null },
             { src: img.tabPay,  label: "Платежи",  active: false, href: null as string | null },
             { src: img.tabHist, label: "История",  active: false, href: null as string | null },
-            { src: img.tabProd, label: "Продукты", active: false, href: `/products?from=home${prototype ? `&prototype=${prototype}` : ""}` },
+            { src: img.tabProd, label: "Продукты", active: false, href: isShowcaseTest
+              ? `/products?from=home&scenario=showcase_test${prototype ? `&prototype=${prototype}` : ""}`
+              : "/products?from=home" },
             { src: img.tabMore, label: "Ещё",      active: false, href: null as string | null },
           ].map((tab) => {
             const tabStyle: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 };

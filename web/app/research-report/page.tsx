@@ -69,6 +69,17 @@ function labelPath(path: string) {
   return "Неизвестный экран";
 }
 
+function screenshotForPath(path: string) {
+  const url = new URL(path, "https://report.local");
+  const prototype = url.searchParams.get("prototype");
+  const scenario = url.searchParams.get("scenario");
+  if (scenario && prototype) {
+    const variant = screenScreenshots[`${url.pathname}?scenario=${scenario}&prototype=${prototype}`];
+    if (variant) return variant;
+  }
+  return screenScreenshots[url.pathname] ?? screenScreenshots[path];
+}
+
 function sessionEnd(events: AnalyticsEvent[], start: JourneyEvent) {
   return events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && e.pid === start.pid && e.timestamp > start.timestamp)
     .reduce<number | undefined>((closest, e) => !closest || e.timestamp < closest ? e.timestamp : closest, undefined);
@@ -160,7 +171,7 @@ function PathMap({ journeys }: { journeys: JourneyPath[] }) {
       return <path key={`${link.from.step}-${link.from.path}-${link.to.step}-${link.to.path}`} d={`M ${startX} ${startY} C ${startX + 44} ${startY}, ${endX - 44} ${endY}, ${endX} ${endY}`} fill="none" stroke="#7da8ef" strokeOpacity=".48" strokeWidth={Math.max(1.2, Math.min(13, link.count * 3.2))} />;
     })}</svg>
     {Array.from({ length: steps }, (_, step) => <div key={step} style={{ ...styles.pathStep, left: x({ step, path: "", count: 0, row: 0 }) }}>Шаг {step + 1}</div>)}
-    {nodes.map((node) => { const shot = screenScreenshots[node.path] ?? screenScreenshots[node.path.split("?")[0]]; return <div key={`${node.step}-${node.path}`} style={{ ...styles.pathNode, left: x(node), top: y(node) }}><div style={styles.pathNodeImage}>{shot ? <img src={asset(shot.src)} alt="" style={styles.pathNodeImg} /> : <span>Экран</span>}</div><div style={styles.pathNodeInfo}><strong>{labelPath(node.path)}</strong><span>{node.count} {node.count === 1 ? "пользователь" : "пользователя"}</span></div>{node.path.startsWith("/showcase-success") && <span style={styles.pathSuccess}>✓</span>}</div>; })}
+    {nodes.map((node) => { const shot = screenshotForPath(node.path); return <div key={`${node.step}-${node.path}`} style={{ ...styles.pathNode, left: x(node), top: y(node) }}><div style={styles.pathNodeImage}>{shot ? <img src={asset(shot.src)} alt="" style={styles.pathNodeImg} /> : <span>Экран</span>}</div><div style={styles.pathNodeInfo}><strong>{labelPath(node.path)}</strong><span>{node.count} {node.count === 1 ? "пользователь" : "пользователя"}</span></div>{node.path.startsWith("/showcase-success") && <span style={styles.pathSuccess}>✓</span>}</div>; })}
   </div></div>;
 }
 
@@ -170,7 +181,7 @@ function Metric({ label, value, note }: { label: string; value: string | number;
 
 function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string; path: string | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const screenshot = path ? screenScreenshots[path] ?? screenScreenshots[path.split("?")[0]] : undefined;
+  const screenshot = path ? screenshotForPath(path) : undefined;
   const width = 375;
   const height = screenshot?.height ?? 812;
   useEffect(() => {
