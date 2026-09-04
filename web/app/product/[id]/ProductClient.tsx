@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
 import { getShowcasePrototype, recordShowcaseProductVisit, reportShowcaseCompletionTime, reportShortestPath } from "@/lib/metrika";
+import { completeShowcaseJourney, recordShowcaseProduct } from "@/lib/analytics";
 
 type Feature = {
   icon: string;
@@ -193,7 +194,10 @@ export default function ProductClient({ id }: { id: string }) {
   const opensCashbox = !scenario && (id === "a2" || id === "b2");
   const showcaseSuccess = scenario === "showcase_test" && ((prototype === "cashbox" && id === "a2") || (prototype === "deposit" && id === "d1") || (prototype === "metals" && id === "m3") || (prototype === "mts" && id === "m1"));
   useEffect(() => {
-    if (showcasePrototype) recordShowcaseProductVisit(showcasePrototype, id);
+    if (showcasePrototype) {
+      recordShowcaseProductVisit(showcasePrototype, id);
+      recordShowcaseProduct(showcasePrototype, id);
+    }
   }, [id, showcasePrototype]);
   const UNLOCK_FEATURE: Feature = {
     icon: asset("/images/chip-lock.png"),
@@ -382,6 +386,7 @@ export default function ProductClient({ id }: { id: string }) {
           if (showcaseSuccess) {
             if (showcasePrototype) reportShortestPath(showcasePrototype);
             if (showcasePrototype) reportShowcaseCompletionTime(showcasePrototype);
+            if (showcasePrototype) completeShowcaseJourney(showcasePrototype);
             router.push(`/showcase-success?product=${id}&prototype=${showcasePrototype}`);
           }
           else if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);

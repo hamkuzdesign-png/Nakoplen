@@ -43,7 +43,25 @@ export type ScrollDepthEvent = BaseEvent & {
   maxDepthPercent: number;
 };
 
-export type AnalyticsEvent = ScreenTimeEvent | ClickEvent | ScrollDepthEvent;
+/** Explicit research milestones. These make "time to success" and the
+ * shortest-path conversion calculable without relying on a vendor counter. */
+export type JourneyEvent = BaseEvent & {
+  type: "journey";
+  prototype: ShowcasePrototype;
+  name: "start" | "product_visit" | "success";
+  productId?: string;
+  shortestPath?: boolean;
+};
+
+export type AnalyticsEvent = ScreenTimeEvent | ClickEvent | ScrollDepthEvent | JourneyEvent;
+
+export type ShowcasePrototype = "cashbox" | "deposit" | "metals" | "mts";
+export const SHOWCASE_TARGETS: Record<ShowcasePrototype, string> = {
+  cashbox: "a2",
+  deposit: "d1",
+  metals: "m3",
+  mts: "m1",
+};
 
 const STORAGE_KEY = "nakoplen_analytics_v1";
 const PID_KEY = "nakoplen_pid";
@@ -90,6 +108,12 @@ function toRow(e: AnalyticsEvent) {
     rage_click: e.type === "click" ? e.rageClick : null,
     dead_click: e.type === "click" ? e.deadClick : null,
     max_depth_percent: e.type === "scroll_depth" ? e.maxDepthPercent : null,
+    ...(e.type === "journey" ? {
+      prototype: e.prototype,
+      journey_name: e.name,
+      product_id: e.productId ?? null,
+      shortest_path: e.shortestPath ?? null,
+    } : {}),
   };
 }
 
@@ -110,6 +134,15 @@ function fromRow(r: Record<string, unknown>): AnalyticsEvent | null {
       };
     case "scroll_depth":
       return { ...base, type: "scroll_depth", path: r.path as string, maxDepthPercent: r.max_depth_percent as number };
+    case "journey":
+      return {
+        ...base,
+        type: "journey",
+        prototype: r.prototype as ShowcasePrototype,
+        name: r.journey_name as JourneyEvent["name"],
+        productId: (r.product_id as string) || undefined,
+        shortestPath: !!r.shortest_path,
+      };
     default:
       return null;
   }
@@ -233,4 +266,41 @@ export function setScenario(scenario: Scenario) {
   } catch {
     // ignore
   }
+}
+
+function journeyKey(prototype: ShowcasePrototype, suffix: string) {
+  return `nakoplen_journey_${prototype}_${suffix}`;
+}
+
+/** Start one measured task per prototype/browser session. */
+export function startShowcaseJourney(prototype: ShowcasePrototype) {
+  if (typeof window === "undefined") return;
+  const key = journeyKey(prototype, "started");
+  if (window.sessionStorage.getItem(key)) return;
+  const now = Date.now();
+  window.sessionStorage.setItem(key, String(now));
+  window.sessionStorage.setItem(journeyKey(prototype, "products"), "[]");
+  logEvent({ type: "journey", name: "start", prototype, pid: getParticipantId(), scenario: "showcase_test", timestamp: now });
+}
+
+export function recordShowcaseProduct(prototype: ShowcasePrototype, productId: string) {
+  if (typeof window === "undefined") return;
+  const key = journeyKey(prototype, "products");
+  const products = new Set<string>(JSON.parse(window.sessionStorage.getItem(key) || "[]"));
+  if (products.has(productId)) return;
+  products.add(productId);
+  window.sessionStorage.setItem(key, JSON.stringify([...products]));
+  logEvent({ type: "journey", name: "product_visit", prototype, productId, pid: getParticipantId(), scenario: "showcase_test", timestamp: Date.now() });
+}
+
+/** Records success exactly once. The report derives elapsed time from its
+ * matching start event and shortest-path conversion from this boolean. */
+export function completeShowcaseJourney(prototype: ShowcasePrototype) {
+  if (typeof window === "undefined") return;
+  const key = journeyKey(prototype, "success");
+  if (window.sessionStorage.getItem(key)) return;
+  const products = new Set<string>(JSON.parse(window.sessionStorage.getItem(journeyKey(prototype, "products")) || "[]"));
+  const shortestPath = products.size === 1 && products.has(SHOWCASE_TARGETS[prototype]);
+  window.sessionStorage.setItem(key, "1");
+  logEvent({ type: "journey", name: "success", prototype, shortestPath, pid: getParticipantId(), scenario: "showcase_test", timestamp: Date.now() });
 }

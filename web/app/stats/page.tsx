@@ -8,7 +8,10 @@ import {
   startNewParticipant,
   type AnalyticsEvent,
   type ClickEvent,
+  type JourneyEvent,
   type Scenario,
+  type ScreenTimeEvent,
+  type ShowcasePrototype,
 } from "@/lib/analytics";
 
 const S = {
@@ -30,6 +33,14 @@ const SCENARIO_LABELS: Record<string, string> = {
   has_products: "Имеет продукты",
   none: "Без сценария (меню)",
 };
+
+const PROTOTYPE_LABELS: Record<ShowcasePrototype, string> = {
+  cashbox: "Кешбокс",
+  deposit: "Вклад Плюс",
+  metals: "Металлы",
+  mts: "МТС Накопления",
+};
+const PROTOTYPES = Object.keys(PROTOTYPE_LABELS) as ShowcasePrototype[];
 
 function scenarioLabel(scenario: Scenario) {
   return SCENARIO_LABELS[scenario ?? "none"];
@@ -299,6 +310,70 @@ function aggregateByScenario(events: AnalyticsEvent[]): ScenarioStats[] {
     .sort((a, b) => b.totalMs - a.totalMs);
 }
 
+type JourneySession = {
+  pid: string;
+  prototype: ShowcasePrototype;
+  startedAt: number;
+  successAt?: number;
+  shortestPath: boolean;
+  path: string[];
+};
+
+/** One session is a participant's explicit start of one of the four tasks.
+ * Route events supply the path map; journey events supply the reliable start
+ * and success timestamps. */
+function aggregateJourneys(events: AnalyticsEvent[]): JourneySession[] {
+  const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start");
+  return starts.map((start) => {
+    const until = events
+      .filter((e): e is JourneyEvent => e.type === "journey" && e.pid === start.pid && e.prototype === start.prototype && e.timestamp >= start.timestamp)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    const success = until.find((e) => e.name === "success");
+    const path = events
+      .filter((e): e is ScreenTimeEvent => e.pid === start.pid && e.scenario === "showcase_test" && e.type === "screen_time" && e.timestamp >= start.timestamp && (!success || e.timestamp <= success.timestamp))
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map((e) => screenLabel(e.path));
+    return { pid: start.pid, prototype: start.prototype, startedAt: start.timestamp, successAt: success?.timestamp, shortestPath: !!success?.shortestPath, path: [...new Set(path)] };
+  });
+}
+
+function JourneyReport({ events, labels }: { events: AnalyticsEvent[]; labels: Map<string, string> }) {
+  const sessions = useMemo(() => aggregateJourneys(events), [events]);
+  const byDay = useMemo(() => {
+    const map = new Map<number, JourneySession[]>();
+    for (const s of sessions) map.set(startOfDay(s.startedAt), [...(map.get(startOfDay(s.startedAt)) ?? []), s]);
+    return [...map.entries()].sort(([a], [b]) => b - a);
+  }, [sessions]);
+  return <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 13, color: S.textSecondary, margin: 0 }}>Сессия начинается при открытии задания и заканчивается на экране успеха. Данные обновляются после перезагрузки страницы.</p>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {PROTOTYPES.map((prototype) => {
+        const list = sessions.filter((s) => s.prototype === prototype);
+        const completed = list.filter((s) => s.successAt);
+        const avg = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : 0;
+        const shortest = completed.filter((s) => s.shortestPath).length;
+        return <div key={prototype} style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 16, padding: "12px 14px" }}>
+          <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 15, color: S.textPrimary, marginBottom: 5 }}>{PROTOTYPE_LABELS[prototype]}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+            <StatChip label={`${list.length} сессий`} /><StatChip label={`${completed.length} успехов`} />
+            <StatChip label={`ср. до успеха ${completed.length ? formatDuration(avg) : "—"}`} />
+            <StatChip label={`кратчайший путь ${completed.length ? `${Math.round(shortest / completed.length * 100)}%` : "—"}`} color={S.purple} />
+          </div>
+        </div>;
+      })}
+    </div>
+    <p style={{ fontFamily: "'MTS Wide', sans-serif", fontWeight: 500, fontSize: 18, color: S.textPrimary, margin: "4px 0 0" }}>Сессии по дням и пути</p>
+    {byDay.map(([day, list]) => <div key={day} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={{ fontFamily: "'MTS Compact', sans-serif", fontWeight: 500, fontSize: 13, color: S.textSecondary, margin: 0, textTransform: "uppercase" }}>{dayLabel(day)} · {list.length}</p>
+      {list.map((s) => <div key={`${s.pid}-${s.prototype}-${s.startedAt}`} style={{ background: S.fieldBg, border: `1px solid ${S.fieldBorder}`, borderRadius: 14, padding: "10px 12px" }}>
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 14, color: S.textPrimary, marginBottom: 4 }}>{labels.get(s.pid) ?? s.pid} · {PROTOTYPE_LABELS[s.prototype]}</p>
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary, marginBottom: 4 }}>{s.successAt ? `до успеха ${formatDuration(s.successAt - s.startedAt)}${s.shortestPath ? " · кратчайший путь" : ""}` : "успех не достигнут"}</p>
+        <p style={{ fontFamily: "'MTS Compact', sans-serif", fontSize: 12, color: S.textSecondary }}>{s.path.length ? s.path.join(" → ") : "Путь пока не зафиксирован"}</p>
+      </div>)}
+    </div>)}
+  </div>;
+}
+
 /** Additive-blend radial dots over a real screenshot of the screen (see
  *  web/public/images/screenshots/) — classic click-heatmap look, no external
  *  libs. Dead clicks render in orange so they stand out from normal clicks.
@@ -379,6 +454,7 @@ const TABS = [
   { key: "screens", label: "Экраны" },
   { key: "participants", label: "Участники" },
   { key: "scenarios", label: "Сценарии" },
+  { key: "tests", label: "Тесты" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -693,6 +769,8 @@ export default function StatsPage() {
               ))}
             </div>
           )}
+
+          {tab === "tests" && <JourneyReport events={allEvents} labels={participantLabels} />}
         </>
       )}
     </div>

@@ -15,8 +15,19 @@ create table if not exists events (
   rage_click boolean,
   dead_click boolean,
   max_depth_percent double precision,
+  prototype text,
+  journey_name text,
+  product_id text,
+  shortest_path boolean,
   created_at timestamptz not null default now()
 );
+
+-- Safe to run for projects that already created the table with an earlier
+-- version of this file.
+alter table events add column if not exists prototype text;
+alter table events add column if not exists journey_name text;
+alter table events add column if not exists product_id text;
+alter table events add column if not exists shortest_path boolean;
 
 alter table events enable row level security;
 

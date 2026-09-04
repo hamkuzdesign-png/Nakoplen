@@ -2,7 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { getParticipantId, getScenario, logEvent, setScenario, type Scenario } from "@/lib/analytics";
+import { getParticipantId, getScenario, logEvent, setScenario, startShowcaseJourney, type Scenario, type ShowcasePrototype } from "@/lib/analytics";
+import { useSearchParams } from "next/navigation";
 
 const RAGE_CLICK_WINDOW_MS = 600;
 const RAGE_CLICK_RADIUS_PX = 24;
@@ -50,6 +51,7 @@ function isInteractive(target: EventTarget | null): boolean {
  */
 export default function AnalyticsTracker() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const pidRef = useRef<string>("");
   const scenarioRef = useRef<Scenario>(null);
   const enteredAtRef = useRef(Date.now());
@@ -73,6 +75,16 @@ export default function AnalyticsTracker() {
     setScenario(scenarioRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The four supplied task links all enter here. Starting the timer at this
+  // point means it includes every detour until the participant reaches success.
+  useEffect(() => {
+    if (pathname !== "/showcase-test") return;
+    const prototype = searchParams.get("prototype");
+    if (["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "")) {
+      startShowcaseJourney(prototype as ShowcasePrototype);
+    }
+  }, [pathname, searchParams]);
 
   function flushScreenTime(path: string, enteredAt: number) {
     const base = { pid: pidRef.current, scenario: scenarioRef.current, timestamp: Date.now() };
