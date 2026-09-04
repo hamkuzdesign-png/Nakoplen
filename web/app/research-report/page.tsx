@@ -105,6 +105,9 @@ export default function ResearchReportPage() {
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
   const visible = selected === "all" ? sessions : sessions.filter((s) => s.prototype === selected);
   const completed = visible.filter((s) => s.successAt);
+  const users = [...new Set(visible.map((s) => s.pid))];
+  const successfulUsers = new Set(completed.map((s) => s.pid)).size;
+  const shortestUsers = new Set(completed.filter((s) => s.shortest).map((s) => s.pid)).size;
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
   const byDay = useMemo(() => {
@@ -125,11 +128,12 @@ export default function ResearchReportPage() {
       <div style={styles.filters}>{[{ id: "all" as const, label: "Все прототипы", color: "#1d2023" }, ...prototypes].map((p) => <button key={p.id} onClick={() => setSelected(p.id)} style={{ ...styles.filter, ...(selected === p.id ? { background: p.color, color: "#fff", borderColor: p.color } : {}) }}>{p.label}</button>)}</div>
       <section style={styles.metricGrid}>
         <Metric value={visible.length} label="сессий" />
-        <Metric value={completed.length} label="успешных прохождений" />
-        <Metric value={completed.length ? `${Math.round(completed.length / visible.length * 100)}%` : "—"} label="конверсия в успех" />
+        <Metric value={users.length} label="уникальных пользователей" />
+        <Metric value={completed.length} label="успешных прохождений" note={`${successfulUsers} пользователей`} />
+        <Metric value={completed.length ? `${Math.round(completed.length / visible.length * 100)}%` : "—"} label="конверсия в успех" note={`${completed.length} из ${visible.length} сессий`} />
         <Metric value={duration(avgSuccess)} label="ср. время до успеха" />
         <Metric value={duration(avgSession)} label="ср. активное время сессии" />
-        <Metric value={completed.length ? `${Math.round(completed.filter((s) => s.shortest).length / completed.length * 100)}%` : "—"} label="прошли кратчайшим путём" note="Без переходов к другим продуктам" />
+        <Metric value={completed.length ? `${Math.round(completed.filter((s) => s.shortest).length / completed.length * 100)}%` : "—"} label="прошли кратчайшим путём" note={`${shortestUsers} из ${successfulUsers} пользователей`} />
       </section>
       <section style={styles.card}><div style={styles.sectionTop}><h2 style={styles.heading}>Динамика по дням</h2><button onClick={() => setDayOrder(dayOrder === "new" ? "old" : "new")} style={styles.sortButton}>{dayOrder === "new" ? "Сначала новые ↓" : "Сначала старые ↑"}</button></div>{byDay.length ? <div style={styles.dayGrid}>{byDay.map(([day, list]) => <div key={day} style={styles.day}><strong style={styles.dayCount}>{list.length}</strong><span style={styles.dayLabel}>{dateLabel(day)}</span><span style={styles.daySuccess}>{list.filter((s) => s.successAt).length} успехов</span></div>)}</div> : <p style={styles.muted}>Пока нет начатых тестов.</p>}</section>
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Тепловые карты</h2><p style={styles.description}>Все срезы доступны здесь: общий, по сценарию и по респонденту.</p></div></div>
