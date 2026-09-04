@@ -13,17 +13,19 @@ const prototypes: { id: ShowcasePrototype; label: string; color: string }[] = [
 ];
 
 const screenNames: Record<string, string> = {
-  "/showcase-test": "Главная", "/new-catalog": "Каталог", "/products": "Все продукты", "/showcase-success": "Успех",
+  "/showcase-test": "Старт задания — главная", "/new-catalog": "Каталог продуктов", "/products": "Все продукты", "/showcase-success": "Экран успеха",
+  "/product/a2": "Карточка продукта «Кешбокс»", "/product/d1": "Карточка продукта «Вклад Плюс»",
+  "/product/m3": "Карточка продукта «Металлы»", "/product/m1": "Карточка продукта «МТС Накопления»",
 };
-const screenScreenshots: Record<string, string> = {
-  "/showcase-test": "/images/screenshots/home.png",
-  "/new-catalog": "/images/screenshots/catalog.png",
-  "/products": "/images/screenshots/products.png",
-  "/showcase-success": "/images/screenshots/root.png",
-  "/product/a2": "/images/screenshots/product-a2.png",
-  "/product/d1": "/images/screenshots/product-d1.png",
-  "/product/m3": "/images/screenshots/product-m3.png",
-  "/product/m1": "/images/screenshots/product-m1.png",
+const screenScreenshots: Record<string, { src: string; height: number }> = {
+  "/showcase-test": { src: "/images/screenshots/home.png", height: 812 },
+  "/new-catalog": { src: "/images/screenshots/catalog.png", height: 2601 },
+  "/products": { src: "/images/screenshots/products.png", height: 812 },
+  "/showcase-success": { src: "/images/screenshots/root.png", height: 812 },
+  "/product/a2": { src: "/images/screenshots/product-a2.png", height: 937 },
+  "/product/d1": { src: "/images/screenshots/product-d1.png", height: 937 },
+  "/product/m3": { src: "/images/screenshots/product-m3.png", height: 937 },
+  "/product/m1": { src: "/images/screenshots/product-m1.png", height: 937 },
 };
 
 type Session = {
@@ -76,8 +78,9 @@ function Metric({ label, value, note }: { label: string; value: string | number;
 
 function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string; path: string | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const width = 760;
-  const height = 380;
+  const screenshot = path ? screenScreenshots[path] : undefined;
+  const width = 375;
+  const height = screenshot?.height ?? 812;
   useEffect(() => {
     const node = canvas.current;
     const ctx = node?.getContext("2d");
@@ -87,9 +90,7 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
     ctx.fillRect(0, 0, width, height);
     for (const click of clicks) {
       const x = click.xNorm * width;
-      // A unified view has no single page height. Cap the vertical coordinate
-      // at 1.5 viewport heights, retaining the useful top-screen hotspots.
-      const y = Math.min(height - 10, click.yPage / 1200 * height);
+      const y = Math.min(height - 10, click.yPage);
       const gradient = ctx.createRadialGradient(x, y, 1, x, y, 42);
       gradient.addColorStop(0, click.deadClick ? "rgba(236,147,0,.58)" : "rgba(232,77,108,.48)");
       gradient.addColorStop(.45, click.deadClick ? "rgba(236,147,0,.18)" : "rgba(232,77,108,.16)");
@@ -98,10 +99,9 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
       ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fill();
     }
   }, [clicks]);
-  const screenshot = path ? screenScreenshots[path] : undefined;
   return <div style={styles.heatmapWrap}>
-    <div style={styles.heatmapTop}><strong>{title}</strong><span>{clicks.length} кликов</span></div>
-    {path && screenshot ? <div style={styles.heatmapStage}><img src={asset(screenshot)} alt={`Скриншот: ${labelPath(path)}`} style={styles.heatmapScreenshot} /><canvas ref={canvas} width={width} height={height} style={styles.heatmapCanvas} /></div> : <div style={styles.heatmapEmpty}>{path ? "Для этого экрана пока нет скриншота" : "Выберите экран"}</div>}
+    <div style={styles.heatmapTop}><div><strong>{title}</strong><span style={styles.heatmapScreenName}>Скриншот: {path ? labelPath(path) : "не выбран"}</span></div><span>{clicks.length} кликов</span></div>
+    {path && screenshot ? <div style={styles.heatmapStage}><img src={asset(screenshot.src)} alt={`Скриншот: ${labelPath(path)}`} style={styles.heatmapScreenshot} /><canvas ref={canvas} width={width} height={height} style={styles.heatmapCanvas} /></div> : <div style={styles.heatmapEmpty}>{path ? "Для этого экрана пока нет скриншота" : "Выберите экран"}</div>}
     <p style={styles.heatmapHint}>Тепловая карта наложена на скриншот выбранного экрана. Оранжевым отмечены клики вне интерактивных элементов.</p>
   </div>;
 }
@@ -174,5 +174,5 @@ export default function ResearchReportPage() {
 
 const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100vh", background: "#f5f6f8", color: "#1d2023", padding: "44px clamp(20px, 5vw, 80px) 64px", fontFamily: "'MTS Compact', Arial, sans-serif", boxSizing: "border-box" },
-  topbar: { maxWidth: 1360, margin: "0 auto 30px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "flex-start" }, eyebrow: { fontSize: 12, letterSpacing: ".08em", fontWeight: 700, color: "#777f89", margin: 0 }, title: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: "clamp(28px, 4vw, 42px)", margin: "8px 0", lineHeight: 1.1 }, subtitle: { margin: 0, color: "#6b737c", fontSize: 16 }, back: { color: "#5b50db", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }, filters: { maxWidth: 1360, margin: "0 auto 24px", display: "flex", flexWrap: "wrap", gap: 8 }, filter: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "9px 14px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 600 }, metricGrid: { maxWidth: 1360, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 12 }, metric: { background: "#fff", borderRadius: 16, padding: "18px", minHeight: 100, boxSizing: "border-box" }, metricValue: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 25, lineHeight: 1.1 }, metricLabel: { color: "#69717a", fontSize: 14, marginTop: 8 }, metricNote: { color: "#9299a1", fontSize: 12, marginTop: 4 }, card: { maxWidth: 1360, margin: "0 auto 20px", background: "#fff", borderRadius: 20, padding: "24px", boxSizing: "border-box" }, heading: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 21, margin: "0 0 8px" }, description: { margin: 0, color: "#727981", fontSize: 14, maxWidth: 660 }, dayGrid: { display: "flex", alignItems: "stretch", gap: 10, overflowX: "auto", paddingTop: 12 }, day: { minWidth: 105, background: "#f3f4f7", borderRadius: 12, padding: "14px", display: "flex", flexDirection: "column", gap: 5 }, dayCount: { fontSize: 25, fontFamily: "'MTS Wide', Arial, sans-serif" }, dayLabel: { fontSize: 14 }, daySuccess: { color: "#777f89", fontSize: 12 }, sectionTop: { display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 16 }, sortButton: { background: "#f1f2f5", border: "none", borderRadius: 9, padding: "8px 11px", color: "#454b52", cursor: "pointer", font: "inherit", fontSize: 13, whiteSpace: "nowrap" }, heatmapControls: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }, controlGroup: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 7 }, controlLabel: { color: "#727981", fontSize: 13, marginRight: 4 }, smallFilter: { padding: "6px 9px", borderRadius: 8, border: "1px solid #dde0e5", background: "#fff", cursor: "pointer", font: "inherit", fontSize: 13, color: "#454b52" }, smallFilterActive: { background: "#1d2023", color: "#fff", borderColor: "#1d2023" }, heatmapWrap: { border: "1px solid #e1e4e8", borderRadius: 14, overflow: "hidden", background: "#f2f4f7" }, heatmapTop: { padding: "12px 14px", background: "#fff", display: "flex", justifyContent: "space-between", fontSize: 14 }, heatmapStage: { position: "relative", maxWidth: 760, margin: "0 auto", overflow: "hidden", background: "#f2f4f7" }, heatmapScreenshot: { width: "100%", height: 380, display: "block", objectFit: "cover", objectPosition: "top" }, heatmapCanvas: { position: "absolute", inset: 0, display: "block", width: "100%", height: "100%" }, heatmapEmpty: { height: 220, display: "grid", placeItems: "center", color: "#727981", fontSize: 14 }, heatmapHint: { margin: 0, padding: "9px 14px", background: "#fff", color: "#727981", fontSize: 12 }, tableWrap: { overflowX: "auto" }, table: { width: "100%", borderCollapse: "collapse", minWidth: 950, fontSize: 14 }, productBadge: { display: "inline-block", padding: "5px 8px", color: "#fff", borderRadius: 7, fontWeight: 600, whiteSpace: "nowrap" }, path: { color: "#606873", minWidth: 250 }, shortest: { display: "block", color: "#138a76", fontSize: 12, marginTop: 3 }, muted: { maxWidth: 1360, margin: "30px auto", color: "#727981" }, footer: { maxWidth: 1360, margin: "0 auto", color: "#727981", fontSize: 13 },
+  topbar: { maxWidth: 1360, margin: "0 auto 30px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "flex-start" }, eyebrow: { fontSize: 12, letterSpacing: ".08em", fontWeight: 700, color: "#777f89", margin: 0 }, title: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: "clamp(28px, 4vw, 42px)", margin: "8px 0", lineHeight: 1.1 }, subtitle: { margin: 0, color: "#6b737c", fontSize: 16 }, back: { color: "#5b50db", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }, filters: { maxWidth: 1360, margin: "0 auto 24px", display: "flex", flexWrap: "wrap", gap: 8 }, filter: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "9px 14px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 600 }, metricGrid: { maxWidth: 1360, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 12 }, metric: { background: "#fff", borderRadius: 16, padding: "18px", minHeight: 100, boxSizing: "border-box" }, metricValue: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 25, lineHeight: 1.1 }, metricLabel: { color: "#69717a", fontSize: 14, marginTop: 8 }, metricNote: { color: "#9299a1", fontSize: 12, marginTop: 4 }, card: { maxWidth: 1360, margin: "0 auto 20px", background: "#fff", borderRadius: 20, padding: "24px", boxSizing: "border-box" }, heading: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 21, margin: "0 0 8px" }, description: { margin: 0, color: "#727981", fontSize: 14, maxWidth: 660 }, dayGrid: { display: "flex", alignItems: "stretch", gap: 10, overflowX: "auto", paddingTop: 12 }, day: { minWidth: 105, background: "#f3f4f7", borderRadius: 12, padding: "14px", display: "flex", flexDirection: "column", gap: 5 }, dayCount: { fontSize: 25, fontFamily: "'MTS Wide', Arial, sans-serif" }, dayLabel: { fontSize: 14 }, daySuccess: { color: "#777f89", fontSize: 12 }, sectionTop: { display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 16 }, sortButton: { background: "#f1f2f5", border: "none", borderRadius: 9, padding: "8px 11px", color: "#454b52", cursor: "pointer", font: "inherit", fontSize: 13, whiteSpace: "nowrap" }, heatmapControls: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }, controlGroup: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 7 }, controlLabel: { color: "#727981", fontSize: 13, marginRight: 4 }, smallFilter: { padding: "6px 9px", borderRadius: 8, border: "1px solid #dde0e5", background: "#fff", cursor: "pointer", font: "inherit", fontSize: 13, color: "#454b52" }, smallFilterActive: { background: "#1d2023", color: "#fff", borderColor: "#1d2023" }, heatmapWrap: { border: "1px solid #e1e4e8", borderRadius: 14, overflow: "hidden", background: "#f2f4f7" }, heatmapTop: { padding: "12px 14px", background: "#fff", display: "flex", justifyContent: "space-between", fontSize: 14 }, heatmapScreenName: { display: "block", marginTop: 4, color: "#727981", fontSize: 12 }, heatmapStage: { position: "relative", width: 375, maxWidth: "100%", margin: "0 auto", overflow: "hidden", background: "#f2f4f7", borderLeft: "1px solid #dfe2e6", borderRight: "1px solid #dfe2e6" }, heatmapScreenshot: { width: "100%", height: "auto", display: "block" }, heatmapCanvas: { position: "absolute", inset: 0, display: "block", width: "100%", height: "100%" }, heatmapEmpty: { height: 220, display: "grid", placeItems: "center", color: "#727981", fontSize: 14 }, heatmapHint: { margin: 0, padding: "9px 14px", background: "#fff", color: "#727981", fontSize: 12 }, tableWrap: { overflowX: "auto" }, table: { width: "100%", borderCollapse: "collapse", minWidth: 950, fontSize: 14 }, productBadge: { display: "inline-block", padding: "5px 8px", color: "#fff", borderRadius: 7, fontWeight: 600, whiteSpace: "nowrap" }, path: { color: "#606873", minWidth: 250 }, shortest: { display: "block", color: "#138a76", fontSize: 12, marginTop: 3 }, muted: { maxWidth: 1360, margin: "30px auto", color: "#727981" }, footer: { maxWidth: 1360, margin: "0 auto", color: "#727981", fontSize: 13 },
 };
