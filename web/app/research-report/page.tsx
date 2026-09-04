@@ -37,7 +37,7 @@ const screenScreenshots: Record<string, { src: string; height: number }> = {
 };
 
 type Session = {
-  pid: string; prototype: ShowcasePrototype; startedAt: number; successAt?: number;
+  pid: string; prototype: ShowcasePrototype; startedAt: number; endedAt?: number; successAt?: number;
   shortest: boolean; activeMs: number; path: string[];
 };
 
@@ -53,6 +53,9 @@ function duration(ms?: number) {
 function dateLabel(timestamp: number) {
   return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(timestamp);
 }
+function sessionContains(session: Session, timestamp: number) {
+  return timestamp >= session.startedAt && (!session.endedAt || timestamp < session.endedAt) && (!session.successAt || timestamp <= session.successAt);
+}
 function participantName(pid: string, pids: string[]) {
   return `Респондент ${pids.indexOf(pid) + 1}`;
 }
@@ -61,17 +64,23 @@ function labelPath(path: string) {
   return "Неизвестный экран";
 }
 
+function sessionEnd(events: AnalyticsEvent[], start: JourneyEvent) {
+  return events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && e.pid === start.pid && e.timestamp > start.timestamp)
+    .reduce<number | undefined>((closest, e) => !closest || e.timestamp < closest ? e.timestamp : closest, undefined);
+}
+
 function sessionsFrom(events: AnalyticsEvent[]): Session[] {
   const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start")
     .sort((a, b) => a.timestamp - b.timestamp);
   return starts.map((start) => {
-    const milestones = events.filter((e): e is JourneyEvent => e.type === "journey" && e.pid === start.pid && e.prototype === start.prototype && e.timestamp >= start.timestamp)
+    const end = sessionEnd(events, start);
+    const milestones = events.filter((e): e is JourneyEvent => e.type === "journey" && e.pid === start.pid && e.prototype === start.prototype && e.timestamp >= start.timestamp && (!end || e.timestamp < end))
       .sort((a, b) => a.timestamp - b.timestamp);
     const success = milestones.find((e) => e.name === "success");
-    const screenEvents = events.filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.pid === start.pid && e.scenario === "showcase_test" && e.timestamp >= start.timestamp && (!success || e.timestamp <= success.timestamp))
+    const screenEvents = events.filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.pid === start.pid && e.scenario === "showcase_test" && e.timestamp >= start.timestamp && (!end || e.timestamp < end) && (!success || e.timestamp <= success.timestamp))
       .sort((a, b) => a.timestamp - b.timestamp);
     return {
-      pid: start.pid, prototype: start.prototype, startedAt: start.timestamp, successAt: success?.timestamp,
+      pid: start.pid, prototype: start.prototype, startedAt: start.timestamp, endedAt: end, successAt: success?.timestamp,
       shortest: !!success?.shortestPath,
       activeMs: screenEvents.reduce((sum, e) => sum + Math.min(e.durationMs, 10 * 60_000), 0),
       path: [...new Set(screenEvents.map((e) => labelPath(e.path)))],
@@ -81,15 +90,15 @@ function sessionsFrom(events: AnalyticsEvent[]): Session[] {
 
 /** Keeps every recorded transition (unlike the summary table, which only
  * stores unique screens) so the path map can show detours and returns. */
-function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype): JourneyPath[] {
-  const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && e.prototype === prototype)
+function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype | "all"): JourneyPath[] {
+  const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && (prototype === "all" || e.prototype === prototype))
     .sort((a, b) => a.timestamp - b.timestamp);
-  return starts.map((start, index) => {
-    const nextStart = starts[index + 1];
-    const milestones = events.filter((e): e is JourneyEvent => e.type === "journey" && e.pid === start.pid && e.prototype === prototype && e.timestamp >= start.timestamp && (!nextStart || e.timestamp < nextStart.timestamp))
+  return starts.map((start) => {
+    const end = sessionEnd(events, start);
+    const milestones = events.filter((e): e is JourneyEvent => e.type === "journey" && e.pid === start.pid && e.prototype === start.prototype && e.timestamp >= start.timestamp && (!end || e.timestamp < end))
       .sort((a, b) => a.timestamp - b.timestamp);
     const success = milestones.find((e) => e.name === "success");
-    const visited = events.filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.pid === start.pid && e.scenario === "showcase_test" && e.timestamp >= start.timestamp && (!nextStart || e.timestamp < nextStart.timestamp) && (!success || e.timestamp <= success.timestamp))
+    const visited = events.filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.pid === start.pid && e.scenario === "showcase_test" && e.timestamp >= start.timestamp && (!end || e.timestamp < end) && (!success || e.timestamp <= success.timestamp))
       .sort((a, b) => a.timestamp - b.timestamp)
       .map((e) => e.path);
     const nodes = ["/showcase-test", ...visited].filter((path, i, all) => i === 0 || path !== all[i - 1]);
@@ -99,6 +108,8 @@ function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype): J
 }
 
 function PathMap({ journeys }: { journeys: JourneyPath[] }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const { nodes, links, steps, height } = useMemo(() => {
     const counts = new Map<string, number>();
     const linkCounts = new Map<string, number>();
@@ -133,7 +144,7 @@ function PathMap({ journeys }: { journeys: JourneyPath[] }) {
   const x = (node: FlowNode) => 28 + node.step * 220;
   const y = (node: FlowNode) => 52 + node.row * 118;
   if (!journeys.length) return <div style={styles.pathMapEmpty}>Для этого сценария ещё нет записанных путей.</div>;
-  return <div style={styles.pathMapScroll}><div style={{ ...styles.pathMapCanvas, width, height }}>
+  return <div ref={mapRef} style={styles.pathMapScroll} onWheel={(event) => { const map = mapRef.current; if (!map) return; event.preventDefault(); map.scrollLeft += event.deltaY + event.deltaX; }} onPointerDown={(event) => { const map = mapRef.current; if (!map) return; drag.current = { x: event.clientX, y: event.clientY, left: map.scrollLeft, top: map.scrollTop }; map.setPointerCapture(event.pointerId); map.style.cursor = "grabbing"; }} onPointerMove={(event) => { const map = mapRef.current; const start = drag.current; if (!map || !start) return; map.scrollLeft = start.left - (event.clientX - start.x); map.scrollTop = start.top - (event.clientY - start.y); }} onPointerUp={(event) => { const map = mapRef.current; drag.current = null; if (map) { map.releasePointerCapture(event.pointerId); map.style.cursor = "grab"; } }}><div style={{ ...styles.pathMapCanvas, width, height }}>
     <svg aria-hidden="true" width={width} height={height} style={styles.pathMapLinks}>{links.map((link) => {
       const startX = x(link.from) + 168; const startY = y(link.from) + 43; const endX = x(link.to); const endY = y(link.to) + 43;
       return <path key={`${link.from.step}-${link.from.path}-${link.to.step}-${link.to.path}`} d={`M ${startX} ${startY} C ${startX + 44} ${startY}, ${endX - 44} ${endY}, ${endX} ${endY}`} fill="none" stroke="#7da8ef" strokeOpacity=".48" strokeWidth={Math.max(1.2, Math.min(13, link.count * 3.2))} />;
@@ -184,7 +195,6 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
 export default function ResearchReportPage() {
   const [events, setEvents] = useState<AnalyticsEvent[] | null>(null);
   const [selected, setSelected] = useState<ShowcasePrototype | "all">("all");
-  const [pathPrototype, setPathPrototype] = useState<ShowcasePrototype>("cashbox");
   const [heatmapScope, setHeatmapScope] = useState<ShowcasePrototype | "all">("all");
   const [heatmapPid, setHeatmapPid] = useState<string | "all">("all");
   const [heatmapPath, setHeatmapPath] = useState<string | null>(null);
@@ -199,21 +209,21 @@ export default function ResearchReportPage() {
   const unfinishedUsers = users.length - successfulUsers;
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
-  const scenarioJourneys = useMemo(() => journeysFrom(events ?? [], pathPrototype), [events, pathPrototype]);
+  const scenarioJourneys = useMemo(() => journeysFrom(events ?? [], selected), [events, selected]);
   const scopedSessions = useMemo(() => sessions.filter((s) => heatmapScope === "all" || s.prototype === heatmapScope), [sessions, heatmapScope]);
   const heatmapPaths = useMemo(() => [...new Set((events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test").filter((click) => {
     if (heatmapScope === "all") return true;
-    return scopedSessions.some((s) => s.pid === click.pid && click.timestamp >= s.startedAt && (!s.successAt || click.timestamp <= s.successAt));
+    return scopedSessions.some((s) => s.pid === click.pid && sessionContains(s, click.timestamp));
   }).map((click) => click.path))], [events, heatmapScope, scopedSessions]);
   const selectedHeatmapPath = heatmapPath && heatmapPaths.includes(heatmapPath) ? heatmapPath : heatmapPaths[0] ?? null;
   // A person appears only if they actually visited the selected screen within
   // the selected scenario — not merely because they took part in another test.
-  const heatmapPids = useMemo(() => [...new Set((events ?? []).filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath).filter((screen) => heatmapScope === "all" || scopedSessions.some((s) => s.pid === screen.pid && screen.timestamp >= s.startedAt && (!s.successAt || screen.timestamp <= s.successAt))).map((screen) => screen.pid))], [events, heatmapScope, scopedSessions, selectedHeatmapPath]);
+  const heatmapPids = useMemo(() => [...new Set((events ?? []).filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath).filter((screen) => heatmapScope === "all" || scopedSessions.some((s) => s.pid === screen.pid && sessionContains(s, screen.timestamp))).map((screen) => screen.pid))], [events, heatmapScope, scopedSessions, selectedHeatmapPath]);
   const selectedHeatmapPid = heatmapPid !== "all" && heatmapPids.includes(heatmapPid) ? heatmapPid : "all";
   const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath && (selectedHeatmapPid === "all" || e.pid === selectedHeatmapPid)), [events, selectedHeatmapPid, selectedHeatmapPath])
     .filter((click) => {
       if (heatmapScope === "all") return true;
-      const session = scopedSessions.find((s) => s.pid === click.pid && click.timestamp >= s.startedAt && (!s.successAt || click.timestamp <= s.successAt));
+      const session = scopedSessions.find((s) => s.pid === click.pid && sessionContains(s, click.timestamp));
       return !!session;
     });
 
@@ -230,7 +240,7 @@ export default function ResearchReportPage() {
         <Metric value={duration(avgSession)} label="ср. активное время сессии" />
         <Metric value={shortestUsers} label="прошли кратчайшим путём" note={`из ${successfulUsers} успешно прошедших`} />
       </section>
-      <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Пути</h2><p style={styles.description}>Переходы между экранами выбранного сценария. Толщина линии показывает, сколько пользователей прошли этим маршрутом.</p></div><select aria-label="Сценарий для карты путей" value={pathPrototype} onChange={(event) => setPathPrototype(event.target.value as ShowcasePrototype)} style={styles.pathScenarioSelect}>{prototypes.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+      <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Пути</h2><p style={styles.description}>Переходы между экранами выбранного сверху сценария. Толщина линии показывает, сколько пользователей прошли этим маршрутом. Колесо мыши и перетаскивание двигают карту.</p></div></div>
         <PathMap journeys={scenarioJourneys} />
       </section>
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Тепловые карты</h2><p style={styles.description}>Все срезы доступны здесь: общий, по сценарию и по респонденту.</p></div></div>
@@ -247,5 +257,5 @@ export default function ResearchReportPage() {
 
 const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100vh", background: "#f5f6f8", color: "#1d2023", padding: "44px clamp(20px, 5vw, 80px) 64px", fontFamily: "'MTS Compact', Arial, sans-serif", boxSizing: "border-box" },
-  topbar: { maxWidth: 1360, margin: "0 auto 30px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "flex-start" }, eyebrow: { fontSize: 12, letterSpacing: ".08em", fontWeight: 700, color: "#777f89", margin: 0 }, title: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: "clamp(28px, 4vw, 42px)", margin: "8px 0", lineHeight: 1.1 }, subtitle: { margin: 0, color: "#6b737c", fontSize: 16 }, back: { color: "#5b50db", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }, filters: { maxWidth: 1360, margin: "0 auto 24px", display: "flex", flexWrap: "wrap", gap: 8 }, filter: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "9px 14px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 600 }, metricGrid: { maxWidth: 1360, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 12 }, metric: { background: "#fff", borderRadius: 16, padding: "18px", minHeight: 100, boxSizing: "border-box" }, metricValue: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 25, lineHeight: 1.1 }, metricLabel: { color: "#69717a", fontSize: 14, marginTop: 8 }, metricNote: { color: "#9299a1", fontSize: 12, marginTop: 4 }, card: { maxWidth: 1360, margin: "0 auto 20px", background: "#fff", borderRadius: 20, padding: "24px", boxSizing: "border-box" }, heading: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 21, margin: "0 0 8px" }, description: { margin: 0, color: "#727981", fontSize: 14, maxWidth: 660 }, sectionTop: { display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 20 }, pathScenarioSelect: { minWidth: 190, alignSelf: "flex-start", minHeight: 40, padding: "8px 34px 8px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", font: "inherit", fontSize: 14, cursor: "pointer" }, pathMapScroll: { overflow: "auto", border: "1px solid #dfe5ed", borderRadius: 16, backgroundImage: "radial-gradient(#dbe2ec 1px, transparent 1px)", backgroundSize: "12px 12px", backgroundColor: "#fbfcfe" }, pathMapCanvas: { position: "relative", minHeight: 390 }, pathMapLinks: { position: "absolute", inset: 0, pointerEvents: "none" }, pathStep: { position: "absolute", top: 14, color: "#87909b", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em" }, pathNode: { position: "absolute", width: 168, minHeight: 86, display: "flex", gap: 9, padding: 8, boxSizing: "border-box", borderRadius: 12, background: "rgba(255,255,255,.96)", border: "1px solid #e0e5ec", boxShadow: "0 2px 8px rgba(20,34,56,.08)" }, pathNodeImage: { width: 50, height: 68, flex: "0 0 50px", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 7, background: "#eef1f5", color: "#7a838e", fontSize: 10 }, pathNodeImg: { width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "top" }, pathNodeInfo: { minWidth: 0, display: "flex", flexDirection: "column", gap: 5, fontSize: 11, lineHeight: 1.25 }, pathSuccess: { position: "absolute", right: -7, bottom: -7, display: "grid", placeItems: "center", width: 23, height: 23, borderRadius: 999, background: "#27bf68", color: "#fff", fontWeight: 800, border: "2px solid #fff" }, pathMapEmpty: { minHeight: 220, display: "grid", placeItems: "center", borderRadius: 14, background: "#f5f6f8", color: "#727981", fontSize: 14 }, heatmapControls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 20, padding: 14, borderRadius: 14, background: "#f5f6f8" }, controlGroup: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 6 }, controlLabel: { color: "#727981", fontSize: 13, fontWeight: 600 }, select: { width: "100%", minHeight: 40, padding: "8px 34px 8px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", font: "inherit", fontSize: 14, cursor: "pointer" }, heatmapWrap: { border: "1px solid #e1e4e8", borderRadius: 14, overflow: "hidden", background: "#f2f4f7" }, heatmapTop: { padding: "12px 14px", background: "#fff", display: "flex", justifyContent: "space-between", fontSize: 14 }, heatmapScreenName: { display: "block", marginTop: 4, color: "#727981", fontSize: 12 }, heatmapStage: { position: "relative", width: 375, maxWidth: "100%", margin: "0 auto", overflow: "hidden", background: "#f2f4f7", borderLeft: "1px solid #dfe2e6", borderRight: "1px solid #dfe2e6" }, heatmapScreenshot: { width: "100%", height: "auto", display: "block" }, heatmapCanvas: { position: "absolute", inset: 0, display: "block", width: "100%", height: "100%" }, heatmapEmpty: { height: 220, display: "grid", placeItems: "center", color: "#727981", fontSize: 14 }, heatmapHint: { margin: 0, padding: "9px 14px", background: "#fff", color: "#727981", fontSize: 12 }, tableWrap: { overflowX: "auto", border: "1px solid #e4e7eb", borderRadius: 14 }, table: { width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1040, fontSize: 14 }, tableHead: { padding: "13px 16px", background: "#f5f6f8", color: "#68717b", fontSize: 12, fontWeight: 700, textAlign: "left", whiteSpace: "nowrap", borderBottom: "1px solid #e4e7eb" }, tableRow: { background: "#fff" }, tableCell: { padding: "16px", verticalAlign: "top", borderBottom: "1px solid #edf0f2", lineHeight: 1.4 }, productBadge: { display: "inline-block", padding: "5px 8px", color: "#fff", borderRadius: 7, fontWeight: 600, whiteSpace: "nowrap" }, path: { color: "#606873", minWidth: 340, maxWidth: 520, lineHeight: 1.5 }, shortest: { display: "block", color: "#138a76", fontSize: 12, marginTop: 3 }, muted: { maxWidth: 1360, margin: "30px auto", color: "#727981" }, footer: { maxWidth: 1360, margin: "0 auto", color: "#727981", fontSize: 13 },
+  topbar: { maxWidth: 1360, margin: "0 auto 30px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "flex-start" }, eyebrow: { fontSize: 12, letterSpacing: ".08em", fontWeight: 700, color: "#777f89", margin: 0 }, title: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: "clamp(28px, 4vw, 42px)", margin: "8px 0", lineHeight: 1.1 }, subtitle: { margin: 0, color: "#6b737c", fontSize: 16 }, back: { color: "#5b50db", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }, filters: { maxWidth: 1360, margin: "0 auto 24px", display: "flex", flexWrap: "wrap", gap: 8 }, filter: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "9px 14px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 600 }, metricGrid: { maxWidth: 1360, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 12 }, metric: { background: "#fff", borderRadius: 16, padding: "18px", minHeight: 100, boxSizing: "border-box" }, metricValue: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 25, lineHeight: 1.1 }, metricLabel: { color: "#69717a", fontSize: 14, marginTop: 8 }, metricNote: { color: "#9299a1", fontSize: 12, marginTop: 4 }, card: { maxWidth: 1360, margin: "0 auto 20px", background: "#fff", borderRadius: 20, padding: "24px", boxSizing: "border-box" }, heading: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 21, margin: "0 0 8px" }, description: { margin: 0, color: "#727981", fontSize: 14, maxWidth: 660 }, sectionTop: { display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 20 }, pathMapScroll: { overflow: "auto", cursor: "grab", touchAction: "none", userSelect: "none", border: "1px solid #dfe5ed", borderRadius: 16, backgroundImage: "radial-gradient(#dbe2ec 1px, transparent 1px)", backgroundSize: "12px 12px", backgroundColor: "#fbfcfe" }, pathMapCanvas: { position: "relative", minHeight: 390 }, pathMapLinks: { position: "absolute", inset: 0, pointerEvents: "none" }, pathStep: { position: "absolute", top: 14, color: "#87909b", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em" }, pathNode: { position: "absolute", width: 168, minHeight: 86, display: "flex", gap: 9, padding: 8, boxSizing: "border-box", borderRadius: 12, background: "rgba(255,255,255,.96)", border: "1px solid #e0e5ec", boxShadow: "0 2px 8px rgba(20,34,56,.08)" }, pathNodeImage: { width: 50, height: 68, flex: "0 0 50px", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 7, background: "#eef1f5", color: "#7a838e", fontSize: 10 }, pathNodeImg: { width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "top" }, pathNodeInfo: { minWidth: 0, display: "flex", flexDirection: "column", gap: 5, fontSize: 11, lineHeight: 1.25 }, pathSuccess: { position: "absolute", right: -7, bottom: -7, display: "grid", placeItems: "center", width: 23, height: 23, borderRadius: 999, background: "#27bf68", color: "#fff", fontWeight: 800, border: "2px solid #fff" }, pathMapEmpty: { minHeight: 220, display: "grid", placeItems: "center", borderRadius: 14, background: "#f5f6f8", color: "#727981", fontSize: 14 }, heatmapControls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 20, padding: 14, borderRadius: 14, background: "#f5f6f8" }, controlGroup: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 6 }, controlLabel: { color: "#727981", fontSize: 13, fontWeight: 600 }, select: { width: "100%", minHeight: 40, padding: "8px 34px 8px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", font: "inherit", fontSize: 14, cursor: "pointer" }, heatmapWrap: { border: "1px solid #e1e4e8", borderRadius: 14, overflow: "hidden", background: "#f2f4f7" }, heatmapTop: { padding: "12px 14px", background: "#fff", display: "flex", justifyContent: "space-between", fontSize: 14 }, heatmapScreenName: { display: "block", marginTop: 4, color: "#727981", fontSize: 12 }, heatmapStage: { position: "relative", width: 375, maxWidth: "100%", margin: "0 auto", overflow: "hidden", background: "#f2f4f7", borderLeft: "1px solid #dfe2e6", borderRight: "1px solid #dfe2e6" }, heatmapScreenshot: { width: "100%", height: "auto", display: "block" }, heatmapCanvas: { position: "absolute", inset: 0, display: "block", width: "100%", height: "100%" }, heatmapEmpty: { height: 220, display: "grid", placeItems: "center", color: "#727981", fontSize: 14 }, heatmapHint: { margin: 0, padding: "9px 14px", background: "#fff", color: "#727981", fontSize: 12 }, tableWrap: { overflowX: "auto", border: "1px solid #e4e7eb", borderRadius: 14 }, table: { width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1040, fontSize: 14 }, tableHead: { padding: "13px 16px", background: "#f5f6f8", color: "#68717b", fontSize: 12, fontWeight: 700, textAlign: "left", whiteSpace: "nowrap", borderBottom: "1px solid #e4e7eb" }, tableRow: { background: "#fff" }, tableCell: { padding: "16px", verticalAlign: "top", borderBottom: "1px solid #edf0f2", lineHeight: 1.4 }, productBadge: { display: "inline-block", padding: "5px 8px", color: "#fff", borderRadius: 7, fontWeight: 600, whiteSpace: "nowrap" }, path: { color: "#606873", minWidth: 340, maxWidth: 520, lineHeight: 1.5 }, shortest: { display: "block", color: "#138a76", fontSize: 12, marginTop: 3 }, muted: { maxWidth: 1360, margin: "30px auto", color: "#727981" }, footer: { maxWidth: 1360, margin: "0 auto", color: "#727981", fontSize: 13 },
 };
