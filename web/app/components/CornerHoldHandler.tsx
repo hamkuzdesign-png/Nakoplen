@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 
 const HOLD_MS = 1800;
 const CORNER_SIZE = 64;
@@ -26,10 +26,18 @@ export default function CornerHoldHandler() {
   const prototype = useSearchParams().get("prototype");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const locked = ["cashbox", "deposit", "metals", "mts"].includes(prototype ?? "");
+  const [isPrototype, setIsPrototype] = useState(false);
+
+  // При статической публикации query-параметры неизвестны на сервере, поэтому
+  // определяем прототип по реальному адресу уже в браузере.
+  useEffect(() => {
+    const currentPrototype = new URLSearchParams(window.location.search).get("prototype");
+    setIsPrototype(["cashbox", "deposit", "metals", "mts"].includes(currentPrototype ?? ""));
+  }, [prototype]);
 
   // В прототипах скрытый выход в меню отключён. Не рендерим и его область
   // нажатия, иначе она перекрывает штатную кнопку «Назад» в левом верхнем углу.
-  if (locked) return null;
+  if (locked || isPrototype) return null;
 
   function start() {
     timerRef.current = setTimeout(() => router.push("/"), HOLD_MS);
