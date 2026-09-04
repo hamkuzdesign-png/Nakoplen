@@ -82,21 +82,27 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
     const ctx = node?.getContext("2d");
     if (!node || !ctx) return;
     ctx.clearRect(0, 0, width, height);
+    // Normalize point strength for large studies. A 500-person test can
+    // produce thousands of clicks; without this, source-over blending turns
+    // the whole screen into one opaque red block.
+    const strength = Math.max(0.012, Math.min(0.22, 1.1 / Math.sqrt(Math.max(1, clicks.length))));
+    const radius = clicks.length > 1500 ? 22 : clicks.length > 400 ? 28 : 36;
     for (const click of clicks) {
       const x = click.xNorm * width;
       const y = Math.min(height - 10, click.yPage);
-      const gradient = ctx.createRadialGradient(x, y, 1, x, y, 42);
-      gradient.addColorStop(0, click.deadClick ? "rgba(236,147,0,.58)" : "rgba(232,77,108,.48)");
-      gradient.addColorStop(.45, click.deadClick ? "rgba(236,147,0,.18)" : "rgba(232,77,108,.16)");
+      const gradient = ctx.createRadialGradient(x, y, 1, x, y, radius);
+      const color = click.deadClick ? "236,147,0" : "232,77,108";
+      gradient.addColorStop(0, `rgba(${color},${strength})`);
+      gradient.addColorStop(.45, `rgba(${color},${strength * .35})`);
       gradient.addColorStop(1, "rgba(232,77,108,0)");
       ctx.fillStyle = gradient;
-      ctx.beginPath(); ctx.arc(x, y, 42, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
     }
   }, [clicks]);
   return <div style={styles.heatmapWrap}>
     <div style={styles.heatmapTop}><div><strong>{title}</strong><span style={styles.heatmapScreenName}>Скриншот: {path ? labelPath(path) : "не выбран"}</span></div><span>{clicks.length} кликов</span></div>
     {path && screenshot ? <div style={styles.heatmapStage}><img src={asset(screenshot.src)} alt={`Скриншот: ${labelPath(path)}`} style={styles.heatmapScreenshot} /><canvas ref={canvas} width={width} height={height} style={styles.heatmapCanvas} /></div> : <div style={styles.heatmapEmpty}>{path ? "Для этого экрана пока нет скриншота" : "Выберите экран"}</div>}
-    <p style={styles.heatmapHint}>Тепловая карта наложена на скриншот выбранного экрана. Оранжевым отмечены клики вне интерактивных элементов.</p>
+    <p style={styles.heatmapHint}>Тепловая карта нормализует плотность для исследований до 500 участников: зоны интереса остаются видны, но не перекрывают экран. Оранжевым отмечены клики вне интерактивных элементов.</p>
   </div>;
 }
 
