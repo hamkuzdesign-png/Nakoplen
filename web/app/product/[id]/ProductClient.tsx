@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
-import { getShowcasePrototype, recordShowcaseProductVisit, reportShortestPath } from "@/lib/metrika";
+import { getShowcasePrototype, recordShowcaseProductVisit, reportShowcaseCompletionTime, reportShortestPath } from "@/lib/metrika";
 
 type Feature = {
   icon: string;
@@ -381,6 +381,7 @@ export default function ProductClient({ id }: { id: string }) {
         <button className="pd-cta-btn" onClick={() => {
           if (showcaseSuccess) {
             if (showcasePrototype) reportShortestPath(showcasePrototype);
+            if (showcasePrototype) reportShowcaseCompletionTime(showcasePrototype);
             router.push(`/showcase-success?product=${id}`);
           }
           else if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);

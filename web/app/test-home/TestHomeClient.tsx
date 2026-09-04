@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
+import { getShowcasePrototype, startShowcaseTimer } from "@/lib/metrika";
 
 const S = {
   bgPrimary:   "#ffffff",
@@ -76,6 +77,10 @@ export default function TestHomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prototype = searchParams.get("prototype");
+  useEffect(() => {
+    const showcasePrototype = getShowcasePrototype(prototype);
+    if (showcasePrototype) startShowcaseTimer(showcasePrototype);
+  }, [prototype]);
   const isShowcaseTest = usePathname() === "/showcase-test";
   /* Вариант каталога тащится через весь сценарий: меню открывает
      /home?catalog=new, и переход в «Мои накопления» несёт флаг дальше,

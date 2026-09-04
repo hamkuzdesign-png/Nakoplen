@@ -56,7 +56,22 @@ export function reportShortestPath(prototype: ShowcasePrototype) {
   if (seen.size === 1 && seen.has(target)) reachGoal(`short_path_${prototype}`, prototype);
 }
 
+export function startShowcaseTimer(prototype: ShowcasePrototype) {
+  const key = `ym_showcase_started_${prototype}`;
+  if (!window.sessionStorage.getItem(key)) window.sessionStorage.setItem(key, String(Date.now()));
+}
+
+export function reportShowcaseCompletionTime(prototype: ShowcasePrototype) {
+  const key = `ym_showcase_started_${prototype}`;
+  const startedAt = Number(window.sessionStorage.getItem(key));
+  if (!Number.isFinite(startedAt) || startedAt <= 0) return;
+  const seconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+  reachGoal(`completion_time_${prototype}`, prototype, { elapsed_seconds: String(seconds) });
+  window.sessionStorage.removeItem(key);
+}
+
 export function resetShowcaseJourney(prototype: ShowcasePrototype) {
   window.sessionStorage.removeItem(`ym_filter_used_${prototype}`);
   window.sessionStorage.removeItem(`ym_products_seen_${prototype}`);
+  window.sessionStorage.removeItem(`ym_showcase_started_${prototype}`);
 }
