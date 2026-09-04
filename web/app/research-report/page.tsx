@@ -33,10 +33,6 @@ type Session = {
   shortest: boolean; activeMs: number; path: string[];
 };
 
-function dayKey(timestamp: number) {
-  const date = new Date(timestamp);
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-}
 function duration(ms?: number) {
   if (ms === undefined) return "—";
   const seconds = Math.round(ms / 1000);
@@ -86,8 +82,6 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
     const ctx = node?.getContext("2d");
     if (!node || !ctx) return;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#f2f4f7";
-    ctx.fillRect(0, 0, width, height);
     for (const click of clicks) {
       const x = click.xNorm * width;
       const y = Math.min(height - 10, click.yPage);
@@ -124,11 +118,6 @@ export default function ResearchReportPage() {
   const unfinishedUsers = users.length - successfulUsers;
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
-  const byDay = useMemo(() => {
-    const map = new Map<number, Session[]>();
-    visible.forEach((s) => map.set(dayKey(s.startedAt), [...(map.get(dayKey(s.startedAt)) ?? []), s]));
-    return [...map.entries()].sort(([a], [b]) => dayOrder === "new" ? b - a : a - b);
-  }, [visible, dayOrder]);
   const scopedSessions = useMemo(() => sessions.filter((s) => heatmapScope === "all" || s.prototype === heatmapScope), [sessions, heatmapScope]);
   const heatmapPaths = useMemo(() => [...new Set((events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test").filter((click) => {
     if (heatmapScope === "all") return true;
@@ -159,7 +148,6 @@ export default function ResearchReportPage() {
         <Metric value={duration(avgSession)} label="ср. активное время сессии" />
         <Metric value={shortestUsers} label="прошли кратчайшим путём" note={`из ${successfulUsers} успешно прошедших`} />
       </section>
-      <section style={styles.card}><div style={styles.sectionTop}><h2 style={styles.heading}>Динамика по дням</h2><button onClick={() => setDayOrder(dayOrder === "new" ? "old" : "new")} style={styles.sortButton}>{dayOrder === "new" ? "Сначала новые ↓" : "Сначала старые ↑"}</button></div>{byDay.length ? <div style={styles.dayGrid}>{byDay.map(([day, list]) => <div key={day} style={styles.day}><strong style={styles.dayCount}>{list.length}</strong><span style={styles.dayLabel}>{dateLabel(day)}</span><span style={styles.daySuccess}>{list.filter((s) => s.successAt).length} успехов</span></div>)}</div> : <p style={styles.muted}>Пока нет начатых тестов.</p>}</section>
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Тепловые карты</h2><p style={styles.description}>Все срезы доступны здесь: общий, по сценарию и по респонденту.</p></div></div>
         <div style={styles.heatmapControls}><div style={styles.controlGroup}><span style={styles.controlLabel}>1. Сценарий</span>{[{ id: "all" as const, label: "Общий" }, ...prototypes.map((p) => ({ id: p.id, label: p.label }))].map((item) => <button key={item.id} onClick={() => { setHeatmapScope(item.id); setHeatmapPid("all"); setHeatmapPath(null); }} style={{ ...styles.smallFilter, ...(heatmapScope === item.id ? styles.smallFilterActive : {}) }}>{item.label}</button>)}</div><div style={styles.controlGroup}><span style={styles.controlLabel}>2. Экран</span>{heatmapPaths.map((path) => <button key={path} onClick={() => { setHeatmapPath(path); setHeatmapPid("all"); }} style={{ ...styles.smallFilter, ...(selectedHeatmapPath === path ? styles.smallFilterActive : {}) }}>{labelPath(path)}</button>)}</div><div style={styles.controlGroup}><span style={styles.controlLabel}>3. Респондент</span><button onClick={() => setHeatmapPid("all")} style={{ ...styles.smallFilter, ...(selectedHeatmapPid === "all" ? styles.smallFilterActive : {}) }}>Все релевантные</button>{heatmapPids.map((pid) => <button key={pid} onClick={() => setHeatmapPid(pid)} style={{ ...styles.smallFilter, ...(selectedHeatmapPid === pid ? styles.smallFilterActive : {}) }}>{participantName(pid, pids)}</button>)}</div></div>
         <Heatmap clicks={heatmapClicks} path={selectedHeatmapPath} title={`${heatmapScope === "all" ? "Общая карта" : prototypes.find((p) => p.id === heatmapScope)?.label}${selectedHeatmapPath ? ` · ${labelPath(selectedHeatmapPath)}` : ""}${selectedHeatmapPid === "all" ? "" : ` · ${participantName(selectedHeatmapPid, pids)}`}`} />
