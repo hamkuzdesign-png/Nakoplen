@@ -267,10 +267,11 @@ export default function TestHomePage() {
                 </div>
               );
               const tileStyle: React.CSSProperties = { flex: "1 0 calc(50% - 4px)", minWidth: 148, maxWidth: "calc(50% - 4px)", height: 140, textDecoration: "none", borderRadius: 20, overflow: "hidden" };
-              // Тестовый сценарий остаётся в светлом каталоге, но переносит
-              // идентификатор задания до карточки продукта и экрана успеха.
+              // Тестовые сценарии открывают светлый каталог с фильтрами и
+              // переносят идентификатор задания до карточки продукта и экрана
+              // успеха. Обычная главная продолжает вести в прежний каталог.
               const tileHref = isShowcaseTest && tile.label === "Накопления"
-                ? `/catalog-v2?scenario=showcase_test${prototype ? `&prototype=${prototype}` : ""}`
+                ? `/new-catalog?scenario=showcase_test${prototype ? `&prototype=${prototype}` : ""}`
                 : tile.href;
               return tileHref
                 ? <Link key={tile.label} href={`${tileHref}${catalogQuery}`} onClick={(event) => {
