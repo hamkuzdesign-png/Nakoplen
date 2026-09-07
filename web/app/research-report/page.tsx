@@ -7,8 +7,8 @@ import { asset } from "@/lib/asset";
 
 const prototypes: { id: ShowcasePrototype; label: string; color: string }[] = [
   { id: "cashbox", label: "Кешбокс", color: "#786cff" },
-  { id: "deposit", label: "Вклад Плюс", color: "#00a58a" },
-  { id: "metals", label: "Металлы", color: "#df9a00" },
+  { id: "deposit", label: "Вклад МТС Максимум", color: "#00a58a" },
+  { id: "metals", label: "ЦФА", color: "#df9a00" },
   { id: "mts", label: "МТС Накопления", color: "#e84d6c" },
 ];
 

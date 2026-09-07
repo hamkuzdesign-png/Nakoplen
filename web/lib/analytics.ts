@@ -58,8 +58,8 @@ export type AnalyticsEvent = ScreenTimeEvent | ClickEvent | ScrollDepthEvent | J
 export type ShowcasePrototype = "cashbox" | "deposit" | "metals" | "mts";
 export const SHOWCASE_TARGETS: Record<ShowcasePrototype, string> = {
   cashbox: "a2",
-  deposit: "d1",
-  metals: "m3",
+  deposit: "d3",
+  metals: "m2",
   mts: "m1",
 };
 

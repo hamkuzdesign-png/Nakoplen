@@ -8,8 +8,8 @@ export type YandexMetricaFunction = ((counterId: number, method: string, ...args
 
 const TARGET_PRODUCT: Record<ShowcasePrototype, string> = {
   cashbox: "a2",
-  deposit: "d1",
-  metals: "m3",
+  deposit: "d3",
+  metals: "m2",
   mts: "m1",
 };
 

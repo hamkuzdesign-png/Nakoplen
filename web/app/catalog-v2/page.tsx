@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { asset } from "@/lib/asset";
 
 const PRODUCTS = [
@@ -11,7 +12,21 @@ const PRODUCTS = [
 ];
 
 export default function CatalogV2Page() {
+  return <Suspense><CatalogV2Content /></Suspense>;
+}
+
+function CatalogV2Content() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prototype = searchParams.get("prototype");
+  const scenario = searchParams.get("scenario");
+  const showcaseTargets: Record<string, { category: string; productId: string }> = {
+    cashbox: { category: "Накопительный счёт", productId: "a2" },
+    deposit: { category: "Вклады", productId: "d3" },
+    metals: { category: "Инвестиции", productId: "m2" },
+    mts: { category: "МТС Накопления", productId: "m1" },
+  };
+  const target = scenario === "showcase_test" && prototype ? showcaseTargets[prototype] : undefined;
 
   return (
     <main className="catalog-v2-shell">
@@ -32,7 +47,12 @@ export default function CatalogV2Page() {
 
         <div className="catalog-v2-products">
           {PRODUCTS.map((product) => (
-            <button className="catalog-v2-card" key={product.title} onClick={() => router.push(product.href)}>
+            <button className="catalog-v2-card" key={product.title} onClick={() => {
+              const href = target?.category === product.title
+                ? `/product/${target.productId}?scenario=showcase_test&prototype=${prototype}`
+                : product.href;
+              router.push(href);
+            }}>
               <div className="catalog-v2-card-copy">
                 <span className="catalog-v2-rate">{product.rate}</span>
                 <strong>{product.title}</strong>

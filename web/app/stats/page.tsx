@@ -36,8 +36,8 @@ const SCENARIO_LABELS: Record<string, string> = {
 
 const PROTOTYPE_LABELS: Record<ShowcasePrototype, string> = {
   cashbox: "Кешбокс",
-  deposit: "Вклад Плюс",
-  metals: "Металлы",
+  deposit: "Вклад МТС Максимум",
+  metals: "ЦФА",
   mts: "МТС Накопления",
 };
 const PROTOTYPES = Object.keys(PROTOTYPE_LABELS) as ShowcasePrototype[];
