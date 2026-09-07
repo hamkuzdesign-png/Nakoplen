@@ -3195,6 +3195,139 @@ html, body {
   background: #1d2023;
 }
 
+/* Shared CFA promo — Figma frame 10812:273132. */
+.cfa-shared-promo {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #f2f3f7;
+  color: #1d2023;
+}
+@media (min-width: 600px) { .cfa-shared-promo { width: 375px; } }
+.cfa-shared-promo-scroll { min-height: 100svh; overflow-y: auto; padding-bottom: 116px; }
+.cfa-shared-promo-hero {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 375px;
+  overflow: hidden;
+  background: #dddcec;
+}
+.cfa-shared-promo-hero img {
+  position: absolute;
+  top: 5px;
+  left: 17px;
+  width: calc(100% - 32px);
+  height: 224px;
+  object-fit: contain;
+}
+.cfa-shared-promo-blocks {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 225px;
+}
+.cfa-shared-promo-card { padding: 20px; border-radius: 32px; background: #fff; }
+.cfa-shared-promo-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #ff0032;
+  color: #fff;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.cfa-shared-promo-card h1,
+.cfa-shared-promo-card > h2 {
+  margin: 12px 0 4px;
+  font-family: 'MTS Wide', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.cfa-shared-promo-lead {
+  margin: 0;
+  color: #626c77;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.cfa-shared-promo-benefits { margin: 12px -20px -10px; }
+.cfa-shared-promo-benefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 20px;
+}
+.cfa-shared-promo-benefit > img { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 16px; object-fit: contain; }
+.cfa-shared-promo-benefit h2,
+.cfa-shared-promo-benefit p,
+.cfa-shared-promo-steps h3,
+.cfa-shared-promo-steps p { margin: 0; font-family: 'MTS Compact', sans-serif; }
+.cfa-shared-promo-benefit h2,
+.cfa-shared-promo-steps h3 { font-size: 17px; font-weight: 500; line-height: 24px; }
+.cfa-shared-promo-benefit p,
+.cfa-shared-promo-steps p { color: #626c77; font-size: 14px; font-weight: 400; line-height: 20px; }
+.cfa-shared-promo-steps-card { padding-bottom: 20px; }
+.cfa-shared-promo-steps { display: flex; flex-direction: column; gap: 12px; margin: 12px -20px -8px; padding: 0; list-style: none; }
+.cfa-shared-promo-steps li { display: flex; align-items: flex-start; gap: 12px; padding: 0 20px 8px; }
+.cfa-shared-promo-steps li > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f2f3f7;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+.cfa-shared-promo-nav { position: absolute; top: calc(56px + env(safe-area-inset-top)); left: 20px; z-index: 2; }
+.cfa-shared-promo-nav button { display: grid; width: 32px; height: 32px; padding: 4px; place-items: center; border: 0; border-radius: 12px; background: #f2f3f7; }
+.cfa-shared-promo-nav img { width: 24px; height: 24px; filter: brightness(0) saturate(100%); }
+.cfa-shared-promo-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+@media (min-width: 600px) { .cfa-shared-promo-bottom { width: 375px; } }
+.cfa-shared-promo-bottom button {
+  width: calc(100% - 40px);
+  height: 52px;
+  margin: 8px 20px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: #ff0032;
+  color: #fff;
+  font-family: 'MTS Wide', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+.cfa-shared-promo-home-indicator { width: 134px; height: 5px; margin-bottom: calc(9px + env(safe-area-inset-bottom)); border-radius: 100px; background: #1d2023; }
+
 /* ── "Бонусы за накопления" detail screen variant (no hero) ── */
 .pd-navbar2 {
   background: #1d2023;

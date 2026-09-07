@@ -171,77 +171,78 @@ const PRODUCTS: Record<string, ProductDetail> = {
 PRODUCTS.b1 = PRODUCTS.a1;
 PRODUCTS.b2 = PRODUCTS.a2;
 
-const MTS_MAXIMUM_PROMO_ASSETS = {
-  hero: asset("/images/figma/mts-maximum/hero.png"),
-  amount: asset("/images/figma/mts-maximum/amount.png"),
-  interest: asset("/images/figma/mts-maximum/interest.png"),
-  choice: asset("/images/figma/mts-maximum/choice.png"),
+const CFA_PROMO_ASSETS = {
+  hero: asset("/images/figma/cfa-promo/hero.png"),
+  yield: asset("/images/figma/cfa-promo/yield.png"),
+  start: asset("/images/figma/cfa-promo/start.png"),
+  term: asset("/images/figma/cfa-promo/term.png"),
 };
 
 const SHOWCASE_PROMO_PRODUCT: Record<string, string> = {
-  // The Figma promo is shared by the matching task routes; MTS Savings has
-  // its own product-specific promo.
+  // The CFA promo is shared by the four task-specific product routes.
   cashbox: "a2",
   deposit: "d3",
   metals: "m2",
+  mts: "m1",
 };
 
-function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
-  const spendingLevels = [
-    "Траты от 10 000 ₽ → до 23,1%",
-    "Траты от 50 000 ₽ → до 23,3%",
-    "Траты от 90 000 ₽ → до 23,5%",
+function CfaPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
+  const benefits = [
+    { icon: CFA_PROMO_ASSETS.yield, title: "Доходность до 20%", text: "Зависит от выбранного вами актива" },
+    { icon: CFA_PROMO_ASSETS.start, title: "Лёгкий старт", text: "Начинайте с небольших сумм от 1 000 ₽" },
+    { icon: CFA_PROMO_ASSETS.term, title: "Фиксированный срок", text: "Воспользоваться вложенными деньгами сможете в конце срока" },
   ];
-  const details = [
-    { icon: MTS_MAXIMUM_PROMO_ASSETS.amount, title: "Определите сумму вклада", text: "Пополнение и снятие до конца срока недоступны, поэтому положите нужную сумму сразу" },
-    { icon: MTS_MAXIMUM_PROMO_ASSETS.interest, title: "Оставляйте проценты на вкладе", text: "Доходность будет выше" },
-    { icon: MTS_MAXIMUM_PROMO_ASSETS.choice, title: "Выберите МТС Максимум", text: "Можно открыть только один вклад с такими условиями" },
+  const steps = [
+    { title: "Заполните анкету", text: "Для регистрации понадобится ИНН и почта. Если вы уже наш клиент, мы заполним анкету автоматически" },
+    { title: "Дождитесь присоединения к программе", text: "Обычно занимает не более 5 минут" },
+    { title: "Купите ЦФА и получайте доход", text: "Откроем вам специальный лицевой счёт для ЦФА. На него будет выплачиваться доход — периодически или в конце срока ЦФА вместе со стоимостью актива" },
   ];
 
   return (
-    <div className="mts-maximum-promo">
-      <main className="mts-maximum-promo-scroll">
-        <section className="mts-maximum-promo-hero">
-          <img src={MTS_MAXIMUM_PROMO_ASSETS.hero} alt="" />
+    <div className="cfa-shared-promo">
+      <main className="cfa-shared-promo-scroll">
+        <section className="cfa-shared-promo-hero">
+          <img src={CFA_PROMO_ASSETS.hero} alt="" />
         </section>
 
-        <div className="mts-maximum-promo-blocks">
-          <section className="mts-maximum-promo-card mts-maximum-promo-rate-card">
-            <span className="mts-maximum-promo-badge">Доходность до 23,5%</span>
-            <h1>Больше трат – больше доходность</h1>
-            <p className="mts-maximum-promo-lead">Доходность растёт в зависимости от ваших трат. Учитываем оплаты нашими кредитными и дебетовыми картами, кроме карт МТС Деньги:</p>
-            <ul className="mts-maximum-promo-list">
-              {spendingLevels.map((level) => <li key={level}>{level}</li>)}
-            </ul>
-          </section>
-
-          <section className="mts-maximum-promo-card mts-maximum-promo-detail-card">
-            <h2>Подробнее о вкладе</h2>
-            <p className="mts-maximum-promo-lead">Если не тратите по картам, базовая доходность — 22,5%. Траты будут учитываться с даты открытия вклада и обновляться ежемесячно</p>
-            <div className="mts-maximum-promo-details">
-              {details.map((detail) => (
-                <div className="mts-maximum-promo-detail" key={detail.title}>
-                  <img src={detail.icon} alt="" />
-                  <div>
-                    <h3>{detail.title}</h3>
-                    <p>{detail.text}</p>
-                  </div>
+        <div className="cfa-shared-promo-blocks">
+          <section className="cfa-shared-promo-card">
+            <span className="cfa-shared-promo-badge">Новый продукт</span>
+            <h1>Цифровые<br />финансовые активы</h1>
+            <p className="cfa-shared-promo-lead">Это современные аналоги ценных бумаг или оцифрованных активов, например, недвижимости или драгоценных металлов</p>
+            <div className="cfa-shared-promo-benefits">
+              {benefits.map((benefit) => (
+                <div className="cfa-shared-promo-benefit" key={benefit.title}>
+                  <img src={benefit.icon} alt="" />
+                  <div><h2>{benefit.title}</h2><p>{benefit.text}</p></div>
                 </div>
               ))}
             </div>
           </section>
+
+          <section className="cfa-shared-promo-card cfa-shared-promo-steps-card">
+            <h2>С чего начать</h2>
+            <ol className="cfa-shared-promo-steps">
+              {steps.map((step, index) => (
+                <li key={step.title}>
+                  <span>{index + 1}</span>
+                  <div><h3>{step.title}</h3><p>{step.text}</p></div>
+                </li>
+              ))}
+            </ol>
+          </section>
         </div>
       </main>
 
-      <header className="mts-maximum-promo-nav">
+      <header className="cfa-shared-promo-nav">
         <button type="button" onClick={onBack} aria-label="Назад">
           <img src={asset("/images/icon-back.svg")} alt="" />
         </button>
       </header>
 
-      <footer className="mts-maximum-promo-bottom">
-        <button type="button" onClick={onOpen}>Открыть вклад</button>
-        <div className="mts-maximum-promo-home-indicator" />
+      <footer className="cfa-shared-promo-bottom">
+        <button type="button" onClick={onOpen}>Присоединиться к ЦФА</button>
+        <div className="cfa-shared-promo-home-indicator" />
       </footer>
     </div>
   );
@@ -280,7 +281,7 @@ export default function ProductClient({ id }: { id: string }) {
 
   if (isShowcasePromo) {
     return (
-      <MtsMaximumPromoScreen
+      <CfaPromoScreen
         onBack={goBack}
         onOpen={() => {
           if (showcasePrototype) {
