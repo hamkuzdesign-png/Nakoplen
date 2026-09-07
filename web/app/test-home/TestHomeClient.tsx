@@ -267,9 +267,10 @@ export default function TestHomePage() {
                 </div>
               );
               const tileStyle: React.CSSProperties = { flex: "1 0 calc(50% - 4px)", minWidth: 148, maxWidth: "calc(50% - 4px)", height: 140, textDecoration: "none", borderRadius: 20, overflow: "hidden" };
-              const tileHref = isShowcaseTest && tile.label === "Накопления"
-                ? `/new-catalog?scenario=showcase_test${prototype ? `&prototype=${prototype}` : ""}`
-                : tile.href;
+              // В тестовом сценарии не подменяем светлый каталог на старый
+              // /new-catalog: именно эта подмена возвращала пользователя на
+              // тёмный экран после нажатия «Накопления».
+              const tileHref = tile.href;
               return tileHref
                 ? <Link key={tile.label} href={`${tileHref}${catalogQuery}`} onClick={(event) => {
                     event.preventDefault();
