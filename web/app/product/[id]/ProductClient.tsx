@@ -179,11 +179,11 @@ const MTS_MAXIMUM_PROMO_ASSETS = {
 };
 
 const SHOWCASE_PROMO_PRODUCT: Record<string, string> = {
-  // The Figma promo is shared by the four task-specific product routes only.
+  // The Figma promo is shared by the matching task routes; MTS Savings has
+  // its own product-specific promo.
   cashbox: "a2",
   deposit: "d3",
   metals: "m2",
-  mts: "m1",
 };
 
 function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
