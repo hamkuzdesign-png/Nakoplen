@@ -2790,7 +2790,9 @@ html, body {
 }
 .pd-screen-savings-promo .pd-hero {
   height: 430px;
-  background: transparent;
+  /* Product data supplies a hero background inline. The promo layout owns the
+     background instead, so every promo variant shares the same light canvas. */
+  background: transparent !important;
 }
 .pd-screen-savings-ed .pd-hero-img {
   width: 374px;
@@ -3017,6 +3019,180 @@ html, body {
   background: #ff0032;
   height: 60px;
   border-radius: 16px;
+}
+
+/* MTS Maximum showcase — Figma frame 10859:276584. */
+.mts-maximum-promo {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: #f2f3f7;
+  color: #1d2023;
+}
+@media (min-width: 600px) { .mts-maximum-promo { width: 375px; } }
+.mts-maximum-promo-scroll {
+  min-height: 100svh;
+  overflow-y: auto;
+  padding-bottom: 116px;
+}
+.mts-maximum-promo-hero {
+  height: 375px;
+  margin-bottom: -40px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #d3d3fb 0%, #a1a1f0 100%);
+}
+.mts-maximum-promo-hero img {
+  width: 90.26%;
+  height: 90.26%;
+  object-fit: contain;
+  position: absolute;
+  top: 8.04%;
+  left: 8.44%;
+}
+.mts-maximum-promo-blocks {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mts-maximum-promo-card {
+  padding: 20px;
+  border-radius: 32px;
+  background: #fff;
+}
+.mts-maximum-promo-rate-card { padding-top: 20px; }
+.mts-maximum-promo-badge {
+  display: inline-flex;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #ff0032;
+  color: #fff;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.mts-maximum-promo-card h1,
+.mts-maximum-promo-card h2 {
+  margin: 12px 0 4px;
+  font-family: 'MTS Wide', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.mts-maximum-promo-card h2 { margin-top: 12px; }
+.mts-maximum-promo-lead {
+  margin: 0;
+  color: #626c77;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.mts-maximum-promo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 24px 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.mts-maximum-promo-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: 'MTS Compact', sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 24px;
+}
+.mts-maximum-promo-list li::before {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: #ff0032;
+  content: '';
+}
+.mts-maximum-promo-detail-card { padding-bottom: 20px; }
+.mts-maximum-promo-details { margin: 12px -20px -10px; }
+.mts-maximum-promo-detail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+}
+.mts-maximum-promo-detail > img {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 16px;
+  object-fit: contain;
+}
+.mts-maximum-promo-detail h3,
+.mts-maximum-promo-detail p { margin: 0; font-family: 'MTS Compact', sans-serif; }
+.mts-maximum-promo-detail h3 { font-size: 17px; font-weight: 500; line-height: 24px; }
+.mts-maximum-promo-detail p { color: #626c77; font-size: 17px; font-weight: 400; line-height: 24px; }
+.mts-maximum-promo-nav {
+  position: absolute;
+  top: calc(44px + env(safe-area-inset-top));
+  left: 20px;
+  z-index: 2;
+}
+.mts-maximum-promo-nav button {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border: 0;
+  border-radius: 12px;
+  background: #f2f3f7;
+}
+.mts-maximum-promo-nav img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) saturate(100%);
+}
+.mts-maximum-promo-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+@media (min-width: 600px) { .mts-maximum-promo-bottom { width: 375px; } }
+.mts-maximum-promo-bottom button {
+  width: calc(100% - 40px);
+  height: 52px;
+  margin: 8px 20px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: #ff0032;
+  color: #fff;
+  font-family: 'MTS Wide', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+.mts-maximum-promo-home-indicator {
+  width: 134px;
+  height: 5px;
+  margin-bottom: calc(9px + env(safe-area-inset-bottom));
+  border-radius: 100px;
+  background: #1d2023;
 }
 
 /* ── "Бонусы за накопления" detail screen variant (no hero) ── */
