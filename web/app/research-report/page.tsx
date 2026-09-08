@@ -243,7 +243,8 @@ export default function ResearchReportPage() {
   // респондент проходил тест несколько раз, оставляем его последнюю сессию.
   const uniqueVisibleSessions = useMemo(() => [...visible]
     .sort((a, b) => b.startedAt - a.startedAt)
-    .filter((session, index, list) => list.findIndex((candidate) => candidate.pid === session.pid) === index), [visible]);
+    .filter((session, index, list) => list.findIndex((candidate) => candidate.pid === session.pid) === index)
+    .sort((a, b) => pids.indexOf(a.pid) - pids.indexOf(b.pid)), [visible, pids]);
   const completed = visible.filter((s) => s.successAt);
   const users = [...new Set(visible.map((s) => s.pid))];
   const successfulUsers = new Set(completed.map((s) => s.pid)).size;
