@@ -2854,6 +2854,19 @@ html, body {
 .pd-screen-savings-cashbox-showcase .pd-content {
   margin-top: -24px;
 }
+.pd-screen-savings-mts-showcase .pd-hero-img {
+  width: 374px;
+  height: 374px;
+  object-fit: contain;
+  transform: translateY(86px) scale(2.125);
+}
+.pd-screen-savings-mts-showcase .pd-hero {
+  background: #ffffff !important;
+}
+.pd-screen-savings-mts-showcase .pd-promo-title { bottom: 38px; }
+.pd-screen-savings-mts-showcase .pd-content { margin-top: -24px; }
+.pd-screen-savings-mts-showcase .pd-feature-icon-wrap { background: transparent; border-radius: 0; }
+.pd-screen-savings-mts-showcase .pd-feature-icon { width: 52px; height: 52px; }
 .pd-screen-savings-deposit-showcase .pd-hero-img {
   width: 374px;
   height: 374px;
@@ -2890,19 +2903,21 @@ html, body {
   width: 52px;
   height: 52px;
 }
-.pd-screen-savings-mts-showcase .pd-hero-img {
+.pd-screen-savings-metal-account-showcase .pd-hero-img {
   width: 374px;
   height: 374px;
   object-fit: contain;
-  transform: translateY(86px) scale(2.125);
+  transform: translateY(-24px);
 }
-.pd-screen-savings-mts-showcase .pd-hero {
-  background: #ffffff !important;
+.pd-screen-savings-metal-account-showcase .pd-promo-title { bottom: 38px; }
+.pd-screen-savings-metal-account-showcase .pd-content { margin-top: -24px; }
+.pd-screen-savings-metal-account-showcase .pd-feature-icon-wrap { background: transparent; border-radius: 0; }
+.pd-screen-savings-metal-account-showcase .pd-feature-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #f2f3f7;
 }
-.pd-screen-savings-mts-showcase .pd-promo-title { bottom: 38px; }
-.pd-screen-savings-mts-showcase .pd-content { margin-top: -24px; }
-.pd-screen-savings-mts-showcase .pd-feature-icon-wrap { background: transparent; border-radius: 0; }
-.pd-screen-savings-mts-showcase .pd-feature-icon { width: 52px; height: 52px; }
 .showcase-success-screen {
   min-height: 100svh;
   display: flex;

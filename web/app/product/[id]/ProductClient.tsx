@@ -498,7 +498,7 @@ export default function ProductClient({ id }: { id: string }) {
   }
 
   return (
-    <div className={`pd-screen${isSavingsPromo ? " pd-screen-savings-promo" : ""}${id === "a1" || id === "b1" ? " pd-screen-savings-ed" : ""}${scenario === "showcase_test" && id === "a3" ? " pd-screen-savings-minimal-showcase" : ""}${scenario === "showcase_test" && id === "a2" ? " pd-screen-savings-cashbox-showcase" : ""}${scenario === "showcase_test" && id === "d3" ? " pd-screen-savings-deposit-showcase" : ""}${scenario === "showcase_test" && id === "m2" ? " pd-screen-savings-metals-showcase" : ""}${scenario === "showcase_test" && id === "m1" ? " pd-screen-savings-mts-showcase" : ""}`}>
+    <div className={`pd-screen${isSavingsPromo ? " pd-screen-savings-promo" : ""}${id === "a1" || id === "b1" ? " pd-screen-savings-ed" : ""}${scenario === "showcase_test" && id === "a3" ? " pd-screen-savings-minimal-showcase" : ""}${scenario === "showcase_test" && id === "a2" ? " pd-screen-savings-cashbox-showcase" : ""}${scenario === "showcase_test" && id === "d3" ? " pd-screen-savings-deposit-showcase" : ""}${scenario === "showcase_test" && id === "m2" ? " pd-screen-savings-metals-showcase" : ""}${scenario === "showcase_test" && id === "m3" ? " pd-screen-savings-metal-account-showcase" : ""}${scenario === "showcase_test" && id === "m1" ? " pd-screen-savings-mts-showcase" : ""}`}>
       {/* Animated wrapper — kept separate from .pd-bottom so its transform
           doesn't create a containing block that breaks position:fixed */}
       <div className="page-enter" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -517,8 +517,8 @@ export default function ProductClient({ id }: { id: string }) {
                 ))}
               </div>
             ) : null}
-            {id === "a1" || id === "b1" || (scenario === "showcase_test" && id === "a3") || (scenario === "showcase_test" && id === "a2") || (scenario === "showcase_test" && id === "d3") || (scenario === "showcase_test" && id === "m2") ? (
-              <p className="pd-promo-title">{id === "a2" ? "Кешбокс — карта заряжает счёт до 14%" : id === "d3" || id === "m2" ? product.title : <>Накопительный счёт<br />на {id === "a3" ? "минимальный" : "ежедневный"} остаток</>}</p>
+            {id === "a1" || id === "b1" || (scenario === "showcase_test" && id === "a3") || (scenario === "showcase_test" && id === "a2") || (scenario === "showcase_test" && id === "d3") || (scenario === "showcase_test" && id === "m2") || (scenario === "showcase_test" && id === "m3") ? (
+              <p className="pd-promo-title">{id === "a2" ? "Кешбокс — карта заряжает счёт до 14%" : id === "d3" || id === "m2" || id === "m3" ? product.title : <>Накопительный счёт<br />на {id === "a3" ? "минимальный" : "ежедневный"} остаток</>}</p>
             ) : null}
           </div>
         )}
