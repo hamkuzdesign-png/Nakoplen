@@ -124,7 +124,7 @@ const PRODUCTS: Record<string, ProductDetail> = {
     title: "Вклад МТС Максимум",
     subtitle: "Динамическая доходность — ставка растёт вместе с суммой",
     features: [
-      { icon: asset("/images/chip-percent.png"),   title: "Ставка до 14,2% годовых",     desc: "Ставка зависит от суммы и срока вклада" },
+      { icon: asset("/images/chip-percent.png"),   title: "Ставка до 14,21% годовых",    desc: "Ставка зависит от суммы и срока вклада" },
       { icon: asset("/images/chip-high-rate.png"), title: "Динамическая доходность",     desc: "Чем больше сумма на счёте, тем выше ставка" },
       { icon: asset("/images/chip-shield.png"),    title: "Застрахован государством",    desc: "Вклад застрахован АСВ на сумму до 1,4 млн рублей" },
       { icon: asset("/images/chip-stable.png"),    title: "Рублёвый вклад",              desc: "Открывается только в рублях" },
@@ -210,9 +210,9 @@ const SHOWCASE_PROTOTYPES = new Set(["cashbox", "deposit", "metals", "mts"]);
 
 function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
   const spendingLevels = [
-    "Траты от 10 000 ₽ → до 23,1%",
-    "Траты от 50 000 ₽ → до 23,3%",
-    "Траты от 90 000 ₽ → до 23,5%",
+    "Траты от 10 000 ₽ → 13.60%",
+    "Траты от 50 000 ₽ → 14.01%",
+    "Траты от 90 000 ₽ → 14.21%",
   ];
   const details = [
     { icon: MTS_MAXIMUM_PROMO_ASSETS.amount, title: "Определите сумму вклада", text: "Пополнение и снятие до конца срока недоступны, поэтому положите нужную сумму сразу" },
@@ -226,14 +226,14 @@ function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen:
         <section className="mts-maximum-promo-hero"><img src={MTS_MAXIMUM_PROMO_ASSETS.hero} alt="" /></section>
         <div className="mts-maximum-promo-blocks">
           <section className="mts-maximum-promo-card mts-maximum-promo-rate-card">
-            <span className="mts-maximum-promo-badge">Доходность до 23,5%</span>
+            <span className="mts-maximum-promo-badge">Доходность до 14.21%</span>
             <h1>Больше трат – больше доходность</h1>
             <p className="mts-maximum-promo-lead">Доходность растёт в зависимости от ваших трат. Учитываем оплаты нашими кредитными и дебетовыми картами, кроме карт МТС Деньги:</p>
             <ul className="mts-maximum-promo-list">{spendingLevels.map((level) => <li key={level}>{level}</li>)}</ul>
           </section>
           <section className="mts-maximum-promo-card mts-maximum-promo-detail-card">
             <h2>Подробнее о вкладе</h2>
-            <p className="mts-maximum-promo-lead">Если не тратите по картам, базовая доходность — 22,5%. Траты будут учитываться с даты открытия вклада и обновляться ежемесячно</p>
+            <p className="mts-maximum-promo-lead">Если не тратите по картам, базовая доходность — 13.21%. Траты будут учитываться с даты открытия вклада и обновляться ежемесячно</p>
             <div className="mts-maximum-promo-details">
               {details.map((detail) => <div className="mts-maximum-promo-detail" key={detail.title}><img src={detail.icon} alt="" /><div><h3>{detail.title}</h3><p>{detail.text}</p></div></div>)}
             </div>
