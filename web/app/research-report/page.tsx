@@ -20,13 +20,13 @@ const screenNames: Record<string, string> = {
   "/product/b1": "МТС Счёт — ежедневный остаток", "/product/b2": "Кешбокс", "/product/d1": "Вклад Плюс", "/product/d2": "Вклад МТС Деньги", "/product/d3": "Вклад МТС Максимум",
   "/product/m1": "МТС Накопления", "/product/m2": "Цифровые активы", "/product/m3": "Металлы",
 };
-type ScreenPreview = { src: string; height: number; live?: boolean };
+type ScreenPreview = { src: string; height: number; live?: boolean; cropHeight?: number };
 
 const screenScreenshots: Record<string, ScreenPreview> = {
   "/showcase-test": { src: "/images/screenshots/home-full.png", height: 812 },
-  // Полный снимок каталога нужен для корректного отображения кликов по всей
-  // прокручиваемой странице — от фильтров до нижнего блока.
-  "/new-catalog": { src: "/images/screenshots/catalog.png", height: 2589 },
+  // В снимке ниже блока «Это всё» начинается технический повтор каталога.
+  // Показываем только первый полный проход страницы, не уменьшая картинку.
+  "/new-catalog": { src: "/images/screenshots/catalog.png", height: 1050, cropHeight: 1050 },
   "/catalog-v2": { src: "/catalog-v2", height: 812, live: true },
   "/products": { src: "/images/screenshots/products.png", height: 812 },
   "/showcase-success": { src: "/images/screenshots/root.png", height: 812 },
@@ -91,7 +91,10 @@ function screenshotForPath(path: string) {
 }
 
 function Preview({ screen, compact = false }: { screen: ScreenPreview; compact?: boolean }) {
-  if (!screen.live) return <img src={asset(screen.src)} alt="" style={compact ? styles.pathNodeImg : styles.heatmapScreenshot} />;
+  if (!screen.live) {
+    const image = <img src={asset(screen.src)} alt="" style={compact ? styles.pathNodeImg : styles.heatmapScreenshot} />;
+    return !compact && screen.cropHeight ? <div style={{ height: screen.cropHeight, overflow: "hidden" }}>{image}</div> : image;
+  }
   if (compact) return <div style={styles.pathNodeLivePreview}><iframe src={screen.src} title="" sandbox="" tabIndex={-1} style={styles.pathNodeLiveFrame} /></div>;
   return <iframe src={screen.src} title="Светлый каталог накоплений" sandbox="" tabIndex={-1} style={{ ...styles.heatmapScreenshot, height: screen.height, border: 0, pointerEvents: "none" }} />;
 }
