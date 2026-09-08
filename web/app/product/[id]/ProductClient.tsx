@@ -185,10 +185,7 @@ const CFA_PROMO_ASSETS = {
   term: asset("/images/figma/cfa-promo/term.png"),
 };
 
-const SHOWCASE_CUSTOM_PROMO_PRODUCT: Record<string, string> = {
-  deposit: "d3",
-  metals: "m2",
-};
+const SHOWCASE_PROTOTYPES = new Set(["cashbox", "deposit", "metals", "mts"]);
 
 function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
   const spendingLevels = [
@@ -319,10 +316,13 @@ export default function ProductClient({ id }: { id: string }) {
     }
   }, [id, showcasePrototype]);
 
-  const customShowcasePromo = scenario === "showcase_test" && prototype != null && SHOWCASE_CUSTOM_PROMO_PRODUCT[prototype] === id;
+  const isShowcasePrototype = prototype != null && SHOWCASE_PROTOTYPES.has(prototype);
+  const isMtsMaximumShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d3";
+  const isCfaShowcasePromo = scenario === "showcase_test" && prototype === "metals" && id === "m2";
+  const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo;
 
   if (customShowcasePromo) {
-    const PromoScreen = prototype === "deposit" ? MtsMaximumPromoScreen : CfaPromoScreen;
+    const PromoScreen = isMtsMaximumShowcasePromo ? MtsMaximumPromoScreen : CfaPromoScreen;
     return (
       <PromoScreen
         onBack={goBack}
