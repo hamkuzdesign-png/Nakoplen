@@ -24,9 +24,9 @@ type ScreenPreview = { src: string; height: number; live?: boolean; cropHeight?:
 
 const screenScreenshots: Record<string, ScreenPreview> = {
   "/showcase-test": { src: "/images/screenshots/home-full.png", height: 812 },
-  // В снимке ниже блока «Это всё» начинается технический повтор каталога.
-  // Показываем только первый полный проход страницы, не уменьшая картинку.
-  "/new-catalog": { src: "/images/screenshots/catalog.png", height: 1050, cropHeight: 1050 },
+  // Полный экспорт актуального каталога без повторяющегося нижнего блока.
+  // Высокое разрешение сохраняет читаемость при показе тепловой карты.
+  "/new-catalog": { src: "/images/screenshots/catalog-heatmap.png", height: 2364 },
   "/catalog-v2": { src: "/catalog-v2", height: 812, live: true },
   "/products": { src: "/images/screenshots/products.png", height: 812 },
   "/showcase-success": { src: "/images/screenshots/root.png", height: 812 },
