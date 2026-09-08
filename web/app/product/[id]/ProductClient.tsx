@@ -178,6 +178,16 @@ const MTS_MAXIMUM_PROMO_ASSETS = {
   choice: asset("/images/figma/mts-maximum/choice.png"),
 };
 
+const DEPOSIT_PLUS_PROMO_ASSETS = {
+  hero: asset("/images/figma/deposit-plus/hero.png"),
+  term: asset("/images/figma/deposit-plus/term.png"),
+  amount: asset("/images/figma/deposit-plus/amount.png"),
+  topup: asset("/images/figma/deposit-plus/topup.png"),
+  yield: asset("/images/figma/deposit-plus/yield.png"),
+  background: asset("/images/figma/deposit-plus/background.svg"),
+  back: asset("/images/figma/deposit-plus/back.svg"),
+};
+
 const CFA_PROMO_ASSETS = {
   hero: asset("/images/figma/cfa-promo/hero.png"),
   yield: asset("/images/figma/cfa-promo/yield.png"),
@@ -221,6 +231,36 @@ function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen:
       </main>
       <header className="mts-maximum-promo-nav"><button type="button" onClick={onBack} aria-label="Назад"><img src={asset("/images/icon-back.svg")} alt="" /></button></header>
       <footer className="mts-maximum-promo-bottom"><button type="button" onClick={onOpen}>Открыть вклад</button><div className="mts-maximum-promo-home-indicator" /></footer>
+    </div>
+  );
+}
+
+function DepositPlusPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
+  const benefits = [
+    { icon: DEPOSIT_PLUS_PROMO_ASSETS.term, title: "Выбирайте комфортный срок", text: "Откройте вклад на 3–12 месяцев" },
+    { icon: DEPOSIT_PLUS_PROMO_ASSETS.amount, title: "Зафиксируйте сумму вклада", text: "Минимум 10 000 ₽, максимальная сумма не ограничена" },
+    { icon: DEPOSIT_PLUS_PROMO_ASSETS.topup, title: "Пополните в течение 3 дней", text: "Переводите себе до 30 млн ₽ в месяц без комиссии через СБП" },
+    { icon: DEPOSIT_PLUS_PROMO_ASSETS.yield, title: "Получите доходность до 14%", text: "Подключите капитализацию процентов, чтобы заработать больше" },
+  ];
+
+  return (
+    <div className="deposit-plus-promo" style={{ backgroundImage: `url(${DEPOSIT_PLUS_PROMO_ASSETS.background})` }}>
+      <main className="deposit-plus-promo-scroll">
+        <section className="deposit-plus-promo-hero">
+          <img className="deposit-plus-promo-hero-image" src={DEPOSIT_PLUS_PROMO_ASSETS.hero} alt="" />
+          <h1>Вклад Плюс</h1>
+        </section>
+        <section className="deposit-plus-promo-card">
+          {benefits.map((benefit) => (
+            <div className="deposit-plus-promo-benefit" key={benefit.title}>
+              <img src={benefit.icon} alt="" />
+              <div><h2>{benefit.title}</h2><p>{benefit.text}</p></div>
+            </div>
+          ))}
+        </section>
+      </main>
+      <header className="deposit-plus-promo-nav"><button type="button" onClick={onBack} aria-label="Назад"><img src={DEPOSIT_PLUS_PROMO_ASSETS.back} alt="" /></button></header>
+      <footer className="deposit-plus-promo-bottom"><button type="button" onClick={onOpen}>Продолжить</button><div className="deposit-plus-promo-home-indicator" /></footer>
     </div>
   );
 }
@@ -319,10 +359,15 @@ export default function ProductClient({ id }: { id: string }) {
   const isShowcasePrototype = prototype != null && SHOWCASE_PROTOTYPES.has(prototype);
   const isMtsMaximumShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d3";
   const isCfaShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "m2";
-  const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo;
+  const isDepositPlusShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d1";
+  const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo || isDepositPlusShowcasePromo;
 
   if (customShowcasePromo) {
-    const PromoScreen = isMtsMaximumShowcasePromo ? MtsMaximumPromoScreen : CfaPromoScreen;
+    const PromoScreen = isMtsMaximumShowcasePromo
+      ? MtsMaximumPromoScreen
+      : isDepositPlusShowcasePromo
+        ? DepositPlusPromoScreen
+        : CfaPromoScreen;
     return (
       <PromoScreen
         onBack={goBack}
