@@ -413,12 +413,12 @@ export default function ProductClient({ id }: { id: string }) {
       <PromoScreen
         onBack={goBack}
         onOpen={() => {
-          if (showcasePrototype) {
+          if (showcaseSuccess && showcasePrototype) {
             reportShortestPath(showcasePrototype);
             reportShowcaseCompletionTime(showcasePrototype);
             completeShowcaseJourney(showcasePrototype);
+            router.push(`/showcase-success?product=${id}&prototype=${showcasePrototype}`);
           }
-          router.push(`/showcase-success?product=${id}&prototype=${showcasePrototype}`);
         }}
       />
     );
