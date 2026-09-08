@@ -171,6 +171,13 @@ const PRODUCTS: Record<string, ProductDetail> = {
 PRODUCTS.b1 = PRODUCTS.a1;
 PRODUCTS.b2 = PRODUCTS.a2;
 
+const MTS_MAXIMUM_PROMO_ASSETS = {
+  hero: asset("/images/figma/mts-maximum/hero.png"),
+  amount: asset("/images/figma/mts-maximum/amount.png"),
+  interest: asset("/images/figma/mts-maximum/interest.png"),
+  choice: asset("/images/figma/mts-maximum/choice.png"),
+};
+
 const CFA_PROMO_ASSETS = {
   hero: asset("/images/figma/cfa-promo/hero.png"),
   yield: asset("/images/figma/cfa-promo/yield.png"),
@@ -178,13 +185,48 @@ const CFA_PROMO_ASSETS = {
   term: asset("/images/figma/cfa-promo/term.png"),
 };
 
-const SHOWCASE_PROMO_PRODUCT: Record<string, string> = {
-  // The CFA promo is shared by the four task-specific product routes.
-  cashbox: "a2",
+const SHOWCASE_CUSTOM_PROMO_PRODUCT: Record<string, string> = {
   deposit: "d3",
   metals: "m2",
-  mts: "m1",
 };
+
+function MtsMaximumPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
+  const spendingLevels = [
+    "Траты от 10 000 ₽ → до 23,1%",
+    "Траты от 50 000 ₽ → до 23,3%",
+    "Траты от 90 000 ₽ → до 23,5%",
+  ];
+  const details = [
+    { icon: MTS_MAXIMUM_PROMO_ASSETS.amount, title: "Определите сумму вклада", text: "Пополнение и снятие до конца срока недоступны, поэтому положите нужную сумму сразу" },
+    { icon: MTS_MAXIMUM_PROMO_ASSETS.interest, title: "Оставляйте проценты на вкладе", text: "Доходность будет выше" },
+    { icon: MTS_MAXIMUM_PROMO_ASSETS.choice, title: "Выберите МТС Максимум", text: "Можно открыть только один вклад с такими условиями" },
+  ];
+
+  return (
+    <div className="mts-maximum-promo">
+      <main className="mts-maximum-promo-scroll">
+        <section className="mts-maximum-promo-hero"><img src={MTS_MAXIMUM_PROMO_ASSETS.hero} alt="" /></section>
+        <div className="mts-maximum-promo-blocks">
+          <section className="mts-maximum-promo-card mts-maximum-promo-rate-card">
+            <span className="mts-maximum-promo-badge">Доходность до 23,5%</span>
+            <h1>Больше трат – больше доходность</h1>
+            <p className="mts-maximum-promo-lead">Доходность растёт в зависимости от ваших трат. Учитываем оплаты нашими кредитными и дебетовыми картами, кроме карт МТС Деньги:</p>
+            <ul className="mts-maximum-promo-list">{spendingLevels.map((level) => <li key={level}>{level}</li>)}</ul>
+          </section>
+          <section className="mts-maximum-promo-card mts-maximum-promo-detail-card">
+            <h2>Подробнее о вкладе</h2>
+            <p className="mts-maximum-promo-lead">Если не тратите по картам, базовая доходность — 22,5%. Траты будут учитываться с даты открытия вклада и обновляться ежемесячно</p>
+            <div className="mts-maximum-promo-details">
+              {details.map((detail) => <div className="mts-maximum-promo-detail" key={detail.title}><img src={detail.icon} alt="" /><div><h3>{detail.title}</h3><p>{detail.text}</p></div></div>)}
+            </div>
+          </section>
+        </div>
+      </main>
+      <header className="mts-maximum-promo-nav"><button type="button" onClick={onBack} aria-label="Назад"><img src={asset("/images/icon-back.svg")} alt="" /></button></header>
+      <footer className="mts-maximum-promo-bottom"><button type="button" onClick={onOpen}>Открыть вклад</button><div className="mts-maximum-promo-home-indicator" /></footer>
+    </div>
+  );
+}
 
 function CfaPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
   const benefits = [
@@ -277,11 +319,12 @@ export default function ProductClient({ id }: { id: string }) {
     }
   }, [id, showcasePrototype]);
 
-  const isShowcasePromo = scenario === "showcase_test" && prototype != null && SHOWCASE_PROMO_PRODUCT[prototype] === id;
+  const customShowcasePromo = scenario === "showcase_test" && prototype != null && SHOWCASE_CUSTOM_PROMO_PRODUCT[prototype] === id;
 
-  if (isShowcasePromo) {
+  if (customShowcasePromo) {
+    const PromoScreen = prototype === "deposit" ? MtsMaximumPromoScreen : CfaPromoScreen;
     return (
-      <CfaPromoScreen
+      <PromoScreen
         onBack={goBack}
         onOpen={() => {
           if (showcasePrototype) {
