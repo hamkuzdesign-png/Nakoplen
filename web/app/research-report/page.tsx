@@ -268,7 +268,7 @@ export default function ResearchReportPage() {
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
   const scenarioJourneys = useMemo(() => journeysFrom(events ?? [], selected), [events, selected]);
   const selectedHeatmapPath = HEATMAP_PATH;
-  const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath)
+  const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path.split("?")[0] === selectedHeatmapPath)
     .filter((click) => {
       if (selected === "all") return true;
       const session = sessions.find((s) => s.prototype === selected && s.pid === click.pid && sessionContains(s, click.timestamp));
