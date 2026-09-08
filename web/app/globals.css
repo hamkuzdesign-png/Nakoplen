@@ -2858,14 +2858,14 @@ html, body {
   width: 374px;
   height: 374px;
   object-fit: contain;
-  transform: translateY(86px) scale(2.125);
+  transform: translateY(86px) scale(2.4);
 }
 .pd-screen-savings-mts-showcase .pd-hero {
   background: #ffffff !important;
 }
 .pd-screen-savings-mts-showcase .pd-promo-title { bottom: 38px; }
 .pd-screen-savings-mts-showcase .pd-content { margin-top: -24px; }
-.pd-screen-savings-mts-showcase .pd-feature-icon-wrap { background: transparent; border-radius: 0; }
+.pd-screen-savings-mts-showcase .pd-feature-icon-wrap { background: #f2f3f7; border-radius: 16px; }
 .pd-screen-savings-mts-showcase .pd-feature-icon { width: 52px; height: 52px; }
 .pd-screen-savings-deposit-showcase .pd-hero-img {
   width: 374px;
