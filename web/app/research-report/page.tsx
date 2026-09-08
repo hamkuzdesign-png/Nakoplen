@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
 import { fetchAllEvents, type AnalyticsEvent, type ClickEvent, type JourneyEvent, type ScreenTimeEvent, type ShowcasePrototype } from "@/lib/analytics";
 import { asset } from "@/lib/asset";
@@ -58,6 +58,7 @@ type Session = {
 type JourneyPath = { id: string; nodes: string[]; success: boolean };
 type FlowNode = { path: string; step: number; count: number; row: number };
 type FlowLink = { from: FlowNode; to: FlowNode; count: number };
+type ClickZone = { id: number; x: number; y: number; width: number; height: number };
 
 function duration(ms?: number) {
   if (ms === undefined) return "—";
@@ -200,9 +201,19 @@ function Metric({ label, value, note }: { label: string; value: string | number;
 
 function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string; path: string | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const [draftZone, setDraftZone] = useState<Omit<ClickZone, "id"> | null>(null);
+  const [zones, setZones] = useState<ClickZone[]>([]);
   const screenshot = path ? screenshotForPath(path) : undefined;
   const width = 375;
   const height = screenshot?.height ?? 812;
+  const toCanvasPoint = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const bounds = stage.current?.getBoundingClientRect();
+    if (!bounds) return null;
+    return { x: (event.clientX - bounds.left) * width / bounds.width, y: (event.clientY - bounds.top) * height / bounds.height };
+  };
+  const zoneFromPoints = (from: { x: number; y: number }, to: { x: number; y: number }) => ({ x: Math.max(0, Math.min(from.x, to.x)), y: Math.max(0, Math.min(from.y, to.y)), width: Math.abs(to.x - from.x), height: Math.abs(to.y - from.y) });
   useEffect(() => {
     const node = canvas.current;
     const ctx = node?.getContext("2d");
@@ -227,8 +238,11 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
   }, [clicks]);
   return <div style={styles.heatmapWrap}>
     <div style={styles.heatmapTop}><div><strong>{title}</strong><span style={styles.heatmapScreenName}>Скриншот: {path ? labelPath(path) : "не выбран"}</span></div><span>{clicks.length} кликов</span></div>
-    {path && screenshot ? <div style={styles.heatmapStage}><Preview screen={screenshot} /><canvas ref={canvas} width={width} height={height} style={styles.heatmapCanvas} /></div> : <div style={styles.heatmapEmpty}>{path ? "Для этого экрана пока нет скриншота" : "Выберите экран"}</div>}
-    <p style={styles.heatmapHint}>Тепловая карта нормализует плотность для исследований до 500 участников: зоны интереса остаются видны, но не перекрывают экран. Оранжевым отмечены клики вне интерактивных элементов.</p>
+    {path && screenshot ? <div ref={stage} style={{ ...styles.heatmapStage, touchAction: "none", cursor: "crosshair" }} onPointerDown={(event) => { const point = toCanvasPoint(event); if (!point) return; dragStart.current = point; event.currentTarget.setPointerCapture(event.pointerId); setDraftZone({ x: point.x, y: point.y, width: 0, height: 0 }); }} onPointerMove={(event) => { const point = toCanvasPoint(event); if (!point || !dragStart.current) return; setDraftZone(zoneFromPoints(dragStart.current, point)); }} onPointerUp={(event) => { const point = toCanvasPoint(event); const start = dragStart.current; dragStart.current = null; setDraftZone(null); event.currentTarget.releasePointerCapture(event.pointerId); if (!point || !start) return; const zone = zoneFromPoints(start, point); if (zone.width < 12 || zone.height < 12) return; setZones((current) => [...current, { ...zone, id: Date.now() }]); }}>
+      <Preview screen={screenshot} /><canvas ref={canvas} width={width} height={height} style={styles.heatmapCanvas} />
+      {[...zones, ...(draftZone ? [{ ...draftZone, id: -1 }] : [])].map((zone) => { const count = clicks.filter((click) => click.xNorm * width >= zone.x && click.xNorm * width <= zone.x + zone.width && click.yPage >= zone.y && click.yPage <= zone.y + zone.height).length; const isDraft = zone.id === -1; return <div key={zone.id} onPointerDown={(event) => { if (isDraft) return; event.stopPropagation(); setZones((current) => current.filter((item) => item.id !== zone.id)); }} title={isDraft ? "Отпустите, чтобы добавить зону" : "Нажмите, чтобы удалить зону"} style={{ position: "absolute", left: `${zone.x / width * 100}%`, top: `${zone.y / height * 100}%`, width: `${zone.width / width * 100}%`, height: `${zone.height / height * 100}%`, boxSizing: "border-box", border: "3px solid #376fea", borderRadius: 10, background: "rgba(55,111,234,.1)", cursor: isDraft ? "crosshair" : "pointer", pointerEvents: isDraft ? "none" : "auto" }}><span style={{ position: "absolute", top: 8, left: 8, padding: "5px 9px", borderRadius: 999, background: "#376fea", color: "#fff", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Клики: {count}{clicks.length ? ` (${Math.round(count / clicks.length * 100)}%)` : ""}</span></div>; })}
+    </div> : <div style={styles.heatmapEmpty}>{path ? "Для этого экрана пока нет скриншота" : "Выберите экран"}</div>}
+    <p style={styles.heatmapHint}>Выделите область перетаскиванием, чтобы увидеть количество кликов в ней. Нажмите на готовую зону, чтобы удалить её. Тепловая карта нормализует плотность для исследований до 500 участников; оранжевым отмечены клики вне интерактивных элементов.</p>
   </div>;
 }
 
