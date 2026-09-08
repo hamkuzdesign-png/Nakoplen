@@ -318,7 +318,7 @@ export default function ProductClient({ id }: { id: string }) {
 
   const isShowcasePrototype = prototype != null && SHOWCASE_PROTOTYPES.has(prototype);
   const isMtsMaximumShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d3";
-  const isCfaShowcasePromo = scenario === "showcase_test" && prototype === "metals" && id === "m2";
+  const isCfaShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "m2";
   const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo;
 
   if (customShowcasePromo) {
