@@ -232,8 +232,6 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
 export default function ResearchReportPage() {
   const [events, setEvents] = useState<AnalyticsEvent[] | null>(null);
   const [selected, setSelected] = useState<ShowcasePrototype | "all">("all");
-  const [heatmapScope, setHeatmapScope] = useState<ShowcasePrototype | "all">("all");
-  const [heatmapPid, setHeatmapPid] = useState<string | "all">("all");
   useEffect(() => { fetchAllEvents().then(setEvents); }, []);
   const sessions = useMemo(() => sessionsFrom(events ?? []), [events]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
@@ -246,18 +244,13 @@ export default function ResearchReportPage() {
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
   const scenarioJourneys = useMemo(() => journeysFrom(events ?? [], selected), [events, selected]);
-  const scopedSessions = useMemo(() => sessions.filter((s) => heatmapScope === "all" || s.prototype === heatmapScope), [sessions, heatmapScope]);
   const selectedHeatmapPath = HEATMAP_PATH;
-  // A person appears only if they actually visited the selected screen within
-  // the selected scenario — not merely because they took part in another test.
-  const heatmapPids = useMemo(() => [...new Set((events ?? []).filter((e): e is ScreenTimeEvent => e.type === "screen_time" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath).filter((screen) => heatmapScope === "all" || scopedSessions.some((s) => s.pid === screen.pid && sessionContains(s, screen.timestamp))).map((screen) => screen.pid))], [events, heatmapScope, scopedSessions, selectedHeatmapPath]);
-  const selectedHeatmapPid = heatmapPid !== "all" && heatmapPids.includes(heatmapPid) ? heatmapPid : "all";
-  const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath && (selectedHeatmapPid === "all" || e.pid === selectedHeatmapPid)), [events, selectedHeatmapPid, selectedHeatmapPath])
+  const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path === selectedHeatmapPath)
     .filter((click) => {
-      if (heatmapScope === "all") return true;
-      const session = scopedSessions.find((s) => s.pid === click.pid && sessionContains(s, click.timestamp));
+      if (selected === "all") return true;
+      const session = sessions.find((s) => s.prototype === selected && s.pid === click.pid && sessionContains(s, click.timestamp));
       return !!session;
-    });
+    }), [events, selected, sessions, selectedHeatmapPath]);
 
   return <main style={styles.page}>
     <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>Данные обновляются из анонимных событий участников</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
@@ -275,9 +268,8 @@ export default function ResearchReportPage() {
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Пути</h2><p style={styles.description}>Переходы между экранами выбранного сверху сценария. Толщина линии показывает, сколько пользователей прошли этим маршрутом. Колесо мыши и перетаскивание двигают карту.</p></div></div>
         <PathMap journeys={scenarioJourneys} />
       </section>
-      <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Тепловые карты</h2><p style={styles.description}>Все срезы доступны здесь: общий, по сценарию и по респонденту.</p></div></div>
-        <div style={styles.heatmapControls}><div style={styles.controlGroup}><label htmlFor="heatmap-scenario" style={styles.controlLabel}>1. Сценарий</label><select id="heatmap-scenario" value={heatmapScope} onChange={(event) => { setHeatmapScope(event.target.value as ShowcasePrototype | "all"); setHeatmapPid("all"); }} style={styles.select}>{[{ id: "all" as const, label: "Общий" }, ...prototypes.map((p) => ({ id: p.id, label: p.label }))].map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div><div style={styles.controlGroup}><span style={styles.controlLabel}>2. Экран</span><div style={styles.fixedControl}>Каталог накоплений с фильтрами</div></div><div style={styles.controlGroup}><label htmlFor="heatmap-participant" style={styles.controlLabel}>3. Респондент</label><select id="heatmap-participant" value={selectedHeatmapPid} onChange={(event) => setHeatmapPid(event.target.value)} style={styles.select}><option value="all">Все релевантные</option>{heatmapPids.map((pid) => <option key={pid} value={pid}>{participantName(pid, pids)}</option>)}</select></div></div>
-        <Heatmap clicks={heatmapClicks} path={selectedHeatmapPath} title={`${heatmapScope === "all" ? "Общая карта" : prototypes.find((p) => p.id === heatmapScope)?.label}${selectedHeatmapPath ? ` · ${labelPath(selectedHeatmapPath)}` : ""}${selectedHeatmapPid === "all" ? "" : ` · ${participantName(selectedHeatmapPid, pids)}`}`} />
+      <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Тепловая карта</h2><p style={styles.description}>Карта полного каталога с фильтрами. Сценарий выбирается общим фильтром вверху страницы.</p></div></div>
+        <Heatmap clicks={heatmapClicks} path={selectedHeatmapPath} title={`${selected === "all" ? "Общая карта" : prototypes.find((p) => p.id === selected)?.label} · Каталог накоплений с фильтрами`} />
       </section>
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Респонденты и путь</h2><p style={styles.description}>Время сессии — суммарное активное время на экранах. До успеха — от входа в задание до нажатия целевого действия.</p></div></div>
         <div style={styles.tableWrap}><table style={styles.table}><thead><tr><th style={styles.tableHead}>Респондент</th><th style={styles.tableHead}>Прототип</th><th style={styles.tableHead}>Дата</th><th style={styles.tableHead}>Сессия</th><th style={styles.tableHead}>До успеха</th><th style={{ ...styles.tableHead, ...styles.path }}>Маршрут</th></tr></thead><tbody>{[...visible].sort((a, b) => b.startedAt - a.startedAt).map((s) => <tr key={`${s.pid}-${s.prototype}-${s.startedAt}`} style={styles.tableRow}><td style={styles.tableCell}>{participantName(s.pid, pids)}</td><td style={styles.tableCell}><span style={{ ...styles.productBadge, background: prototypes.find((p) => p.id === s.prototype)?.color }}>{prototypes.find((p) => p.id === s.prototype)?.label}</span></td><td style={styles.tableCell}>{dateLabel(s.startedAt)}</td><td style={styles.tableCell}>{duration(s.activeMs)}</td><td style={styles.tableCell}>{s.successAt ? <>{duration(s.successAt - s.startedAt)}{s.shortest && <span style={styles.shortest}>Кратчайший</span>}</> : "Не завершил"}</td><td style={{ ...styles.tableCell, ...styles.path }}>{s.path.length ? s.path.join(" → ") : "Путь ещё не записан"}</td></tr>)}</tbody></table></div>
