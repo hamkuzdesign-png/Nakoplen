@@ -3471,10 +3471,10 @@ html, body {
 .mts-money-deposit-promo-hero { position: relative; height: 413px; overflow: hidden; }
 .mts-money-deposit-promo-hero-image {
   position: absolute;
-  top: -5px;
+  top: -35px;
   left: 50%;
-  width: 462px;
-  height: 462px;
+  width: 514px;
+  height: 514px;
   max-width: none;
   transform: translateX(-50%);
   object-fit: contain;

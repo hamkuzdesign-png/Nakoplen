@@ -289,7 +289,7 @@ function MtsMoneyDepositPromoScreen({ onBack, onOpen }: { onBack: () => void; on
     <div className="mts-money-deposit-promo" style={{ backgroundImage: `url(${MTS_MONEY_DEPOSIT_PROMO_ASSETS.background})` }}>
       <main className="mts-money-deposit-promo-scroll">
         <section className="mts-money-deposit-promo-hero">
-          <img className="mts-money-deposit-promo-hero-image" src={MTS_MONEY_DEPOSIT_PROMO_ASSETS.hero} alt="" />
+          <img className="mts-money-deposit-promo-hero-image" src={DEPOSIT_PLUS_PROMO_ASSETS.hero} alt="" />
           <h1>Вклад<br />МТС Деньги</h1>
         </section>
         <section className="mts-money-deposit-promo-card">

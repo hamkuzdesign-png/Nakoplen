@@ -32,7 +32,7 @@ const ACCOUNTS: CardData[] = [
 const DEPOSITS: CardData[] = [
   { id: "d1", title: "Вклад Плюс", desc: "В рублях, юанях или дирхамах", badge: "До 14%", img: asset("/images/prod-vklad-plus.png") },
   { id: "d2", title: "Вклад МТС Деньги", desc: "В рублях. Без снятия и пополнения", badge: "До 13,5%", img: asset("/images/prod-mts-dengi.png") },
-  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,2%", img: asset("/images/prod-mts-maksimum.png"), wide: true },
+  { id: "d3", title: "Вклад МТС Максимум", desc: "Динамическая доходность в рублях", badge: "До 14,2%", img: asset("/images/max.png"), wide: true },
 ];
 
 /* УПРИД: уже доступные продукты, не требующие полной идентификации */
