@@ -239,6 +239,11 @@ export default function ResearchReportPage() {
   const sessions = useMemo(() => sessionsFrom(events ?? []), [events]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
   const visible = selected === "all" ? sessions : sessions.filter((s) => s.prototype === selected);
+  // В таблице один человек должен быть представлен одной строкой. Если
+  // респондент проходил тест несколько раз, оставляем его последнюю сессию.
+  const uniqueVisibleSessions = useMemo(() => [...visible]
+    .sort((a, b) => b.startedAt - a.startedAt)
+    .filter((session, index, list) => list.findIndex((candidate) => candidate.pid === session.pid) === index), [visible]);
   const completed = visible.filter((s) => s.successAt);
   const users = [...new Set(visible.map((s) => s.pid))];
   const successfulUsers = new Set(completed.map((s) => s.pid)).size;
@@ -275,7 +280,7 @@ export default function ResearchReportPage() {
         <Heatmap clicks={heatmapClicks} path={selectedHeatmapPath} title={`${selected === "all" ? "Общая карта" : prototypes.find((p) => p.id === selected)?.label} · Каталог накоплений с фильтрами`} />
       </section>
       <section style={styles.card}><div style={styles.sectionTop}><div><h2 style={styles.heading}>Респонденты и путь</h2><p style={styles.description}>Время сессии — суммарное активное время на экранах. До успеха — от входа в задание до нажатия целевого действия.</p></div></div>
-        <div style={styles.tableWrap}><table style={styles.table}><thead><tr><th style={styles.tableHead}>Респондент</th><th style={styles.tableHead}>Прототип</th><th style={styles.tableHead}>Дата</th><th style={styles.tableHead}>Сессия</th><th style={styles.tableHead}>До успеха</th><th style={{ ...styles.tableHead, ...styles.path }}>Маршрут</th></tr></thead><tbody>{[...visible].sort((a, b) => b.startedAt - a.startedAt).map((s) => <tr key={`${s.pid}-${s.prototype}-${s.startedAt}`} style={styles.tableRow}><td style={styles.tableCell}>{participantName(s.pid, pids)}</td><td style={styles.tableCell}><span style={{ ...styles.productBadge, background: prototypes.find((p) => p.id === s.prototype)?.color }}>{prototypes.find((p) => p.id === s.prototype)?.label}</span></td><td style={styles.tableCell}>{dateLabel(s.startedAt)}</td><td style={styles.tableCell}>{duration(s.activeMs)}</td><td style={styles.tableCell}>{s.successAt ? <>{duration(s.successAt - s.startedAt)}{s.shortest && <span style={styles.shortest}>Кратчайший</span>}</> : "Не завершил"}</td><td style={{ ...styles.tableCell, ...styles.path }}>{s.path.length ? s.path.join(" → ") : "Путь ещё не записан"}</td></tr>)}</tbody></table></div>
+        <div style={styles.tableWrap}><table style={styles.table}><thead><tr><th style={styles.tableHead}>Респондент</th><th style={styles.tableHead}>Прототип</th><th style={styles.tableHead}>Дата</th><th style={styles.tableHead}>Сессия</th><th style={styles.tableHead}>До успеха</th><th style={{ ...styles.tableHead, ...styles.path }}>Маршрут</th></tr></thead><tbody>{uniqueVisibleSessions.map((s) => <tr key={s.pid} style={styles.tableRow}><td style={styles.tableCell}>{participantName(s.pid, pids)}</td><td style={styles.tableCell}><span style={{ ...styles.productBadge, background: prototypes.find((p) => p.id === s.prototype)?.color }}>{prototypes.find((p) => p.id === s.prototype)?.label}</span></td><td style={styles.tableCell}>{dateLabel(s.startedAt)}</td><td style={styles.tableCell}>{duration(s.activeMs)}</td><td style={styles.tableCell}>{s.successAt ? <>{duration(s.successAt - s.startedAt)}{s.shortest && <span style={styles.shortest}>Кратчайший</span>}</> : "Не завершил"}</td><td style={{ ...styles.tableCell, ...styles.path }}>{s.path.length ? s.path.join(" → ") : "Путь ещё не записан"}</td></tr>)}</tbody></table></div>
       </section>
       <p style={styles.footer}>Тепловые карты строятся только по данным пользовательских тестов и не используют прежнюю страницу аналитики.</p>
     </>}
