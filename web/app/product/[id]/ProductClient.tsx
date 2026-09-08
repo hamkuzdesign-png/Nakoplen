@@ -188,6 +188,17 @@ const DEPOSIT_PLUS_PROMO_ASSETS = {
   back: asset("/images/figma/deposit-plus/back.svg"),
 };
 
+const MTS_MONEY_DEPOSIT_PROMO_ASSETS = {
+  hero: asset("/images/figma/mts-money-deposit/hero.png"),
+  amount: asset("/images/figma/mts-money-deposit/amount.png"),
+  term: asset("/images/figma/mts-money-deposit/term.png"),
+  rate: asset("/images/figma/mts-money-deposit/rate.png"),
+  interest: asset("/images/figma/mts-money-deposit/interest.png"),
+  withdraw: asset("/images/figma/mts-money-deposit/withdraw.png"),
+  background: asset("/images/figma/mts-money-deposit/background.svg"),
+  back: asset("/images/figma/mts-money-deposit/back.svg"),
+};
+
 const CFA_PROMO_ASSETS = {
   hero: asset("/images/figma/cfa-promo/hero.png"),
   yield: asset("/images/figma/cfa-promo/yield.png"),
@@ -261,6 +272,32 @@ function DepositPlusPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen
       </main>
       <header className="deposit-plus-promo-nav"><button type="button" onClick={onBack} aria-label="Назад"><img src={DEPOSIT_PLUS_PROMO_ASSETS.back} alt="" /></button></header>
       <footer className="deposit-plus-promo-bottom"><button type="button" onClick={onOpen}>Продолжить</button><div className="deposit-plus-promo-home-indicator" /></footer>
+    </div>
+  );
+}
+
+function MtsMoneyDepositPromoScreen({ onBack, onOpen }: { onBack: () => void; onOpen: () => void }) {
+  const benefits = [
+    { icon: MTS_MONEY_DEPOSIT_PROMO_ASSETS.amount, title: "Сумма — от 10 000 ₽", text: "Положите столько, сколько хотите" },
+    { icon: MTS_MONEY_DEPOSIT_PROMO_ASSETS.term, title: "Срок — 12 месяцев", text: "Деньги работают весь год" },
+    { icon: MTS_MONEY_DEPOSIT_PROMO_ASSETS.rate, title: "Ставка 14% годовых", text: "Если это первый вклад или закрыли прошлый 30 дней назад" },
+    { icon: MTS_MONEY_DEPOSIT_PROMO_ASSETS.interest, title: "Проценты не сгорают", text: "Если держать деньги на вкладе 92 дня и дольше" },
+    { icon: MTS_MONEY_DEPOSIT_PROMO_ASSETS.withdraw, title: "Пополнение и снятие", text: "Не предусмотрены" },
+  ];
+
+  return (
+    <div className="mts-money-deposit-promo" style={{ backgroundImage: `url(${MTS_MONEY_DEPOSIT_PROMO_ASSETS.background})` }}>
+      <main className="mts-money-deposit-promo-scroll">
+        <section className="mts-money-deposit-promo-hero">
+          <img className="mts-money-deposit-promo-hero-image" src={MTS_MONEY_DEPOSIT_PROMO_ASSETS.hero} alt="" />
+          <h1>Вклад<br />МТС Деньги</h1>
+        </section>
+        <section className="mts-money-deposit-promo-card">
+          {benefits.map((benefit) => <div className="mts-money-deposit-promo-benefit" key={benefit.title}><img src={benefit.icon} alt="" /><div><h2>{benefit.title}</h2><p>{benefit.text}</p></div></div>)}
+        </section>
+      </main>
+      <header className="mts-money-deposit-promo-nav"><button type="button" onClick={onBack} aria-label="Назад"><img src={MTS_MONEY_DEPOSIT_PROMO_ASSETS.back} alt="" /></button></header>
+      <footer className="mts-money-deposit-promo-bottom"><button type="button" onClick={onOpen}>Открыть вклад</button><div className="mts-money-deposit-promo-home-indicator" /></footer>
     </div>
   );
 }
@@ -360,14 +397,17 @@ export default function ProductClient({ id }: { id: string }) {
   const isMtsMaximumShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d3";
   const isCfaShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "m2";
   const isDepositPlusShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d1";
-  const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo || isDepositPlusShowcasePromo;
+  const isMtsMoneyDepositShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d2";
+  const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo || isDepositPlusShowcasePromo || isMtsMoneyDepositShowcasePromo;
 
   if (customShowcasePromo) {
     const PromoScreen = isMtsMaximumShowcasePromo
       ? MtsMaximumPromoScreen
       : isDepositPlusShowcasePromo
         ? DepositPlusPromoScreen
-        : CfaPromoScreen;
+        : isMtsMoneyDepositShowcasePromo
+          ? MtsMoneyDepositPromoScreen
+          : CfaPromoScreen;
     return (
       <PromoScreen
         onBack={goBack}

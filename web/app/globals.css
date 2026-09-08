@@ -3454,6 +3454,59 @@ html, body {
 }
 .deposit-plus-promo-home-indicator { width: 144px; height: 5px; margin-bottom: calc(8px + env(safe-area-inset-bottom)); border-radius: 100px; background: #000; }
 
+/* MTS Money Deposit promo — Figma frame 10675:180192. */
+.mts-money-deposit-promo {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  margin: 0 auto;
+  overflow: hidden;
+  background-color: #5166a9;
+  background-position: center;
+  background-size: cover;
+  color: #1d2023;
+}
+@media (min-width: 600px) { .mts-money-deposit-promo { width: 393px; } }
+.mts-money-deposit-promo-scroll { min-height: 100svh; padding-bottom: 128px; }
+.mts-money-deposit-promo-hero { position: relative; height: 413px; overflow: hidden; }
+.mts-money-deposit-promo-hero-image {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 462px;
+  height: 462px;
+  max-width: none;
+  transform: translateX(-50%);
+  object-fit: contain;
+}
+.mts-money-deposit-promo-hero h1 {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  left: 20px;
+  margin: 0;
+  color: #fff;
+  font-family: 'MTS Wide', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 28px;
+  text-align: center;
+}
+.mts-money-deposit-promo-card { display: flex; flex-direction: column; padding: 20px 0 168px; border-radius: 32px 32px 0 0; background: #fff; }
+.mts-money-deposit-promo-benefit { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 20px; }
+.mts-money-deposit-promo-benefit > img { display: block; width: 52px; height: 52px; flex: 0 0 52px; border-radius: 16px; background: #f2f3f7; object-fit: contain; }
+.mts-money-deposit-promo-benefit h2,
+.mts-money-deposit-promo-benefit p { margin: 0; font-family: 'MTS Compact', sans-serif; }
+.mts-money-deposit-promo-benefit h2 { font-size: 17px; font-weight: 500; line-height: 20px; }
+.mts-money-deposit-promo-benefit p { margin-top: 4px; color: #626c77; font-size: 14px; font-weight: 400; line-height: 18px; }
+.mts-money-deposit-promo-nav { position: absolute; top: calc(80px + env(safe-area-inset-top)); left: 20px; z-index: 2; }
+.mts-money-deposit-promo-nav button { display: grid; width: 32px; height: 32px; padding: 4px; place-items: center; border: 0; border-radius: 12px; background: rgba(255, 255, 255, .08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.mts-money-deposit-promo-nav img { width: 24px; height: 24px; }
+.mts-money-deposit-promo-bottom { position: fixed; bottom: 0; left: 50%; z-index: 10; display: flex; width: 100%; flex-direction: column; align-items: center; transform: translateX(-50%); background: rgba(255, 255, 255, .94); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+@media (min-width: 600px) { .mts-money-deposit-promo-bottom { width: 393px; } }
+.mts-money-deposit-promo-bottom button { width: calc(100% - 64px); height: 60px; margin: 8px 32px 12px; border: 0; border-radius: 16px; background: #ff0032; color: #fff; font-family: 'MTS Wide', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .6px; line-height: 16px; text-transform: uppercase; }
+.mts-money-deposit-promo-home-indicator { width: 144px; height: 5px; margin-bottom: calc(8px + env(safe-area-inset-bottom)); border-radius: 100px; background: #000; }
+
 /* ── "Бонусы за накопления" detail screen variant (no hero) ── */
 .pd-navbar2 {
   background: #1d2023;
