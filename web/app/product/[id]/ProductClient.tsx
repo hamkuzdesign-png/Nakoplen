@@ -36,7 +36,7 @@ const CARD_REQUIRED_FEATURE: Feature = {
 const BONUS_DETAIL = {
   navTitle: "Бонусы за накопления",
   cardTitle: "Подключите бонусы",
-  cardSubtitle: "И держите нужную сумму на отдельном счёте",
+  cardSubtitle: "И держите нужную сумму на счёте в течение указанного количества дней",
   bonuses: [
     { icon: asset("/images/pd-bonus/icon-marketplace.png"), title: "15% Маркетплейсы", desc: "За остаток 50 000 ₽" },
     { icon: asset("/images/pd-bonus/icon-zhkh.png"),         title: "5% ЖКХ",            desc: "За остаток 30 000 ₽" },
@@ -398,6 +398,7 @@ export default function ProductClient({ id }: { id: string }) {
   const isCfaShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "m2";
   const isDepositPlusShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d1";
   const isMtsMoneyDepositShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "d2";
+  const isSavingsBonusesShowcasePromo = scenario === "showcase_test" && isShowcasePrototype && id === "a4";
   const customShowcasePromo = isMtsMaximumShowcasePromo || isCfaShowcasePromo || isDepositPlusShowcasePromo || isMtsMoneyDepositShowcasePromo;
 
   if (customShowcasePromo) {
@@ -432,7 +433,7 @@ export default function ProductClient({ id }: { id: string }) {
   if (id === "a4") {
     const b = BONUS_DETAIL;
     return (
-      <div className="pd-screen pd-screen-tall-bottom">
+      <div className={`pd-screen pd-screen-tall-bottom${isSavingsBonusesShowcasePromo ? " pd-bonus-light" : ""}`}>
         {/* Animated wrapper — kept separate from .pd-bottom so its transform
             doesn't create a containing block that breaks position:fixed */}
         <div className="page-enter" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -447,7 +448,7 @@ export default function ProductClient({ id }: { id: string }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+          <div className="pd-bonus-content" style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
             {/* Подключите бонусы */}
             <div className="pd-card">
               <div className="pd-card-title-block">
@@ -503,9 +504,9 @@ export default function ProductClient({ id }: { id: string }) {
         {/* Fixed bottom — CTA */}
         <div className="pd-bottom pd-bottom-stacked">
           <div className="pd-cta-btn-wrap">
-            <button className="pd-cta-btn" onClick={() => {
+            <button className="pd-cta-btn" disabled={isSavingsBonusesShowcasePromo} onClick={() => {
               if (needsIdentity) router.push(`/identity${scenario ? `?scenario=${scenario}` : ""}`);
-            }}>{needsIdentity ? "Подтвердить личность" : "Продолжить"}</button>
+            }}>{isSavingsBonusesShowcasePromo ? "Пополнить" : needsIdentity ? "Подтвердить личность" : "Продолжить"}</button>
           </div>
           <div className="pd-bottom-handle-wrap">
             <div className="pd-bottom-handle" />

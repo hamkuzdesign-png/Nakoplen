@@ -3590,6 +3590,7 @@ html, body {
 .pd-bonus-icon {
   width: 52px;
   height: 52px;
+  background: #f2f3f7;
   border-radius: 16px;
   flex-shrink: 0;
   object-fit: cover;
@@ -3656,6 +3657,57 @@ html, body {
   height: 4px;
   border-radius: 12px;
   background: #fafafa;
+}
+
+/* «Бонусы за накопления» — светлый промоэкран в четырёх тестовых сценариях. */
+.pd-bonus-light {
+  background: #f2f3f7;
+}
+.pd-bonus-light .pd-navbar2 {
+  background: #fff;
+}
+.pd-bonus-light .pd-navbar2-title,
+.pd-bonus-light .pd-card-title,
+.pd-bonus-light .pd-bonus-title {
+  color: #1d2023;
+}
+.pd-bonus-light .pd-navbar2-btn img {
+  filter: brightness(0) saturate(100%);
+}
+.pd-bonus-light .pd-card-subtitle,
+.pd-bonus-light .pd-bonus-desc,
+.pd-bonus-light .pd-feature-desc {
+  color: #697586;
+}
+.pd-bonus-light .pd-card {
+  background: #fff;
+}
+.pd-bonus-light .pd-bonus-content {
+  padding-top: 12px;
+}
+.pd-bonus-light .pd-feature-title {
+  color: #1d2023;
+}
+.pd-bonus-light .pd-feature-icon-wrap {
+  background: #f2f3f7;
+}
+.pd-bonus-light .pd-terms {
+  background: transparent;
+}
+.pd-bonus-light .pd-terms-link {
+  color: #e30613;
+}
+.pd-bonus-light .pd-bottom {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+}
+.pd-bonus-light .pd-cta-btn:disabled {
+  background: #d9dde3;
+  color: #969fa8;
+  cursor: default;
+}
+.pd-bonus-light .pd-bottom-handle {
+  background: #1d2023;
 }
 
 /* ══════════════════════════════════════════════════════════════
