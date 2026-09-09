@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 import Link from "next/link";
 import { fetchAllEvents, SHOWCASE_TARGETS, type AnalyticsEvent, type ClickEvent, type JourneyEvent, type ScreenTimeEvent, type ShowcasePrototype } from "@/lib/analytics";
 import { asset } from "@/lib/asset";
-import TestTwoReport from "./TestTwoReport";
 
 const prototypes: { id: ShowcasePrototype; label: string; color: string }[] = [
   { id: "cashbox", label: "Кешбокс", color: "#786cff" },
@@ -303,7 +302,7 @@ export default function ResearchReportPage() {
   const cohortEvents = useMemo(() => (events ?? []).filter((event) => {
     const inTestOne = STUDY_COHORT_PIDS.has(event.pid);
     const inTestTwo = event.timestamp >= TEST_2_STARTED_AT && testTwoPids.has(event.pid);
-    return study === "test-2" ? inTestTwo : inTestOne;
+    return study === "test-1" ? inTestOne : study === "test-2" ? inTestTwo : inTestOne || inTestTwo;
   }), [events, study, testTwoPids]);
   const sessions = useMemo(() => sessionsFrom(cohortEvents), [cohortEvents]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
@@ -334,12 +333,10 @@ export default function ResearchReportPage() {
     }), [cohortEvents, selected, sessions, selectedHeatmapPath]);
 
   return <main style={styles.page}>
-    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>{study === "test-1" ? "Тест 1 · волна из 10 респондентов" : study === "test-2" ? "Тест 2 · все 26 анкет Pathway" : "Две волны: 10 + 26 участников · результаты раздельно по волнам"}</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
+    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>{study === "test-1" ? "Тест 1 · подтверждённая волна из 10 респондентов" : study === "test-2" ? "Тест 2 · в выборку войдут участники, начавшие все 4 сценария" : "Все подтверждённые волны исследования"}</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
     {events === null ? <p style={styles.muted}>Загружаем данные…</p> : <>
       <div style={styles.studyTabs}>{studyViews.map((item) => <button key={item.id} onClick={() => setStudy(item.id)} style={{ ...styles.studyTab, ...(study === item.id ? styles.studyTabActive : {}) }}>{item.label}</button>)}</div>
       <div style={styles.filters}>{[{ id: "all" as const, label: "Все прототипы", color: "#1d2023" }, ...prototypes].map((p) => <button key={p.id} onClick={() => setSelected(p.id)} style={{ ...styles.filter, ...(selected === p.id ? { background: p.color, color: "#fff", borderColor: p.color } : {}) }}>{p.label}</button>)}</div>
-      {study === "test-2" ? <TestTwoReport events={events} selected={selected} labelPath={labelPath} renderPaths={paths => <PathMap journeys={paths} />} renderHeatmap={items => <Heatmap clicks={items.filter((e): e is ClickEvent => e.type === "click" && e.path.split("?")[0] === HEATMAP_PATH)} path={HEATMAP_PATH} title="Тест 2 · Каталог накоплений" />} /> : <>
-      {study === "all" && <h2 style={styles.card}>Тест 1 · 10 респондентов</h2>}
       <section style={styles.metricGrid}>
         <Metric value={users.length} label="пользователей начали тест" />
         <Metric value={successfulUsers} label="успешно прошли" note={`из ${users.length} пользователей`} />
@@ -359,8 +356,6 @@ export default function ResearchReportPage() {
         <div style={styles.tableWrap}><table style={styles.table}><thead><tr><th style={styles.tableHead}>Респондент</th><th style={styles.tableHead}>Прототип</th><th style={styles.tableHead}>Дата</th><th style={styles.tableHead}>Сессия</th><th style={styles.tableHead}>До успеха</th><th style={{ ...styles.tableHead, ...styles.path }}>Маршрут</th></tr></thead><tbody>{uniqueVisibleSessions.map((s) => <tr key={s.pid} style={styles.tableRow}><td style={styles.tableCell}>{participantName(s.pid, pids)}</td><td style={styles.tableCell}><span style={{ ...styles.productBadge, background: prototypes.find((p) => p.id === s.prototype)?.color }}>{prototypes.find((p) => p.id === s.prototype)?.label}</span></td><td style={styles.tableCell}>{dateLabel(s.startedAt)}</td><td style={styles.tableCell}>{duration(s.activeMs)}</td><td style={styles.tableCell}>{s.successAt ? <>{duration(s.successAt - s.startedAt)}{s.shortest && <span style={styles.shortest}>Кратчайший</span>}</> : "Не завершил"}</td><td style={{ ...styles.tableCell, ...styles.path }}>{s.path.length ? <>{s.path.join(" → ")}{s.successAt && <><span aria-hidden="true"> → </span><strong style={styles.successAction}>Нажал целевое действие</strong></>}</> : "Путь ещё не записан"}</td></tr>)}</tbody></table></div>
       </section>
       <p style={styles.footer}>Тепловые карты строятся только по данным пользовательских тестов и не используют прежнюю страницу аналитики.</p>
-      </>}
-      {study === "all" && <TestTwoReport events={events} selected={selected} labelPath={labelPath} renderPaths={paths => <PathMap journeys={paths} />} renderHeatmap={items => <Heatmap clicks={items.filter((e): e is ClickEvent => e.type === "click" && e.path.split("?")[0] === HEATMAP_PATH)} path={HEATMAP_PATH} title="Тест 2 · Каталог накоплений" />} />}
     </>}
   </main>;
 }
