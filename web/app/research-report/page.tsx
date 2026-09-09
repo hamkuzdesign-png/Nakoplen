@@ -154,6 +154,11 @@ function sessionsFrom(events: AnalyticsEvent[]): Session[] {
  * stores unique screens) so the path map can show detours and returns. */
 function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype | "all", includedSessionIds: Set<string>): JourneyPath[] {
   const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && (prototype === "all" || e.prototype === prototype) && includedSessionIds.has(`${e.pid}-${e.timestamp}`))
+    // Telemetry can retry the same request. Match the session de-duplication
+    // used by the table so a duplicate start cannot become an extra path.
+    .filter((start, index, all) => all.findIndex((candidate) =>
+      candidate.pid === start.pid && candidate.prototype === start.prototype && candidate.timestamp === start.timestamp
+    ) === index)
     .sort((a, b) => a.timestamp - b.timestamp);
   return starts.map((start) => {
     const end = sessionEnd(events, start);
