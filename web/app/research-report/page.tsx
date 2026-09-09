@@ -12,6 +12,15 @@ const prototypes: { id: ShowcasePrototype; label: string; color: string }[] = [
   { id: "mts", label: "МТС Накопления", color: "#e84d6c" },
 ];
 
+// Состав проведённой волны: 10 респондентов прошли все четыре прототипа.
+// Отчёт намеренно не включает служебные, демо- и незавершённые сессии,
+// которые попадают в общую таблицу событий. Для следующей волны замените
+// этот список на её заранее выданные pid.
+const STUDY_COHORT_PIDS = new Set([
+  "p_m3ussylw", "p_mbyp6djw", "p_oh67fus2", "p_r04ros7a", "p_rh7bo7dx",
+  "p_3j4m4hfl", "p_4f0dkh6o", "p_ct62mwqc", "p_x4jt1him", "p_7im03tij",
+]);
+
 const screenNames: Record<string, string> = {
   "/showcase-test": "Старт задания — главная", "/new-catalog": "Каталог накоплений", "/catalog-v2": "Каталог накоплений", "/products": "Все продукты", "/showcase-success": "Задание выполнено",
   "/home-anon": "Главная — анонимный пользователь", "/home-identified": "Главная — клиент банка", "/my-savings": "Мои накопления",
@@ -250,7 +259,8 @@ export default function ResearchReportPage() {
   const [events, setEvents] = useState<AnalyticsEvent[] | null>(null);
   const [selected, setSelected] = useState<ShowcasePrototype | "all">("all");
   useEffect(() => { fetchAllEvents().then(setEvents); }, []);
-  const sessions = useMemo(() => sessionsFrom(events ?? []), [events]);
+  const cohortEvents = useMemo(() => (events ?? []).filter((event) => STUDY_COHORT_PIDS.has(event.pid)), [events]);
+  const sessions = useMemo(() => sessionsFrom(cohortEvents), [cohortEvents]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
   const visible = selected === "all" ? sessions : sessions.filter((s) => s.prototype === selected);
   // В таблице один человек должен быть представлен одной строкой. Если
@@ -266,17 +276,17 @@ export default function ResearchReportPage() {
   const unfinishedUsers = users.length - successfulUsers;
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
-  const scenarioJourneys = useMemo(() => journeysFrom(events ?? [], selected), [events, selected]);
+  const scenarioJourneys = useMemo(() => journeysFrom(cohortEvents, selected), [cohortEvents, selected]);
   const selectedHeatmapPath = HEATMAP_PATH;
-  const heatmapClicks = useMemo(() => (events ?? []).filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path.split("?")[0] === selectedHeatmapPath)
+  const heatmapClicks = useMemo(() => cohortEvents.filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path.split("?")[0] === selectedHeatmapPath)
     .filter((click) => {
       if (selected === "all") return true;
       const session = sessions.find((s) => s.prototype === selected && s.pid === click.pid && sessionContains(s, click.timestamp));
       return !!session;
-    }), [events, selected, sessions, selectedHeatmapPath]);
+    }), [cohortEvents, selected, sessions, selectedHeatmapPath]);
 
   return <main style={styles.page}>
-    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>Данные обновляются из анонимных событий участников</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
+    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>Волна из 10 респондентов · данные обновляются из анонимных событий</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
     {events === null ? <p style={styles.muted}>Загружаем данные…</p> : <>
       <div style={styles.filters}>{[{ id: "all" as const, label: "Все прототипы", color: "#1d2023" }, ...prototypes].map((p) => <button key={p.id} onClick={() => setSelected(p.id)} style={{ ...styles.filter, ...(selected === p.id ? { background: p.color, color: "#fff", borderColor: p.color } : {}) }}>{p.label}</button>)}</div>
       <section style={styles.metricGrid}>
