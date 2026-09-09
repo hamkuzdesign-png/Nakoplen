@@ -21,6 +21,16 @@ const STUDY_COHORT_PIDS = new Set([
   "p_3j4m4hfl", "p_4f0dkh6o", "p_ct62mwqc", "p_x4jt1him", "p_7im03tij",
 ]);
 
+// Test 2 uses the same public links as Test 1. New participants are separated
+// by the recorded start time, then admitted only after starting all 4 tasks.
+const TEST_2_STARTED_AT = 1788938492000;
+type StudyView = "test-1" | "test-2" | "all";
+const studyViews: { id: StudyView; label: string }[] = [
+  { id: "test-1", label: "Тест 1" },
+  { id: "test-2", label: "Тест 2" },
+  { id: "all", label: "Все волны" },
+];
+
 const screenNames: Record<string, string> = {
   "/showcase-test": "Старт задания — главная", "/new-catalog": "Каталог накоплений", "/catalog-v2": "Каталог накоплений", "/products": "Все продукты", "/showcase-success": "Задание выполнено",
   "/home-anon": "Главная — анонимный пользователь", "/home-identified": "Главная — клиент банка", "/my-savings": "Мои накопления",
@@ -91,6 +101,17 @@ function labelPath(path: string) {
 
 function targetProductPath(prototype: ShowcasePrototype) {
   return `/product/${SHOWCASE_TARGETS[prototype]}?scenario=showcase_test&prototype=${prototype}`;
+}
+
+function completedWavePids(events: AnalyticsEvent[], startedAfter: number) {
+  const prototypesByPid = new Map<string, Set<ShowcasePrototype>>();
+  for (const event of events) {
+    if (event.type !== "journey" || event.name !== "start" || event.timestamp < startedAfter) continue;
+    const prototypes = prototypesByPid.get(event.pid) ?? new Set<ShowcasePrototype>();
+    prototypes.add(event.prototype);
+    prototypesByPid.set(event.pid, prototypes);
+  }
+  return new Set([...prototypesByPid].filter(([, prototypes]) => prototypes.size === 4).map(([pid]) => pid));
 }
 
 /** The target product's screen-time event is flushed after its CTA logs the
@@ -274,9 +295,15 @@ function Heatmap({ clicks, title, path }: { clicks: ClickEvent[]; title: string;
 
 export default function ResearchReportPage() {
   const [events, setEvents] = useState<AnalyticsEvent[] | null>(null);
+  const [study, setStudy] = useState<StudyView>("test-1");
   const [selected, setSelected] = useState<ShowcasePrototype | "all">("all");
   useEffect(() => { fetchAllEvents().then(setEvents); }, []);
-  const cohortEvents = useMemo(() => (events ?? []).filter((event) => STUDY_COHORT_PIDS.has(event.pid)), [events]);
+  const testTwoPids = useMemo(() => completedWavePids(events ?? [], TEST_2_STARTED_AT), [events]);
+  const cohortEvents = useMemo(() => (events ?? []).filter((event) => {
+    const inTestOne = STUDY_COHORT_PIDS.has(event.pid);
+    const inTestTwo = event.timestamp >= TEST_2_STARTED_AT && testTwoPids.has(event.pid);
+    return study === "test-1" ? inTestOne : study === "test-2" ? inTestTwo : inTestOne || inTestTwo;
+  }), [events, study, testTwoPids]);
   const sessions = useMemo(() => sessionsFrom(cohortEvents), [cohortEvents]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
   const visible = selected === "all" ? sessions : sessions.filter((s) => s.prototype === selected);
@@ -306,8 +333,9 @@ export default function ResearchReportPage() {
     }), [cohortEvents, selected, sessions, selectedHeatmapPath]);
 
   return <main style={styles.page}>
-    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>Волна из 10 респондентов · данные обновляются из анонимных событий</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
+    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>{study === "test-1" ? "Тест 1 · подтверждённая волна из 10 респондентов" : study === "test-2" ? "Тест 2 · в выборку войдут участники, начавшие все 4 сценария" : "Все подтверждённые волны исследования"}</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
     {events === null ? <p style={styles.muted}>Загружаем данные…</p> : <>
+      <div style={styles.studyTabs}>{studyViews.map((item) => <button key={item.id} onClick={() => setStudy(item.id)} style={{ ...styles.studyTab, ...(study === item.id ? styles.studyTabActive : {}) }}>{item.label}</button>)}</div>
       <div style={styles.filters}>{[{ id: "all" as const, label: "Все прототипы", color: "#1d2023" }, ...prototypes].map((p) => <button key={p.id} onClick={() => setSelected(p.id)} style={{ ...styles.filter, ...(selected === p.id ? { background: p.color, color: "#fff", borderColor: p.color } : {}) }}>{p.label}</button>)}</div>
       <section style={styles.metricGrid}>
         <Metric value={users.length} label="пользователей начали тест" />
@@ -335,5 +363,5 @@ export default function ResearchReportPage() {
 const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100vh", background: "#f5f6f8", color: "#1d2023", padding: "44px clamp(20px, 5vw, 80px) 64px", fontFamily: "'MTS Compact', Arial, sans-serif", boxSizing: "border-box" },
   topbar: { maxWidth: 1360, margin: "0 auto 30px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "flex-start" }, eyebrow: { fontSize: 12, letterSpacing: ".08em", fontWeight: 700, color: "#777f89", margin: 0 }, title: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: "clamp(28px, 4vw, 42px)", margin: "8px 0", lineHeight: 1.1 }, subtitle: { margin: 0, color: "#6b737c", fontSize: 16 }, back: { color: "#5b50db", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }, filters: { maxWidth: 1360, margin: "0 auto 24px", display: "flex", flexWrap: "wrap", gap: 8 }, filter: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "9px 14px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 600 }, metricGrid: { maxWidth: 1360, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 12 }, metric: { background: "#fff", borderRadius: 16, padding: "18px", minHeight: 100, boxSizing: "border-box" }, metricValue: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 25, lineHeight: 1.1 }, metricLabel: { color: "#69717a", fontSize: 14, marginTop: 8 }, metricNote: { color: "#9299a1", fontSize: 12, marginTop: 4 }, card: { maxWidth: 1360, margin: "0 auto 20px", background: "#fff", borderRadius: 20, padding: "24px", boxSizing: "border-box" }, heading: { fontFamily: "'MTS Wide', Arial, sans-serif", fontSize: 21, margin: "0 0 8px" }, description: { margin: 0, color: "#727981", fontSize: 14, maxWidth: 660 }, sectionTop: { display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 20 }, pathMapScroll: { overflow: "auto", cursor: "grab", touchAction: "none", userSelect: "none", border: "1px solid #dfe5ed", borderRadius: 16, backgroundImage: "radial-gradient(#dbe2ec 1px, transparent 1px)", backgroundSize: "12px 12px", backgroundColor: "#fbfcfe" }, pathMapCanvas: { position: "relative", minHeight: 390 }, pathMapLinks: { position: "absolute", inset: 0, pointerEvents: "none" }, pathStep: { position: "absolute", top: 14, color: "#87909b", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em" }, pathNode: { position: "absolute", width: 168, minHeight: 86, display: "flex", gap: 9, padding: 8, boxSizing: "border-box", borderRadius: 12, background: "rgba(255,255,255,.96)", border: "1px solid #e0e5ec", boxShadow: "0 2px 8px rgba(20,34,56,.08)" }, pathNodeImage: { width: 50, height: 68, flex: "0 0 50px", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 7, background: "#eef1f5", color: "#7a838e", fontSize: 10 }, pathNodeImg: { width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "top" }, pathNodeLivePreview: { width: "100%", height: "100%", overflow: "hidden" }, pathNodeLiveFrame: { width: 375, height: 812, display: "block", border: 0, transform: "scale(.13334)", transformOrigin: "top left", pointerEvents: "none" }, pathNodeInfo: { minWidth: 0, display: "flex", flexDirection: "column", gap: 5, fontSize: 11, lineHeight: 1.25 }, pathSuccess: { position: "absolute", right: -7, bottom: -7, display: "grid", placeItems: "center", width: 23, height: 23, borderRadius: 999, background: "#27bf68", color: "#fff", fontWeight: 800, border: "2px solid #fff" }, pathMapEmpty: { minHeight: 220, display: "grid", placeItems: "center", borderRadius: 14, background: "#f5f6f8", color: "#727981", fontSize: 14 }, heatmapControls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 20, padding: 14, borderRadius: 14, background: "#f5f6f8" }, controlGroup: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 6 }, controlLabel: { color: "#727981", fontSize: 13, fontWeight: 600 }, select: { width: "100%", minHeight: 40, padding: "8px 34px 8px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", font: "inherit", fontSize: 14, cursor: "pointer" }, heatmapWrap: { border: "1px solid #e1e4e8", borderRadius: 14, overflow: "hidden", background: "#f2f4f7" }, heatmapTop: { padding: "12px 14px", background: "#fff", display: "flex", justifyContent: "space-between", fontSize: 14 }, heatmapScreenName: { display: "block", marginTop: 4, color: "#727981", fontSize: 12 }, heatmapStage: { position: "relative", width: 375, maxWidth: "100%", margin: "0 auto", overflow: "hidden", background: "#f2f4f7", borderLeft: "1px solid #dfe2e6", borderRight: "1px solid #dfe2e6" }, heatmapScreenshot: { width: "100%", height: "auto", display: "block" }, heatmapCanvas: { position: "absolute", inset: 0, display: "block", width: "100%", height: "100%" }, heatmapEmpty: { height: 220, display: "grid", placeItems: "center", color: "#727981", fontSize: 14 }, heatmapHint: { margin: 0, padding: "9px 14px", background: "#fff", color: "#727981", fontSize: 12 }, tableWrap: { overflowX: "auto", border: "1px solid #e4e7eb", borderRadius: 14 }, table: { width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 1040, fontSize: 14 }, tableHead: { padding: "13px 16px", background: "#f5f6f8", color: "#68717b", fontSize: 12, fontWeight: 700, textAlign: "left", whiteSpace: "nowrap", borderBottom: "1px solid #e4e7eb" }, tableRow: { background: "#fff" }, tableCell: { padding: "16px", verticalAlign: "top", borderBottom: "1px solid #edf0f2", lineHeight: 1.4 }, productBadge: { display: "inline-block", padding: "5px 8px", color: "#fff", borderRadius: 7, fontWeight: 600, whiteSpace: "nowrap" }, path: { color: "#606873", minWidth: 340, maxWidth: 520, lineHeight: 1.5 }, shortest: { display: "block", color: "#138a76", fontSize: 12, marginTop: 3 }, muted: { maxWidth: 1360, margin: "30px auto", color: "#727981" }, footer: { maxWidth: 1360, margin: "0 auto", color: "#727981", fontSize: 13 },
-  successAction: { color: "#138a76", fontWeight: 700 }, fixedControl: { minHeight: 40, padding: "10px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", boxSizing: "border-box", fontSize: 14 },
+  studyTabs: { maxWidth: 1360, margin: "0 auto 12px", display: "flex", flexWrap: "wrap", gap: 8 }, studyTab: { background: "#fff", border: "1px solid #dde0e5", borderRadius: 999, padding: "10px 16px", color: "#454b52", cursor: "pointer", font: "inherit", fontWeight: 700 }, studyTabActive: { background: "#1d2023", borderColor: "#1d2023", color: "#fff" }, successAction: { color: "#138a76", fontWeight: 700 }, fixedControl: { minHeight: 40, padding: "10px 11px", borderRadius: 9, border: "1px solid #d5d9df", background: "#fff", color: "#1d2023", boxSizing: "border-box", fontSize: 14 },
 };
