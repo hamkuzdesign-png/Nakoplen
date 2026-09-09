@@ -152,8 +152,8 @@ function sessionsFrom(events: AnalyticsEvent[]): Session[] {
 
 /** Keeps every recorded transition (unlike the summary table, which only
  * stores unique screens) so the path map can show detours and returns. */
-function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype | "all"): JourneyPath[] {
-  const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && (prototype === "all" || e.prototype === prototype))
+function journeysFrom(events: AnalyticsEvent[], prototype: ShowcasePrototype | "all", includedSessionIds: Set<string>): JourneyPath[] {
+  const starts = events.filter((e): e is JourneyEvent => e.type === "journey" && e.name === "start" && (prototype === "all" || e.prototype === prototype) && includedSessionIds.has(`${e.pid}-${e.timestamp}`))
     .sort((a, b) => a.timestamp - b.timestamp);
   return starts.map((start) => {
     const end = sessionEnd(events, start);
@@ -288,7 +288,10 @@ export default function ResearchReportPage() {
   const unfinishedUsers = users.length - successfulUsers;
   const avgSuccess = completed.length ? completed.reduce((sum, s) => sum + (s.successAt! - s.startedAt), 0) / completed.length : undefined;
   const avgSession = visible.length ? visible.reduce((sum, s) => sum + s.activeMs, 0) / visible.length : undefined;
-  const scenarioJourneys = useMemo(() => journeysFrom(cohortEvents, selected), [cohortEvents, selected]);
+  // Карта и таблица используют один и тот же срез: последняя сессия каждого
+  // респондента. Без этого карта складывала повторные попытки, а таблица — нет.
+  const visibleSessionIds = useMemo(() => new Set(uniqueVisibleSessions.map((session) => `${session.pid}-${session.startedAt}`)), [uniqueVisibleSessions]);
+  const scenarioJourneys = useMemo(() => journeysFrom(cohortEvents, selected, visibleSessionIds), [cohortEvents, selected, visibleSessionIds]);
   const selectedHeatmapPath = HEATMAP_PATH;
   const heatmapClicks = useMemo(() => cohortEvents.filter((e): e is ClickEvent => e.type === "click" && e.scenario === "showcase_test" && e.path.split("?")[0] === selectedHeatmapPath)
     .filter((click) => {
