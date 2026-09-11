@@ -21,13 +21,15 @@ const STUDY_COHORT_PIDS = new Set([
   "p_3j4m4hfl", "p_4f0dkh6o", "p_ct62mwqc", "p_x4jt1him", "p_7im03tij",
 ]);
 
-// Test 2 uses the same public links as Test 1. New participants are separated
+// All waves use the same public links. New participants are separated
 // by the recorded start time, then admitted only after starting all 4 tasks.
 const TEST_2_STARTED_AT = 1788938492000;
-type StudyView = "test-1" | "test-2" | "all";
+const TEST_3_STARTED_AT = Date.parse("2026-09-11T11:39:54Z");
+type StudyView = "test-1" | "test-2" | "test-3" | "all";
 const studyViews: { id: StudyView; label: string }[] = [
   { id: "test-1", label: "Тест 1" },
   { id: "test-2", label: "Тест 2" },
+  { id: "test-3", label: "Тест 3 - не МТСБ" },
   { id: "all", label: "Все волны" },
 ];
 
@@ -103,10 +105,10 @@ function targetProductPath(prototype: ShowcasePrototype) {
   return `/product/${SHOWCASE_TARGETS[prototype]}?scenario=showcase_test&prototype=${prototype}`;
 }
 
-function completedWavePids(events: AnalyticsEvent[], startedAfter: number) {
+function completedWavePids(events: AnalyticsEvent[], startedAfter: number, endedBefore = Infinity) {
   const prototypesByPid = new Map<string, Set<ShowcasePrototype>>();
   for (const event of events) {
-    if (event.type !== "journey" || event.name !== "start" || event.timestamp < startedAfter) continue;
+    if (event.type !== "journey" || event.name !== "start" || event.timestamp < startedAfter || event.timestamp >= endedBefore) continue;
     const prototypes = prototypesByPid.get(event.pid) ?? new Set<ShowcasePrototype>();
     prototypes.add(event.prototype);
     prototypesByPid.set(event.pid, prototypes);
@@ -298,12 +300,14 @@ export default function ResearchReportPage() {
   const [study, setStudy] = useState<StudyView>("test-1");
   const [selected, setSelected] = useState<ShowcasePrototype | "all">("all");
   useEffect(() => { fetchAllEvents().then(setEvents); }, []);
-  const testTwoPids = useMemo(() => completedWavePids(events ?? [], TEST_2_STARTED_AT), [events]);
+  const testTwoPids = useMemo(() => completedWavePids(events ?? [], TEST_2_STARTED_AT, TEST_3_STARTED_AT), [events]);
+  const testThreePids = useMemo(() => completedWavePids(events ?? [], TEST_3_STARTED_AT), [events]);
   const cohortEvents = useMemo(() => (events ?? []).filter((event) => {
-    const inTestOne = STUDY_COHORT_PIDS.has(event.pid);
-    const inTestTwo = event.timestamp >= TEST_2_STARTED_AT && testTwoPids.has(event.pid);
-    return study === "test-1" ? inTestOne : study === "test-2" ? inTestTwo : inTestOne || inTestTwo;
-  }), [events, study, testTwoPids]);
+    const inTestOne = event.timestamp < TEST_3_STARTED_AT && STUDY_COHORT_PIDS.has(event.pid);
+    const inTestTwo = event.timestamp >= TEST_2_STARTED_AT && event.timestamp < TEST_3_STARTED_AT && testTwoPids.has(event.pid);
+    const inTestThree = event.timestamp >= TEST_3_STARTED_AT && testThreePids.has(event.pid);
+    return study === "test-1" ? inTestOne : study === "test-2" ? inTestTwo : study === "test-3" ? inTestThree : inTestOne || inTestTwo || inTestThree;
+  }), [events, study, testTwoPids, testThreePids]);
   const sessions = useMemo(() => sessionsFrom(cohortEvents), [cohortEvents]);
   const pids = useMemo(() => [...new Set(sessions.map((s) => s.pid))], [sessions]);
   const visible = selected === "all" ? sessions : sessions.filter((s) => s.prototype === selected);
@@ -333,7 +337,7 @@ export default function ResearchReportPage() {
     }), [cohortEvents, selected, sessions, selectedHeatmapPath]);
 
   return <main style={styles.page}>
-    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>{study === "test-1" ? "Тест 1 · подтверждённая волна из 10 респондентов" : study === "test-2" ? "Тест 2 · в выборку войдут участники, начавшие все 4 сценария" : "Все подтверждённые волны исследования"}</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
+    <div style={styles.topbar}><div><p style={styles.eyebrow}>ИССЛЕДОВАНИЕ ПРОТОТИПОВ</p><h1 style={styles.title}>Отчёт по пользовательским тестам</h1><p style={styles.subtitle}>{study === "test-1" ? "Тест 1 · подтверждённая волна из 10 респондентов" : study === "test-2" ? "Тест 2 · в выборку войдут участники, начавшие все 4 сценария" : study === "test-3" ? "Тест 3 - не МТСБ · в выборку войдут участники, начавшие все 4 сценария" : "Все подтверждённые волны исследования"}</p></div><Link href="/" style={styles.back}>К прототипам →</Link></div>
     {events === null ? <p style={styles.muted}>Загружаем данные…</p> : <>
       <div style={styles.studyTabs}>{studyViews.map((item) => <button key={item.id} onClick={() => setStudy(item.id)} style={{ ...styles.studyTab, ...(study === item.id ? styles.studyTabActive : {}) }}>{item.label}</button>)}</div>
       <div style={styles.filters}>{[{ id: "all" as const, label: "Все прототипы", color: "#1d2023" }, ...prototypes].map((p) => <button key={p.id} onClick={() => setSelected(p.id)} style={{ ...styles.filter, ...(selected === p.id ? { background: p.color, color: "#fff", borderColor: p.color } : {}) }}>{p.label}</button>)}</div>
